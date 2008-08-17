@@ -6,17 +6,11 @@ PKG    = PackageHeader
 TYPES    = Types
 ETH    = Ethernet
 TCP     = Tcp
-#ETH    = ethernet
-#TFH    = tcpdump_file_handler
-#PKT    = packet
-#OA     = option_analizer
-#ICMP   = icmp
-#FTR    = filter
-#ER     = error
-#TI     = type_inverting
+IP    = Ip
+UTIL   = Util
 
-HEADERS =  $(PKG).h $(TYPES).h $(ETH).h $(TCP).h
-OBJECTS = $(PKG).o $(TYPES).o $(ETH).o $(TCP).o $(XNOOP).o
+HEADERS =  $(PKG).h $(TYPES).h $(ETH).h $(TCP).h $(IP).h $(UTIL).h
+OBJECTS = $(PKG).o $(TYPES).o $(ETH).o $(TCP).o $(IP).o $(UTIL).o $(XNOOP).o
 
 # ****************************************************
 
@@ -35,8 +29,14 @@ $(ETH).o: $(ETH).c $(ETH).h
 $(TCP).o: $(TCP).c $(TCP).h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
+$(IP).o: $(IP).c $(IP).h
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+$(UTIL).o: $(UTIL).c $(UTIL).h
+	$(CC) $(CFLAGS) -o $@ -c $<
+	
 $(XNOOP).o: $(XNOOP).c $(HEADERS)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 clean:
-	-rm *.o Network;
+	-rm *.o;

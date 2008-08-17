@@ -1,6 +1,6 @@
 #ifndef TCP_H_
 #define TCP_H_
-#include "Type.h"
+#include "Types.h"
 
 typedef struct
 {
@@ -12,10 +12,11 @@ typedef struct
 	SWORD window;
 	SWORD checksum;
 	SWORD urgent_pointer;
+	WORD options;
 }TCP_HEADER;		
 
 CHAR_T*
-trace_tcp(){}
+trace_tcp();
 
 
 #endif /*TCP_H_*/
