@@ -1,0 +1,9 @@
+#ifndef TCP_C_
+#define TCP_C_
+#include "Ethernet.h"
+
+CHAR_T*
+trace_tcp(){}
+
+
+#endif /*TCP_H_*/
