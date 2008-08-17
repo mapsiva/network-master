@@ -3,7 +3,7 @@
 #include "Ethernet.h"
 
 CHAR_T*
-trace_tcp(){}
+trace_tcp(){return 0;}
 
 
-#endif /*TCP_H_*/
+#endif

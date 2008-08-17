@@ -6,4 +6,4 @@ WORD to_word(void * value)
 {
 	return (WORD) ((void*)value); 
 }
-#endif /*TYPES_H_*/
+#endif 

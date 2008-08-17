@@ -67,4 +67,4 @@ print_pkt_header (FRAME_HEADER *fh)
 	printf("Seconds: %u Micsecs %u %X %X \n", (unsigned int) fh->seconds,(unsigned int) fh->mic_secs, (unsigned int)fh->capt_data, (unsigned int)fh->actual_length );
 }
 
-#endif /*PACKAGEHEADER_C_*/
+#endif 
