@@ -40,6 +40,8 @@ trace_ip( IP_HEADER * pkg)
     return 0;
 }
 
+
+/*Ainda nao estah pronto*/
 int
 resolve_address(WORD  address, CHAR_T *ip) 
 {
@@ -48,9 +50,11 @@ resolve_address(WORD  address, CHAR_T *ip)
      
      sprintf(ip, "%u.%u.%u.%u", *IP, *IP+2, *IP+2, *IP+3);
      
+     struct in_addr addr;
      
+     inet_aton(ip, &addr);
      
-     struct hostent *resolved = gethostbyaddr((const void *)&w_ip, 4, AF_INET);
+     struct hostent *resolved = gethostbyaddr(&addr,  sizeof (addr), AF_INET);
      
      if(resolved)
         printf("%s", resolved->h_name);
