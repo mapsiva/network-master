@@ -10,8 +10,8 @@
 typedef struct 
 {
   WORD		magic_number;
-  SWORD	major_version;
-  SWORD	minor_version;
+  SWORD		major_version;
+  SWORD		minor_version;
   WORD		time_zone_off;
   WORD		time_stamp;
   WORD		snap_length;
@@ -25,8 +25,6 @@ typedef struct
   WORD		capt_data;
   WORD		actual_length;
 } FRAME_HEADER;
-
-
 
 void error_exit(char *fmt, ...);
 WORD invert_long( WORD );

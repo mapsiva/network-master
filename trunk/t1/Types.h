@@ -18,6 +18,14 @@ enum
     TCP     = 6,
     UDP     = 17
 };
+
+enum
+{
+    BASIC    	= 1,
+    VERB  		= 2,
+    VERB_EXT    = 3
+};
+
 /* ip PRECENDENCE
 111 - Network Control
 110 - Internetwork Control
