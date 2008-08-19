@@ -7,7 +7,6 @@
 #include <string.h>
 #include "PackageHeader.h"
 
-
 void
 error_exit(char *fmt, ...)
 {

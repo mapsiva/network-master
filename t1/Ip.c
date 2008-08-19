@@ -28,8 +28,7 @@ trace_ip( IP_HEADER * pkg)
     printf("IP: Time to alive =  %u seconds/hops \n", (pkg->time_alive));
     printf("IP: Protocol =  %u (%s)\n", (pkg->protocol), ((pkg->protocol==1)?"ICMP":(pkg->protocol==6)?"TCP":"UDP"));
     printf("IP: Header ckecksum =  %X \n", ntohs(pkg->checksum));
-    
-    
+        
     resolve_address(ntohl(pkg->source_address), &source[0]);
     
     printf("IP: Source address =  %s \n",  source);
