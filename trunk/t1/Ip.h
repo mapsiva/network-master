@@ -17,11 +17,16 @@ typedef struct
     WORD options;
 }IP_HEADER;		
 
+struct in_addr addr;
+struct hostent *resolved;
+
 CHAR_T*
-trace_ip( IP_HEADER *);
+trace_ip( IP_HEADER * );
 
-int
-resolve_address(WORD  address, CHAR_T *ip) ;
+CHAR_T*
+resolve_address( WORD ) ;
 
+CHAR_T*
+format_address( WORD ) ;
 
 #endif 

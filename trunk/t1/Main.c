@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <netinet/in.h>
 #include "PackageHeader.h"
 #include "Ethernet.h"
 #include "Tcp.h"
@@ -26,9 +27,9 @@ int main(int argc, char *argv[])
 	int count_pkt_udp 	= 0;
 	int count_pkt_tcp 	= 0;
 
-	int modo = 1;	//inicializa o modo com 1 indicando o modo de funcionamento BASICO
+	int modo = 1;	/*inicializa o modo com 1 indicando o modo de funcionamento BASICO*/
     
-    //A execucao do programa está passando parâmetros [opcoes] ou [filtros]
+    /*A execucao do programa está passando parâmetros [opcoes] ou [filtros]*/
     if (argc > 2)
     {
     	if (argv[2][0] == '-')
@@ -67,10 +68,10 @@ int main(int argc, char *argv[])
 		
 		/*Le o conteudo do pacote*/
 		fread(pkt_buf, frame_header.capt_data, 1, inf);
-		
+		qtd_pkt ++;
 		/*Capturando um pacote ethernet*/
 		pkg_ethernet = (ETHERNET_HEADER *)pkt_buf;
-		
+		trace_ethernet (pkg_ethernet, qtd_pkt,  &frame_header);
 		/*Verifica o tipo do pacote ethernet*/
 		switch (ntohs(pkg_ethernet->type))
 		{
@@ -98,25 +99,25 @@ int main(int argc, char *argv[])
 		        }
 		        break;
 		    case ARP:
-		       	count_pkt_arq++;
+		       	count_pkt_arp++;
 		        break;
 		}
 		
 		/*trace_ethernet ( pkg_ethernet, ++count_pkt_ether, &frame_header );*/		
 	}
 	
-	//Impressão das informações no caso do funcionamento básico (Só deve imprimir estas informações se o modo for igual a BASIC)	
+	/*Impressão das informações no caso do funcionamento básico (Só deve imprimir estas informações se o modo for igual a BASIC)*/	
 	if (modo == BASIC)
 	{
 		printf("\n");
 		printf("ethernet frames: %d", count_pkt_ether);
-		//printf("ethernet broadcast: %d", count_pkt_broad);
+		/*printf("ethernet broadcast: %d", count_pkt_broad);*/
 		printf("ARP: %d",count_pkt_arp);
 		printf("IP: %d",count_pkt_ip);
 		printf("ICMP: %d",count_pkt_icmp);
 		printf("UDP: %d",count_pkt_udp);
 		printf("TCP: %d",count_pkt_tcp);
-		//printf("To this host: %d",count_pkt_me);
+		/*printf("To this host: %d",count_pkt_me);*/
 	}
    	
    	return 0;

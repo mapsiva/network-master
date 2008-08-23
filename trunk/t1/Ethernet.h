@@ -13,4 +13,7 @@ typedef struct
 CHAR_T*
 trace_ethernet(ETHERNET_HEADER *, int,  FRAME_HEADER *); 
 
+
+int is_broadcast(BYTE *);
+
 #endif 
