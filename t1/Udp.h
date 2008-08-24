@@ -16,5 +16,5 @@ CHAR_T*
 trace_udp( UDP_HEADER *);
 
 void
-view_data ( UDP_HEADER );
+view_data_udp ( UDP_HEADER *);
 #endif /*UDP_H_*/

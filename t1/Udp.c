@@ -1,25 +1,28 @@
 #ifndef UDP_C_
 #define UDP_C_
-#include "Tcp.h"
+#include "Udp.h"
 #include "Types.h"
 #include <netdb.h>
 #include <stdio.h>
 
 CHAR_T*
-trace_tcp( UDP_HEADER * pkg )
+trace_udp( UDP_HEADER * pkg )
 {
     printf("UDP: ----- UDP Header -----\n");
     printf("UDP:\n");
-    printf("UDP: Source Port = %u", ntohs(pkg->src_port));
-    printf("UDP: Destination Port = %u", ntohs(pkg->dest_port));
+    printf("UDP: Source Port = %u\n", ntohs(pkg->src_port));
+    printf("UDP: Destination Port = %u\n", ntohs(pkg->dest_port));
     printf("UDP: Length = %u\n", ntohs(pkg->length));
     printf("UDP: Cheksum = %u\n", ntohs(pkg->checksum));
+    
+    view_data_udp ( pkg );
+    
     printf ("UDP:\n\n");
     return 0;
 }
 
 void
-view_data ( UDP_HEADER * pkg)
+view_data_udp ( UDP_HEADER * pkg)
 {
     BYTE *byteEX = &pkg->fisrt_data;
     BYTE *byteCHAR = &pkg->fisrt_data;

@@ -8,9 +8,10 @@ ETH    = Ethernet
 TCP     = Tcp
 IP    = Ip
 UTIL   = Util
+UDP     = Udp
 
-HEADERS =  $(PKG).h $(TYPES).h $(ETH).h $(TCP).h $(IP).h $(UTIL).h
-OBJECTS = $(PKG).o $(TYPES).o $(ETH).o $(TCP).o $(IP).o $(UTIL).o $(XNOOP).o
+HEADERS =  $(PKG).h $(TYPES).h $(ETH).h $(TCP).h $(IP).h $(UTIL).h $(UDP).h
+OBJECTS = $(PKG).o $(TYPES).o $(ETH).o $(TCP).o $(IP).o $(UTIL).o $(UDP).o $(XNOOP).o
 
 # ****************************************************
 
@@ -33,6 +34,9 @@ $(IP).o: $(IP).c $(IP).h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 $(UTIL).o: $(UTIL).c $(UTIL).h
+	$(CC) $(CFLAGS) -o $@ -c $<
+	
+$(UDP).o: $(UDP).c $(UDP).h
 	$(CC) $(CFLAGS) -o $@ -c $<
 	
 $(XNOOP).o: $(XNOOP).c $(HEADERS)
