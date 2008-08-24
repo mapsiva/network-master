@@ -11,7 +11,7 @@ trace_ethernet(ETHERNET_HEADER* eth, int ID,  FRAME_HEADER *frh)
 	printf ("ETHER: ----- Ether Header -----\n");
 	printf ("ETHER:\n");
 	printf ("ETHER: Packet %d\n", ID);
-	printf ("ETHER: Packet size = %u\n", (unsigned int) frh->capt_data);
+	printf ("ETHER: Packet size = %u bytes\n", (unsigned int) frh->capt_data);
 	
 		
 	
@@ -19,7 +19,7 @@ trace_ethernet(ETHERNET_HEADER* eth, int ID,  FRAME_HEADER *frh)
 	
 	printf ("ETHER: Source \t\t= %.02X:%02X:%02X:%02X:%02X:%.02X\n", eth->sender[0], eth->sender[1], eth->sender[2], eth->sender[3], eth->sender[4], eth->sender[5]);	
 	printf ("ETHER: Ethertype %04X\n",(unsigned int) ntohs(eth->type));
-	printf ("ETHER:\n\n");
+	printf ("ETHER:\n");
 	return 0;
 }
 
