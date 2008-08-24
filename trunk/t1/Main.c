@@ -4,6 +4,7 @@
 #include "Ethernet.h"
 #include "Tcp.h"
 #include "Ip.h"
+#include "Udp.h"
 
 #define BUF_SIZE	2000
 char byte_order; /* 0=little, 1=big endian*/
@@ -94,6 +95,7 @@ int main(int argc, char *argv[])
 						count_pkt_tcp++;
 		                break;
 		            case UDP:
+		                trace_udp ((UDP_HEADER *)(pkg_ip + 1));
 						count_pkt_udp++;
 		                break;
 		            case ICMP:
