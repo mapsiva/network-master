@@ -14,7 +14,6 @@ typedef struct
     SWORD checksum;
     WORD source_address;
     WORD destination_address;
-    WORD options;
 }IP_HEADER;		
 
 struct in_addr addr;

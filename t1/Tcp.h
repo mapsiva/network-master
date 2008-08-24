@@ -1,6 +1,7 @@
 #ifndef TCP_H_
 #define TCP_H_
 #include "Types.h"
+#include <netdb.h>
 
 typedef struct
 {
@@ -15,8 +16,13 @@ typedef struct
 	WORD options;
 }TCP_HEADER;		
 
+
+void
+view_service( SWORD );
+
+	
 CHAR_T*
-trace_tcp();
+trace_tcp( TCP_HEADER *);
 
 
 #endif /*TCP_H_*/
