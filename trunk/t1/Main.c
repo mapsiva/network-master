@@ -18,7 +18,8 @@ int main(int argc, char *argv[])
 	FILE *inf;
 	ETHERNET_HEADER * pkg_ethernet;
     IP_HEADER * pkg_ip;      
-	
+	TCP_HEADER * pkg_tcp;
+	 
 	int qtd_pkt 		= 0;
 	int count_pkt_ether = 0;
 	int count_pkt_arp 	= 0;
@@ -88,6 +89,8 @@ int main(int argc, char *argv[])
 		        switch (pkg_ip->protocol)
 		        {
 		            case TCP:
+		                pkg_tcp = (TCP_HEADER *)(pkg_ip + 1);
+		                trace_tcp (pkg_tcp);
 						count_pkt_tcp++;
 		                break;
 		            case UDP:
