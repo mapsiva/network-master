@@ -6,6 +6,8 @@ typedef unsigned char BYTE;
 typedef unsigned short SWORD;
 typedef unsigned long WORD;
 
+#define DATA 64;
+
 enum
 {
     IP      = 0x0800,
