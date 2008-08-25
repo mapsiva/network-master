@@ -4,77 +4,91 @@
 #include "Types.h"
 #include <netdb.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 CHAR_T*
-trace_icmp( ICMP_HEADER * pkg )
+trace_icmp( ICMP_HEADER * pkg, int translation, int modo)
 {
-    printf("ICMP: ----- ICMP Header -----\n");
-    printf("ICMP:\n");
-    view_type_icmp ( pkg );
-    printf("ICMP: code = %u\n", pkg->code);
-    printf("ICMP: Cheksum = %04X\n", ntohs(pkg->checksum));
-    printf("ICMP:\n\n");
-    return 0;
+	if (modo == VERB_EXT)
+	{
+		printf("ICMP: ----- ICMP Header -----\n");
+		printf("ICMP:\n");
+		view_type_icmp ( pkg, modo);
+		printf("ICMP: code = %u\n", pkg->code);
+		printf("ICMP: Cheksum = %04X\n", ntohs(pkg->checksum));
+		printf("ICMP:\n\n");
+	}
+	else if (modo == VERB)
+		view_type_icmp ( pkg, modo);
+	return 0;
 }
 
 void
-view_type_icmp ( ICMP_HEADER * pkg)
+view_type_icmp ( ICMP_HEADER * pkg, int modo)
 {
-    printf("ICMP: Type = %u ", pkg->type);
+	CHAR_T * text;
+    text = (CHAR_T*) malloc (100);
+     
+    if (modo==VERB_EXT)
+    	printf("ICMP: Type = %u ", pkg->type);
     
     switch (pkg->type)
     {
         case ECHO_REPLAY:
-             printf("(Echo Reply)");
+        	sprintf((char *)text, "Echo Reply");
             break;
         case DESTINATION_UN:
-            printf("(Destination Unreachable)");
+        	sprintf((char *)text, "Destination Unreachable");
             break;
         case SOURCE_QUENCH:
-            printf("(Source Quench)");
+        	sprintf((char *)text, "Source Quench");
             break;
         case REDIRECT:
-            printf("(Redirect)");
+        	sprintf((char *)text, "Redirect");
             break;
         case ECHO_REQUEST:
-            printf("(Echo Request)");
+        	sprintf((char *)text, "Echo Request");
             break;
         case ROUTER_AD:
-            printf("(Router advertisement)");
+        	sprintf((char *)text, "Router advertisement");
             break;
         case ROUTER_SOL:
-             printf("(Router Solicitation)");
+        	sprintf((char *)text, "Router Solicitation");
             break;
         case TTL:
-             printf("(TTL exceeded)");
+        	sprintf((char *)text, "TTL exceeded");
             break;
         case PP:
-             printf("(Parameter Problem)");
+        	sprintf((char *)text, "Parameter Problem");
             break;
         case TIMESTAMP_REQUEST:
-              printf("(Timestamp Request)");
+        	sprintf((char *)text, "Timestamp Request");
             break;
         case TIMESTAMP_REPLY:
-             printf("(Timestamp Reply)");
+        	sprintf((char *)text, "Timestamp Reply");
             break;
         case INFO_REQUEST:
-             printf("(Information Request)");
+        	sprintf((char *)text, "Information Request");
             break;
         case INFO_REPLY:
-             printf("(Information Reply)");
+        	sprintf((char *)text, "Information Reply");
             break;
         case ADDRESS_MASK_REQUEST:
-             printf("(Address Mask Request)");
+        	sprintf((char *)text, "Address Mask Request");
             break;
         case ADDRESS_MASK_REPLY:
-            printf("(Address Mask Reply)");
+        	sprintf((char *)text, "Address Mask Reply");
             break;
         default:
-            printf("(Unknow code)");
-        
-    
+        	sprintf((char *)text, "Unknow code");
     }
-    printf("\n");
+    if (modo == VERB_EXT)    
+    	printf("(%s)", text);
+    else if(modo == VERB)
+    	printf("%s", text);
+    free(text);
+    printf("\n");    	
 }
 
 #endif

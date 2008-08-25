@@ -15,10 +15,9 @@ typedef struct
     BYTE target_hardware_addr[6];
     WORD target_ip_addr;
 } ARP_HEADER;
-	
 
 CHAR_T*
-trace_arp( ARP_HEADER *);
+trace_arp( ARP_HEADER *, int, int);
 
 void 
 view_type_arp ( ARP_HEADER *);

@@ -30,9 +30,9 @@ enum Types
 };
 
 CHAR_T*
-trace_icmp( ICMP_HEADER *);
+trace_icmp( ICMP_HEADER *, int, int);
 
 void 
-view_type_icmp ( ICMP_HEADER *);
+view_type_icmp ( ICMP_HEADER *, int);
 
 #endif /*ICMP_H_*/
