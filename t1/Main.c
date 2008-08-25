@@ -6,6 +6,7 @@
 #include "Ip.h"
 #include "Udp.h"
 #include "Icmp.h"
+#include "Arp.h"
 
 #define BUF_SIZE	2000
 char byte_order; /* 0=little, 1=big endian*/
@@ -100,12 +101,13 @@ int main(int argc, char *argv[])
 						count_pkt_udp++;
 		                break;
 		            case ICMP:
-		                trace_icmp ((ICMP_HEADER *)(pkg_ip + 1));
+		               /* trace_icmp ((ICMP_HEADER *)(pkg_ip + 1));*/
 						count_pkt_icmp++;
 		                break;
 		        }
 		        break;
 		    case ARP:
+		        trace_arp ((ARP_HEADER *)(pkg_ethernet + 1));
 		       	count_pkt_arp++;
 		        break;
 		}

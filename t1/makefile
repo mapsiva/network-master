@@ -10,9 +10,10 @@ IP    = Ip
 UTIL   = Util
 UDP     = Udp
 ICMP    = Icmp
+ARP     = Arp
 
-HEADERS =  $(PKG).h $(TYPES).h $(ETH).h $(TCP).h $(IP).h $(UTIL).h $(UDP).h $(ICMP).h
-OBJECTS = $(PKG).o $(TYPES).o $(ETH).o $(TCP).o $(IP).o $(UTIL).o $(UDP).o $(ICMP).o $(XNOOP).o
+HEADERS =  $(PKG).h $(TYPES).h $(ETH).h $(TCP).h $(IP).h $(UTIL).h $(UDP).h $(ICMP).h $(ARP).h
+OBJECTS = $(PKG).o $(TYPES).o $(ETH).o $(TCP).o $(IP).o $(UTIL).o $(UDP).o $(ICMP).o $(ARP).o $(XNOOP).o
 
 # ****************************************************
 
@@ -41,6 +42,9 @@ $(UDP).o: $(UDP).c $(UDP).h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 $(ICMP).o: $(ICMP).c $(ICMP).h
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+$(ARP).o: $(ARP).c $(ARP).h
 	$(CC) $(CFLAGS) -o $@ -c $<
 	
 $(XNOOP).o: $(XNOOP).c $(HEADERS)
