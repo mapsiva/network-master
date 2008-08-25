@@ -10,6 +10,8 @@
 CHAR_T*
 trace_arp( ARP_HEADER * pkg )
 {
+    CHAR_T *ip, *name;
+    
     printf("ARP: ----- ARP Header -----\n");
     printf("ARP:\n");
     printf("ARP: Hardware Type = %u\n", ntohs(pkg->hardware_type));
@@ -18,11 +20,22 @@ trace_arp( ARP_HEADER * pkg )
     printf("ARP: Length of protocol address = %u bytes\n", pkg->protocol_len);
     printf("ARP: Opcode %u (%s)\n", ntohs(pkg->operation), (ntohs(pkg->operation) == 1)?"Echo Request":"Echo Reply");
     
-    printf ("ARP: Sender’s hardware address = %.02X:%02X:%02X:%02X:%02X:%.02X\n", pkg->sender_hardware_addr[0], pkg->sender_hardware_addr[1], pkg->sender_hardware_addr[2], pkg->sender_hardware_addr[3], pkg->sender_hardware_addr[4], pkg->sender_hardware_addr[5]);	
+    printf ("ARP: Sender’s hardware address \t= %.02X:%02X:%02X:%02X:%02X:%.02X\n", pkg->sender_hardware_addr[0], pkg->sender_hardware_addr[1], pkg->sender_hardware_addr[2], pkg->sender_hardware_addr[3], pkg->sender_hardware_addr[4], pkg->sender_hardware_addr[5]);	
+   
+    ip = format_address(pkg->sender_ip_addr);
+    printf("ARP: Sender’s protocol address =  %s", ip );
+    name = resolve_address(pkg->sender_ip_addr);
+    printf("%s", name);
+    free (ip);free(name);
     
-    printf ("ARP: Target hardware address = %02X:%02X:%02X:%02X:%02X:%02X %s\n", pkg->target_hardware_addr[0], pkg->target_hardware_addr[1], pkg->target_hardware_addr[2], pkg->target_hardware_addr[3], pkg->target_hardware_addr[4], pkg->target_hardware_addr[5], (is_broadcast(pkg->target_hardware_addr)?"(brodcast)":""));
+    printf ("ARP: Target hardware address \t= %02X:%02X:%02X:%02X:%02X:%02X %s\n", pkg->target_hardware_addr[0], pkg->target_hardware_addr[1], pkg->target_hardware_addr[2], pkg->target_hardware_addr[3], pkg->target_hardware_addr[4], pkg->target_hardware_addr[5], (is_broadcast(pkg->target_hardware_addr)?"(brodcast)":""));
 	
-	
+    ip = format_address(pkg->target_ip_addr);
+    printf("ARP: Target protocol address =  %s", ip );
+    name = resolve_address(pkg->target_ip_addr);
+    printf("%s", name);
+    free (ip);free(name);
+    
     printf("ARP:\n\n");
     return 0;
 }
