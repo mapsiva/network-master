@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 	TCP_HEADER * pkg_tcp;
 	 
 	int qtd_pkt 		= 0;
-	int count_pkt_ether = 0;
+	
 	int count_pkt_arp 	= 0;
 	int count_pkt_ip 	= 0;
 	int count_pkt_icmp 	= 0;
@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
 		qtd_pkt ++;
 		/*Capturando um pacote ethernet*/
 		pkg_ethernet = (ETHERNET_HEADER *)pkt_buf;
-		/*trace_ethernet (pkg_ethernet, qtd_pkt,  &frame_header);*/
+		trace_ethernet (pkg_ethernet, qtd_pkt,  &frame_header);
 		/*Verifica o tipo do pacote ethernet*/
 		switch (ntohs(pkg_ethernet->type))
 		{
@@ -87,21 +87,21 @@ int main(int argc, char *argv[])
 		        
 		        pkg_ip = (IP_HEADER *)( pkg_ethernet + 1 ); 
 		        
-		       /* trace_ip (pkg_ip);*/
+		        trace_ip (pkg_ip);
 		        
 		        switch (pkg_ip->protocol)
 		        {
 		            case TCP:
 		                pkg_tcp = (TCP_HEADER *)(pkg_ip + 1);
-		                /*trace_tcp (pkg_tcp);*/
+		                trace_tcp (pkg_tcp);
 						count_pkt_tcp++;
 		                break;
 		            case UDP:
-		                /*trace_udp ((UDP_HEADER *)(pkg_ip + 1));*/
+		                trace_udp ((UDP_HEADER *)(pkg_ip + 1));
 						count_pkt_udp++;
 		                break;
 		            case ICMP:
-		               /* trace_icmp ((ICMP_HEADER *)(pkg_ip + 1));*/
+		                trace_icmp ((ICMP_HEADER *)(pkg_ip + 1));
 						count_pkt_icmp++;
 		                break;
 		        }
@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
 	if (modo == BASIC)
 	{
 		printf("\n");
-		printf("ethernet frames: %d\n", count_pkt_ether);
+		printf("ethernet frames: %d\n", qtd_pkt);
 		/*printf("ethernet broadcast: %d", count_pkt_broad);*/
 		printf("ARP: %d\n",count_pkt_arp);
 		printf("IP: %d\n",count_pkt_ip);
