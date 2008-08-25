@@ -18,7 +18,7 @@ trace_ethernet(ETHERNET_HEADER* eth, int ID,  FRAME_HEADER *frh)
 	printf ("ETHER: Destination \t= %02X:%02X:%02X:%02X:%02X:%02X %s\n", eth->receiver[0], eth->receiver[1], eth->receiver[2], eth->receiver[3], eth->receiver[4], eth->receiver[5], (is_broadcast(eth->receiver)?"(brodcast)":""));
 	
 	printf ("ETHER: Source \t\t= %.02X:%02X:%02X:%02X:%02X:%.02X\n", eth->sender[0], eth->sender[1], eth->sender[2], eth->sender[3], eth->sender[4], eth->sender[5]);	
-	printf ("ETHER: Ethertype %04X\n",(unsigned int) ntohs(eth->type));
+	printf ("ETHER: Ethertype %04X %s\n",(unsigned int) ntohs(eth->type), ((unsigned int) ntohs(eth->type) == 0x800)?"(IP)":"(ARP)");
 	printf ("ETHER:\n");
 	return 0;
 }

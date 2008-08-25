@@ -5,6 +5,7 @@
 #include "Tcp.h"
 #include "Ip.h"
 #include "Udp.h"
+#include "Icmp.h"
 
 #define BUF_SIZE	2000
 char byte_order; /* 0=little, 1=big endian*/
@@ -73,7 +74,7 @@ int main(int argc, char *argv[])
 		qtd_pkt ++;
 		/*Capturando um pacote ethernet*/
 		pkg_ethernet = (ETHERNET_HEADER *)pkt_buf;
-		trace_ethernet (pkg_ethernet, qtd_pkt,  &frame_header);
+		/*trace_ethernet (pkg_ethernet, qtd_pkt,  &frame_header);*/
 		/*Verifica o tipo do pacote ethernet*/
 		switch (ntohs(pkg_ethernet->type))
 		{
@@ -85,20 +86,21 @@ int main(int argc, char *argv[])
 		        
 		        pkg_ip = (IP_HEADER *)( pkg_ethernet + 1 ); 
 		        
-		        trace_ip (pkg_ip);
+		       /* trace_ip (pkg_ip);*/
 		        
 		        switch (pkg_ip->protocol)
 		        {
 		            case TCP:
 		                pkg_tcp = (TCP_HEADER *)(pkg_ip + 1);
-		                trace_tcp (pkg_tcp);
+		                /*trace_tcp (pkg_tcp);*/
 						count_pkt_tcp++;
 		                break;
 		            case UDP:
-		                trace_udp ((UDP_HEADER *)(pkg_ip + 1));
+		                /*trace_udp ((UDP_HEADER *)(pkg_ip + 1));*/
 						count_pkt_udp++;
 		                break;
 		            case ICMP:
+		                trace_icmp ((ICMP_HEADER *)(pkg_ip + 1));
 						count_pkt_icmp++;
 		                break;
 		        }
@@ -115,13 +117,13 @@ int main(int argc, char *argv[])
 	if (modo == BASIC)
 	{
 		printf("\n");
-		printf("ethernet frames: %d", count_pkt_ether);
+		printf("ethernet frames: %d\n", count_pkt_ether);
 		/*printf("ethernet broadcast: %d", count_pkt_broad);*/
-		printf("ARP: %d",count_pkt_arp);
-		printf("IP: %d",count_pkt_ip);
-		printf("ICMP: %d",count_pkt_icmp);
-		printf("UDP: %d",count_pkt_udp);
-		printf("TCP: %d",count_pkt_tcp);
+		printf("ARP: %d\n",count_pkt_arp);
+		printf("IP: %d\n",count_pkt_ip);
+		printf("ICMP: %d\n",count_pkt_icmp);
+		printf("UDP: %d\n",count_pkt_udp);
+		printf("TCP: %d\n",count_pkt_tcp);
 		/*printf("To this host: %d",count_pkt_me);*/
 	}
    	
