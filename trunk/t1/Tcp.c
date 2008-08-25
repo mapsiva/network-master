@@ -6,48 +6,65 @@
 #include <stdio.h>
 
 CHAR_T*
-trace_tcp( TCP_HEADER * pkg )
+trace_tcp( TCP_HEADER * pkg, int modo)
 {
-    printf("TCP: ----- TCP Header -----\n");
-    printf("TCP:\n");
-    printf("TCP: Source Port = %u", ntohs(pkg->src_port));
-    
-    view_service (pkg->src_port);
-    
-    printf("TCP: Destination Port = %u", ntohs(pkg->dest_port));
-    
-    view_service (pkg->dest_port);
-    
-    printf("TCP: Sequence Number = %u\n", ntohl(pkg->seq_number_port));    
-    printf("TCP: Acknowledgement number = %u\n", ntohl(pkg->ack));
-    printf("TCP: Data offset = %u bytes\n", (unsigned int) ((pkg->offset >> 12)& 0x000F)<< 2); /* x4*/
-    
-    view_flags ( pkg );
-    
-    printf("TCP: Window = %u\n", ntohs(pkg->window));
-    printf("TCP: Cheksum = %u\n", ntohs(pkg->checksum));
-    printf("TCP: Urgent Pointer = %u\n", ntohs(pkg->urgent_pointer));
-   
-    if ((((pkg->offset >> 12)& 0x000F)<< 2) == sizeof (WORD))
-        printf ("TCP: No options\n");
-    else
-        printf ("TCP: With options\n");
-      
-    view_data ( pkg );
-    
-    printf ("TCP:\n\n");
+	if (modo == VERB_EXT)
+	{
+		printf("TCP: ----- TCP Header -----\n");
+		printf("TCP:\n");
+		printf("TCP: Source Port = %u", ntohs(pkg->src_port));
+		
+		view_service (pkg->src_port, modo);
+		
+		printf("TCP: Destination Port = %u", ntohs(pkg->dest_port));
+		
+		view_service (pkg->dest_port, modo);
+		
+		printf("TCP: Sequence Number = %u\n", ntohl(pkg->seq_number_port));    
+		printf("TCP: Acknowledgement number = %u\n", ntohl(pkg->ack));
+		printf("TCP: Data offset = %u bytes\n", (unsigned int) ((pkg->offset >> 12)& 0x000F)<< 2); /* x4*/
+		
+		view_flags ( pkg );
+		
+		printf("TCP: Window = %u\n", ntohs(pkg->window));
+		printf("TCP: Cheksum = %u\n", ntohs(pkg->checksum));
+		printf("TCP: Urgent Pointer = %u\n", ntohs(pkg->urgent_pointer));
+	   
+		if ((((pkg->offset >> 12)& 0x000F)<< 2) == sizeof (WORD))
+		    printf ("TCP: No options\n");
+		else
+		    printf ("TCP: With options\n");
+		  
+		view_data ( pkg );
+		
+		printf ("TCP:\n\n");
+	}
+	else if(modo == VERB)
+	{
+		view_service (pkg->src_port, modo);		
+		printf("sourceport=%u ", ntohs(pkg->src_port));
+		printf("destport=%u", ntohs(pkg->dest_port));
+		printf("\n");
+	}
     return 0;
 }
 
 void
-view_service( SWORD port)
+view_service( SWORD port, int modo)
 {
-    struct servent *serv = getservbyport( port ,"tcp"); 
+    struct servent *serv = getservbyport(port ,"tcp");
     
-    if((serv != NULL && ntohs( port )<=1024))
-	    printf(" (%s)\n", serv->s_name);
-	else
-	    printf("\n");
+    if (modo == VERB_EXT)
+   	{
+		if((serv != NULL && ntohs( port )<=1024))
+			printf(" (%s)", serv->s_name);
+    	printf("\n");
+    }
+    else if (modo == VERB)
+    {
+    	if(serv != NULL)
+			printf("(%s) ", serv->s_name);
+    }
 }
 
 void

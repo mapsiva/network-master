@@ -13,7 +13,7 @@ typedef struct
 }UDP_HEADER;		
 	
 CHAR_T*
-trace_udp( UDP_HEADER *);
+trace_udp( UDP_HEADER *, int);
 
 void
 view_data_udp ( UDP_HEADER *);

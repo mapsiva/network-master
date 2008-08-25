@@ -1,23 +1,34 @@
 #ifndef UDP_C_
 #define UDP_C_
 #include "Udp.h"
+#include "Tcp.h"
 #include "Types.h"
 #include <netdb.h>
 #include <stdio.h>
 
 CHAR_T*
-trace_udp( UDP_HEADER * pkg )
+trace_udp( UDP_HEADER * pkg, int modo)
 {
-    printf("UDP: ----- UDP Header -----\n");
-    printf("UDP:\n");
-    printf("UDP: Source Port = %u\n", ntohs(pkg->src_port));
-    printf("UDP: Destination Port = %u\n", ntohs(pkg->dest_port));
-    printf("UDP: Length = %u\n", ntohs(pkg->length));
-    printf("UDP: Cheksum = %u\n", ntohs(pkg->checksum));
-    
-    view_data_udp ( pkg );
-    
-    printf ("UDP:\n\n");
+	if (modo == VERB_EXT)
+	{
+		printf("UDP: ----- UDP Header -----\n");
+		printf("UDP:\n");
+		printf("UDP: Source Port = %u\n", ntohs(pkg->src_port));
+		printf("UDP: Destination Port = %u\n", ntohs(pkg->dest_port));
+		printf("UDP: Length = %u\n", ntohs(pkg->length));
+		printf("UDP: Cheksum = %u\n", ntohs(pkg->checksum));
+		
+		view_data_udp ( pkg );
+		
+		printf ("UDP:\n");
+    }
+    else if(modo == VERB)
+	{
+		view_service (pkg->src_port, modo);
+		printf("sourceport=%u ", ntohs(pkg->src_port));
+		printf("destport=%u", ntohs(pkg->dest_port));
+		printf("\n");
+	}
     return 0;
 }
 

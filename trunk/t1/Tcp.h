@@ -27,11 +27,11 @@ enum Flags
 };
 
 void
-view_service( SWORD );
+view_service( SWORD , int);
 
 	
 CHAR_T*
-trace_tcp( TCP_HEADER *);
+trace_tcp( TCP_HEADER *, int);
 
 void
 view_flags ( TCP_HEADER * );

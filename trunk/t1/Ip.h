@@ -14,18 +14,21 @@ typedef struct
     SWORD checksum;
     WORD source_address;
     WORD destination_address;
-}IP_HEADER;		
+}IP_HEADER;
 
 struct in_addr addr;
 struct hostent *resolved;
 
 CHAR_T*
-trace_ip( IP_HEADER * );
+trace_ip( IP_HEADER *, int, int);
 
 CHAR_T*
 resolve_address( WORD ) ;
 
 CHAR_T*
 format_address( WORD ) ;
+
+int 
+ip_is_broadcast(WORD *) ;
 
 #endif 
