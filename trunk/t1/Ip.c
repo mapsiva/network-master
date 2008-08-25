@@ -4,6 +4,7 @@
 #include "Ip.h"	
 #include "Util.h"	
 #include <stdio.h>
+#include <stdlib.h>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -12,6 +13,8 @@
 CHAR_T*
 trace_ip( IP_HEADER * pkg)
 {
+    CHAR_T *ip, *name;
+    
     printf("IP: ----- IP Header -----\n");
     printf("IP:\n");
     printf("IP: Version = %u, header length = %u bytes\n", IP_VER(pkg), IP_IHL(pkg));
@@ -33,11 +36,18 @@ trace_ip( IP_HEADER * pkg)
     printf("IP: Header ckecksum =  %X \n", ntohs(pkg->checksum));
         
 
+    ip = format_address(pkg->source_address);
+    printf("IP: Source address =  %s", ip );
+    name = resolve_address(pkg->source_address);
+    printf("%s", name);
+    free (ip);free(name);
     
-    printf("IP: Source address =  %s",  format_address(pkg->source_address));
-    resolve_address(pkg->source_address);
-    printf("IP: Destination address =  %s",  format_address(pkg->destination_address));
-    resolve_address(pkg->destination_address);
+    ip = format_address(pkg->source_address);
+    printf("IP: Destination address =  %s", ip);
+    name = resolve_address(pkg->destination_address);
+    printf("%s", name);
+    
+    free (ip);free(name);
     return 0;
 }
 
@@ -46,24 +56,29 @@ trace_ip( IP_HEADER * pkg)
 CHAR_T*
 resolve_address(WORD  address) 
 {   
+     CHAR_T * name;
+     name = (CHAR_T*) malloc (100);
+    
      resolved = gethostbyaddr((unsigned char*)&address,  sizeof (address), AF_INET);
      
      if(resolved)
-        printf(", %s\n", resolved->h_name);
+        sprintf((char *)name, ", %s\n", resolved->h_name);
      else   
-        printf("\n");
+        sprintf((char *)name, "\n");
         
-     return 0;
+     return name;
 }
 
 CHAR_T*
 format_address(WORD  address) 
 {
-    CHAR_T * IP = (CHAR_T *) &address,  name[100];
-     
-    sprintf(name, "%u.%u.%u.%u", *IP, *IP+2, *IP+2, *IP+3);
+    CHAR_T * IP = (CHAR_T *) &address,  *ip;
     
-    return name;
+    ip = (CHAR_T*) malloc (16);
+    
+    sprintf((char *)ip, "%u.%u.%u.%u", *IP, *IP+2, *IP+2, *IP+3);
+    
+    return ip;
 }
 
 #endif 
