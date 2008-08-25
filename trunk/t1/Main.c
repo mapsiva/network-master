@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 		pkg_ethernet = (ETHERNET_HEADER *)pkt_buf;
 		trace_ethernet (pkg_ethernet, qtd_pkt,  &frame_header);
 		/*Verifica o tipo do pacote ethernet*/
-		switch (ntohs(pkg_ethernet->type))
+		switch (ntohs (pkg_ethernet->type))
 		{
 		    case IP:
 				count_pkt_ip++;
@@ -116,6 +116,7 @@ int main(int argc, char *argv[])
 	}
 	
 	/*Impressão das informações no caso do funcionamento básico (Só deve imprimir estas informações se o modo for igual a BASIC)*/	
+
 	if (modo == BASIC)
 	{
 		printf("\n");
