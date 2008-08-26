@@ -7,6 +7,7 @@
 #include "Udp.h"
 #include "Icmp.h"
 #include "Arp.h"
+#include "Analyzer.h"
 
 #define BUF_SIZE	2000
 char byte_order; /* 0=little, 1=big endian*/
@@ -81,7 +82,14 @@ int main(int argc, char *argv[])
 	check_parameters(argc, argv, &translation, &modo, &npkgs_max);
     
 	inf = fopen(argv[1], "rb");
-	
+	for (int i = 2; i < argc; i++)
+	{
+	    Token *token = Advance ((CHAR_T *)argv[i]);
+	    
+	    
+	    free (token);
+	}
+	return 0;
 	if (!inf) 
 		error_exit("Could not open file: %s\n", argv[1]);	
 
