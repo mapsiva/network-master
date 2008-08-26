@@ -10,7 +10,7 @@ typedef unsigned long long DWORD;
 typedef struct
 {
     int code;
-    CHAR_T * value;
+    void * value;
 }Token;
 
 

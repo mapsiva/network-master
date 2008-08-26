@@ -2,7 +2,7 @@
 #define ANALYZER_H_
 #include "Types.h"
 
-CHAR_T * _current;
+char * _current;
 
 enum _tokens
 {
