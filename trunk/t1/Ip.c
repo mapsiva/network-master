@@ -131,19 +131,19 @@ format_address(WORD  address)
 void
 ip_view_flags (IP_HEADER * pkg)
 {  
-	printf("IP: Flags =  0x%X \n", pkg->fragment & 0x0040);
-	printf("IP: \t.%d.. .... = %s fragment\n", (pkg->fragment & 0x0040) >> 6, ((pkg->fragment & 0x0040) >> 6)?"don't":"may");
-	printf("IP: \t..%d. .... = %s fragment\n", (pkg->fragment & 0x0020) >> 5, ((pkg->fragment & 0x0020) >> 5)?"more":"last");
+	printf("IP: Flags =  0x%X \n", pkg->fragment & BIN64);
+	printf("IP: \t.%d.. .... = %s fragment\n", (pkg->fragment & BIN64) >> 6, ((pkg->fragment & BIN64) >> 6)?"don't":"may");
+	printf("IP: \t..%d. .... = %s fragment\n", (pkg->fragment & BIN32) >> 5, ((pkg->fragment & BIN32) >> 5)?"more":"last");
 }
 
 void
 ip_view_service (IP_HEADER * pkg)
 { 
 	printf("IP: Type of service = 0x%X \n", pkg->type_service);
-	printf("IP: \t%u%u%u. .... = %s\n", (pkg->type_service & 0x0080) >> 7, (pkg->type_service & 0x0040) >> 6, (pkg->type_service & 0x0020) >> 5, get_precedence_name(pkg->type_service));
-	printf("IP: \t...%d .... = %s delay\n", (pkg->type_service & 0x0010) >> 4, ((pkg->type_service & 0x0010) >> 4)?"low":"normal");
-	printf("IP: \t.... %d... = %s throughput\n", (pkg->type_service & 0x0008) >> 3, ((pkg->type_service & 0x0008) >> 3)?"high":"normal");
-	printf("IP: \t.... .%d.. = %s relibility\n", (pkg->type_service & 0x0004) >> 2, ((pkg->type_service & 0x0004) >> 2)?"high":"normal");
+	printf("IP: \t%u%u%u. .... = %s\n", (pkg->type_service & BIN128) >> 7, (pkg->type_service & BIN64) >> 6, (pkg->type_service & BIN32) >> 5, get_precedence_name(pkg->type_service));
+	printf("IP: \t...%d .... = %s delay\n", (pkg->type_service & BIN16) >> 4, ((pkg->type_service & BIN16) >> 4)?"low":"normal");
+	printf("IP: \t.... %d... = %s throughput\n", (pkg->type_service & BIN8) >> 3, ((pkg->type_service & BIN8) >> 3)?"high":"normal");
+	printf("IP: \t.... .%d.. = %s relibility\n", (pkg->type_service & BIN4) >> 2, ((pkg->type_service & BIN4) >> 2)?"high":"normal");
 }
 
 int 

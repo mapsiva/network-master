@@ -63,12 +63,14 @@ enum Types
 
 enum Flags
 {
-    URG = 0x0020,
-    ACK = 0x0010, 
-    PSH = 0x0008, 
-    RST = 0x0004, 
-    SYN = 0x0002, 
-    FIN = 0x0001
+	BIN128 = 0x0080,
+	BIN64 = 0x0040,
+    BIN32 = 0x0020,
+    BIN16 = 0x0010, 
+    BIN8 = 0x0008, 
+    BIN4 = 0x0004, 
+    BIN2 = 0x0002, 
+    BIN1 = 0x0001
 };
 
 /* ip PRECENDENCE
