@@ -7,9 +7,7 @@
 #include <wctype.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include <string.h>
 
 
 Token *
@@ -50,15 +48,28 @@ Advance( CHAR_T* argv)
         printf ("operador\n");
         return token;
     }
+    
+    printf ("Unknow Format\n");
     return 0;
 }
 
 int
 is_ip( CHAR_T * ip)
 {
-    struct in_addr *addr;
- 
-    return inet_aton((const char *)ip,  &addr);
+    char * b, copy[16];
+    
+    strcpy ( (char *)copy, (char *)ip);
+    
+    int count = 0 ;
+    b = strtok ((char *)copy,".");
+    while (b)
+    {
+        count ++;
+        if((int)atoi((const char *)b) < 0 || atoi((const char *)b) > 255)
+            return 0;
+        b = strtok (NULL, ".");
+    }
+    return (count < 4)?0:1;
 }
 
 
@@ -79,7 +90,7 @@ is_hexa ( CHAR_T * hex )
 int
 is_decimal ( CHAR_T * dec )
 {
-     if (strtoul((const char *)dec, NULL, 10))
+     if (strtoul((const char *)dec, NULL, 10) && !strpbrk(".",(char *)dec))
         return 1;
     return 0;
 }
