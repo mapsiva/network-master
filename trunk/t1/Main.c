@@ -48,16 +48,12 @@ int check_parameters(int argc, char *argv[], int *translation, int *modo, unsign
 			(*modo) = VERB;
 			break;
 		}
-	}		
-
-	for (i=1; i<argc; i++)
-	{
-		if (strcmp(argv[i], "-V") == 0)
+		else if (strcmp(argv[i], "-V") == 0)
 		{
 			(*modo) = VERB_EXT;
 			break;
 		}
-	}
+	}		
 	return 0;
 }
 
@@ -85,7 +81,7 @@ int main(int argc, char *argv[])
 	check_parameters(argc, argv, &translation, &modo, &npkgs_max);
     
 	inf = fopen(argv[1], "rb");
-	
+	printf ("%d >>>>>>>>>>>>>>>", sizeof(DWORD));
 	if (!inf) 
 		error_exit("Could not open file: %s\n", argv[1]);	
 

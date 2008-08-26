@@ -5,6 +5,7 @@ typedef unsigned char CHAR_T;
 typedef unsigned char BYTE;
 typedef unsigned short SWORD;
 typedef unsigned long WORD;
+typedef unsigned long long DWORD;
 
 #define DATA 64;
 

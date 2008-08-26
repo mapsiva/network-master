@@ -1,5 +1,5 @@
 CC     = gcc
-CFLAGS = -ansi -pedantic -Wall -g
+CFLAGS =  -std=c99 -pedantic -Wall -g
 
 XNOOP  = Main
 PKG    = PackageHeader
