@@ -11,9 +11,11 @@ UTIL   = Util
 UDP     = Udp
 ICMP    = Icmp
 ARP     = Arp
+STACK   = Stack
+AN   = Analyzer
 
-HEADERS =  $(PKG).h $(TYPES).h $(ETH).h $(TCP).h $(IP).h $(UTIL).h $(UDP).h $(ICMP).h $(ARP).h
-OBJECTS = $(PKG).o $(TYPES).o $(ETH).o $(TCP).o $(IP).o $(UTIL).o $(UDP).o $(ICMP).o $(ARP).o $(XNOOP).o
+HEADERS =  $(PKG).h $(TYPES).h $(ETH).h $(TCP).h $(IP).h $(UTIL).h $(UDP).h $(ICMP).h $(ARP).h $(STACK).h $(AN).h
+OBJECTS = $(PKG).o $(TYPES).o $(ETH).o $(TCP).o $(IP).o $(UTIL).o $(UDP).o $(ICMP).o $(ARP).o $(STACK).o $(AN).o $(XNOOP).o
 
 # ****************************************************
 
@@ -47,6 +49,12 @@ $(ICMP).o: $(ICMP).c $(ICMP).h
 $(ARP).o: $(ARP).c $(ARP).h
 	$(CC) $(CFLAGS) -o $@ -c $<
 	
+$(STACK).o: $(STACK).c $(STACK).h
+	$(CC) $(CFLAGS) -o $@ -c $<	
+	
+$(AN).o: $(AN).c $(AN).h
+	$(CC) $(CFLAGS) -o $@ -c $<
+
 $(XNOOP).o: $(XNOOP).c $(HEADERS)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
