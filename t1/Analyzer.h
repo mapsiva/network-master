@@ -35,6 +35,17 @@ enum _tokens
 
 
 Token *
-token();
+token( CHAR_T* argv);
 
+int
+is_ip( CHAR_T * );
+
+int
+is_hexa ( CHAR_T * );
+
+DWORD *
+to_ip_byte( CHAR_T * );
+
+int
+is_key_word( CHAR_T * );
 #endif 

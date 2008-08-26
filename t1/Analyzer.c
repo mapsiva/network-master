@@ -7,45 +7,29 @@
 #include <stdlib.h>
 
 Token *
-token()
+token( CHAR_T* argv)
 {
-    Token token;
-    DWORD ip, hexa;
-    if(!_current)
-        return 0;
-
-_decimal:
-    
-    if(iswdigit(*_current))
+    Token * token = (Token *)malloc (sizeof(Token));
+    if(is_ip(argv))
     {
-        int num;
-        
-        while (iswdigit(*_current))
-        {
-            num *= 10;
-            num += (int)atoi (*((char *)_current++));
-        }
-        
-        if(iswspace(*_current))
-        {
-            token.value = (int *)&num;
-            token.code = _NUMBER;
-            
-            return token;
-        }
-        
-        if((*_current)== '.')
-        {
-            
-            goto _ip_format;
-        }
+        token->value = (DWORD *) to_ip_byte (argv);
+        token->code = _IP;
+        return token;
     }
-
-_ip_format:
-
-_hexa:
-
+    
+    
     return 0;
 }
 
+int
+is_ip( CHAR_T * ip){return 0;}
+
+int
+is_hexa ( CHAR_T * hex ){return 0;}
+
+DWORD *
+to_ip_byte( CHAR_T * ip){return 0;}
+
+int
+is_key_word( CHAR_T * keyword){return 0;}
 #endif 
