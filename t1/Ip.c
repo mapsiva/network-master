@@ -3,7 +3,7 @@
 #include "Types.h"
 #include "Ethernet.h"
 #include "Ip.h"	
-#include "Util.h"	
+#include "Util.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <netdb.h>
@@ -21,12 +21,8 @@ trace_ip( IP_HEADER * pkg, int translation, int modo)
 		printf("IP: ----- IP Header -----\n");
 		printf("IP:\n");
 		printf("IP: Version = %u, header length = %u bytes\n", IP_VER(pkg), IP_IHL(pkg));
-		printf("IP: Type of service = 0x%X \n", pkg->type_service);
-
-		printf("IP: \t.... ....  \n");
-		printf("IP: \t.... ....  \n");
-		printf("IP: \t.... ....  \n");
-		printf("IP: \t.... ....  \n");
+		
+		ip_view_service(pkg);
 
 		printf("IP: Total length =  %u bytes\n", ntohs(pkg->total_length));
 		printf("IP: Identification =  %u \n", ntohs(pkg->identification));
@@ -133,17 +129,70 @@ format_address(WORD  address)
 }
 
 void
-ip_view_flags ( IP_HEADER * pkg)
+ip_view_flags (IP_HEADER * pkg)
 {  
-	printf("IP: Flags =  0x%02x \n", pkg->fragment & 0x0040);
+	printf("IP: Flags =  0x%X \n", pkg->fragment & 0x0040);
 	printf("IP: \t.%d.. .... = %s fragment\n", (pkg->fragment & 0x0040) >> 6, ((pkg->fragment & 0x0040) >> 6)?"don't":"may");
 	printf("IP: \t..%d. .... = %s fragment\n", (pkg->fragment & 0x0020) >> 5, ((pkg->fragment & 0x0020) >> 5)?"more":"last");
 }
 
+void
+ip_view_service (IP_HEADER * pkg)
+{ 
+	printf("IP: Type of service = 0x%X \n", pkg->type_service);
+	printf("IP: \t%u%u%u. .... = %s\n", (pkg->type_service & 0x0080) >> 7, (pkg->type_service & 0x0040) >> 6, (pkg->type_service & 0x0020) >> 5, get_precedence_name(pkg->type_service));
+	printf("IP: \t...%d .... = %s delay\n", (pkg->type_service & 0x0010) >> 4, ((pkg->type_service & 0x0010) >> 4)?"low":"normal");
+	printf("IP: \t.... %d... = %s throughput\n", (pkg->type_service & 0x0008) >> 3, ((pkg->type_service & 0x0008) >> 3)?"high":"normal");
+	printf("IP: \t.... .%d.. = %s relibility\n", (pkg->type_service & 0x0004) >> 2, ((pkg->type_service & 0x0004) >> 2)?"high":"normal");
+}
+
 int 
-ip_is_broadcast(WORD *ip)
+ip_is_broadcast (WORD *ip)
 {
     return (*ip == 255) && (*(ip+1) == 255) && (*(ip+2) == 255) && (*(ip+3) == 255) ;
+}
+
+char * get_precedence_name(SWORD service)
+{
+	char *text;
+	int aux;
+	
+	aux = service >> 5;
+		
+	switch(aux)
+	{
+		case 0:
+			text="Routine";
+		break;
+
+		case 1:
+			text="Priority";
+		break;
+
+		case 2:
+			text="Immediate";
+		break;
+
+		case 3:
+			text="Flash";
+		break;
+
+		case 4:
+			text="Flash Override";
+		break;
+
+		case 5:
+			text="CRITIC/ECP";
+		break;
+
+		case 6:
+			text="Internetwork Control";
+		break;
+
+		case 7:
+			text="Network Control";
+	}	
+	return text;
 }
 
 #endif 

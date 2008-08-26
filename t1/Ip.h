@@ -51,7 +51,12 @@ CHAR_T*
 format_address( WORD ) ;
 
 void
-ip_view_flags ( IP_HEADER *);
+ip_view_service (IP_HEADER * );
+
+char * get_precedence_name( SWORD );
+
+void
+ip_view_flags ( IP_HEADER * );
 
 int 
 ip_is_broadcast(WORD *) ;

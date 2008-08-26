@@ -78,6 +78,7 @@ view_flags ( TCP_HEADER * pkg)
     printf ("TCP: \t .... ..%d. %s\n", (pkg->offset & SYN) >> 1, ((pkg->offset & SYN) >> 1)?"Syn":"No Syn");
     printf ("TCP: \t .... ...%d %s\n", (pkg->offset & FIN), ((pkg->offset & FIN))?"Fin":"No Fin");
 }
+
 void
 view_data ( TCP_HEADER * pkg)
 {

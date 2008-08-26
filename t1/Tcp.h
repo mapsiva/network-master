@@ -16,16 +16,6 @@ typedef struct
 	BYTE fisrt_data;
 }TCP_HEADER;		
 
-enum Flags
-{
-    URG = 0x0020,
-    ACK = 0x0010, 
-    PSH = 0x0008, 
-    RST = 0x0004, 
-    SYN = 0x0002, 
-    FIN = 0x0001
-};
-
 void
 view_service( SWORD , int);
 
