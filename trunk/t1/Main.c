@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 	check_parameters(argc, argv, &translation, &modo, &npkgs_max);
     
 	inf = fopen(argv[1], "rb");
-	printf ("%d >>>>>>>>>>>>>>>", sizeof(DWORD));
+	
 	if (!inf) 
 		error_exit("Could not open file: %s\n", argv[1]);	
 
