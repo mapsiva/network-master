@@ -71,12 +71,12 @@ void
 view_flags ( TCP_HEADER * pkg)
 {  
     printf ("TCP: Flags = 0x%02X\n", pkg->offset & 0x003F);
-    printf ("TCP: \t ..%d. .... %s\n", (pkg->offset & URG) >> 5, ((pkg->offset & URG) >> 5)?"Urgent Pointer":"No Urgent Pointer");
-    printf ("TCP: \t ...%d .... %s\n", (pkg->offset & ACK) >> 4, ((pkg->offset & ACK) >> 4)?"Acknowledgement":"No Acknowledgement");
-    printf ("TCP: \t .... %d... %s\n", (pkg->offset & PSH) >> 3, ((pkg->offset & PSH) >> 3)?"Push":"No Push");
-    printf ("TCP: \t .... .%d.. %s\n", (pkg->offset & RST) >> 2, ((pkg->offset & RST) >> 2)?"Reset":"No Reset");
-    printf ("TCP: \t .... ..%d. %s\n", (pkg->offset & SYN) >> 1, ((pkg->offset & SYN) >> 1)?"Syn":"No Syn");
-    printf ("TCP: \t .... ...%d %s\n", (pkg->offset & FIN), ((pkg->offset & FIN))?"Fin":"No Fin");
+    printf ("TCP: \t ..%d. .... %s\n", (pkg->offset & BIN32) >> 5, ((pkg->offset & BIN32) >> 5)?"Urgent Pointer":"No Urgent Pointer");
+    printf ("TCP: \t ...%d .... %s\n", (pkg->offset & BIN16) >> 4, ((pkg->offset & BIN16) >> 4)?"Acknowledgement":"No Acknowledgement");
+    printf ("TCP: \t .... %d... %s\n", (pkg->offset & BIN8) >> 3, ((pkg->offset & BIN8) >> 3)?"Push":"No Push");
+    printf ("TCP: \t .... .%d.. %s\n", (pkg->offset & BIN4) >> 2, ((pkg->offset & BIN4) >> 2)?"Reset":"No Reset");
+    printf ("TCP: \t .... ..%d. %s\n", (pkg->offset & BIN2) >> 1, ((pkg->offset & BIN2) >> 1)?"Syn":"No Syn");
+    printf ("TCP: \t .... ...%d %s\n", (pkg->offset & BIN1), ((pkg->offset & BIN1))?"Fin":"No Fin");
 }
 
 void
