@@ -39,7 +39,7 @@ enum
 enum
 {
 	ARP_REQUEST = 1,
-	ARP_REPLY	 = 2
+	ARP_REPLY	= 2
 };
 
 enum Types
@@ -61,6 +61,15 @@ enum Types
     ADDRESS_MASK_REPLY      = 18
 };
 
+enum Flags
+{
+    URG = 0x0020,
+    ACK = 0x0010, 
+    PSH = 0x0008, 
+    RST = 0x0004, 
+    SYN = 0x0002, 
+    FIN = 0x0001
+};
 
 /* ip PRECENDENCE
 111 - Network Control
