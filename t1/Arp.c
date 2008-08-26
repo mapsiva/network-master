@@ -19,7 +19,7 @@ trace_arp( ARP_HEADER * pkg, int translation, int modo)
 		printf("ARP: Protocol Type = %04X %s\n", ntohs(pkg->protocol_type), (ntohs(pkg->protocol_type) == IP)?"(IP)":" ");
 		printf("ARP: Length of hardware address = %u bytes\n", pkg->hardware_len);
 		printf("ARP: Length of protocol address = %u bytes\n", pkg->protocol_len);
-		printf("ARP: Opcode %u (%s)\n", ntohs(pkg->operation), (ntohs(pkg->operation) == 1)?"Echo Request":"Echo Reply");
+		printf("ARP: Opcode %u (%s)\n", ntohs(pkg->operation), (ntohs(pkg->operation) == ARP_REQUEST)?"Echo Request":"Echo Reply");
 
 		printf ("ARP: Sender’s hardware address \t= %.02X:%02X:%02X:%02X:%02X:%.02X\n", pkg->sender_hardware_addr[0], pkg->sender_hardware_addr[1], pkg->sender_hardware_addr[2], pkg->sender_hardware_addr[3], pkg->sender_hardware_addr[4], pkg->sender_hardware_addr[5]);	
 
@@ -48,6 +48,7 @@ trace_arp( ARP_HEADER * pkg, int translation, int modo)
 	}
 	else if (modo == VERB)
 	{
+		/*Resolving IP or Name of Source*/
 		if (translation && (name = resolve_address(pkg->sender_ip_addr)) != NULL )
 		{
 			printf("%s -> ", name);
@@ -59,8 +60,9 @@ trace_arp( ARP_HEADER * pkg, int translation, int modo)
 			printf("%s -> ", ip );
 			free (ip);
 		}
-				
-		if (is_broadcast(pkg->target_hardware_addr))
+		
+		/*Resolving IP or Name of Target*/
+		if (ip_is_broadcast(&pkg->target_ip_addr))
 		{
 			if (translation)
 				printf("(brodcast) ");
@@ -81,9 +83,34 @@ trace_arp( ARP_HEADER * pkg, int translation, int modo)
 			ip = format_address(pkg->target_ip_addr);
 			printf("%s ", ip );
 			free (ip);
-		}
+		}		
+		printf ("ARP ");
 		
-		printf ("ARP\n");
+		if (ntohs(pkg->operation) == ARP_REQUEST)
+		{
+			printf("Who-has ");
+			
+			ip = format_address(pkg->target_ip_addr);
+			printf("%s ", ip );
+			free (ip);
+			
+			printf("tell ");
+			
+			ip = format_address(pkg->sender_ip_addr);
+			printf("%s ", ip );
+			free (ip);
+		}
+		else	/*pkg->operation == ECHO_REPLY*/
+		{
+			printf("Reply ");
+			
+			ip = format_address(pkg->sender_ip_addr);
+			printf("%s ", ip );
+			free (ip);
+			
+			printf("is-at %02X:%02X:%02X:%02X:%02X:%02X", pkg->sender_hardware_addr[0], pkg->sender_hardware_addr[1], pkg->sender_hardware_addr[2], pkg->sender_hardware_addr[3], pkg->sender_hardware_addr[4], pkg->sender_hardware_addr[5]);			
+		}
+		printf("\n");
 	}
     return 0;
 }

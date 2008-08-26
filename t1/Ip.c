@@ -23,20 +23,20 @@ trace_ip( IP_HEADER * pkg, int translation, int modo)
 		printf("IP: Version = %u, header length = %u bytes\n", IP_VER(pkg), IP_IHL(pkg));
 		printf("IP: Type of service = 0x%X \n", pkg->type_service);
 
-		printf("IP: .... ....  \n");
-		printf("IP: .... ....  \n");
-		printf("IP: .... ....  \n");
-		printf("IP: .... ....  \n");
+		printf("IP: \t.... ....  \n");
+		printf("IP: \t.... ....  \n");
+		printf("IP: \t.... ....  \n");
+		printf("IP: \t.... ....  \n");
 
 		printf("IP: Total length =  %u bytes\n", ntohs(pkg->total_length));
 		printf("IP: Identification =  %u \n", ntohs(pkg->identification));
-		printf("IP: Flags =  0x%02X \n", IP_FLAGS(pkg));
-		printf("IP: \t.%d.. .... \n", (ntohs(pkg->fragment) & 0x4FFF) >> 14);
-		printf("IP: \t..%d. .... \n", (ntohs(pkg->fragment) & 0x2FFF) >> 13);
+		
+		ip_view_flags(pkg);
+		
 		printf("IP: Fragment offset =  %u bytes \n", IP_OFFSET(pkg));
 		printf("IP: Time to alive =  %u seconds/hops \n", (pkg->time_alive));
 		printf("IP: Protocol =  %u (%s)\n", (pkg->protocol), ((pkg->protocol==ICMP)?"ICMP":(pkg->protocol==TCP)?"TCP":"UDP"));
-		printf("IP: Header ckecksum =  %X \n", ntohs(pkg->checksum));        
+		printf("IP: Header ckecksum =  %X \n", ntohs(pkg->checksum));
 
 		ip = format_address(pkg->source_address);
 		printf("IP: Source address =  %s", ip );
@@ -130,6 +130,14 @@ format_address(WORD  address)
     sprintf((char *)ip, "%u.%u.%u.%u", *IP, *IP+1, *IP+2, *IP+3);
     
     return ip;
+}
+
+void
+ip_view_flags ( IP_HEADER * pkg)
+{  
+	printf("IP: Flags =  0x%02x \n", pkg->fragment & 0x0040);
+	printf("IP: \t.%d.. .... = %s fragment\n", (pkg->fragment & 0x0040) >> 6, ((pkg->fragment & 0x0040) >> 6)?"don't":"may");
+	printf("IP: \t..%d. .... = %s fragment\n", (pkg->fragment & 0x0020) >> 5, ((pkg->fragment & 0x0020) >> 5)?"more":"last");
 }
 
 int 
