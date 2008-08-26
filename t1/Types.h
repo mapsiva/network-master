@@ -7,6 +7,13 @@ typedef unsigned short SWORD;
 typedef unsigned long WORD;
 typedef unsigned long long DWORD;
 
+typedef struct
+{
+    int code;
+    CHAR_T * value;
+}Token;
+
+
 #define DATA 64;
 
 enum
