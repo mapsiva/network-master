@@ -84,9 +84,12 @@ int main(int argc, char *argv[])
 	inf = fopen(argv[1], "rb");
 	for (int i = 2; i < argc; i++)
 	{
-	    Token *token = Advance ((CHAR_T *)argv[i]);
+	   
 	    
+	    printf("Token => %s = ", argv[i]);
 	    
+	     Token *token = Advance ((CHAR_T *)argv[i]);
+	     
 	    free (token);
 	}
 	return 0;
