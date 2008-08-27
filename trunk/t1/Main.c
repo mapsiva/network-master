@@ -10,7 +10,6 @@
 #include "Analyzer.h"
 #include "Stack.h"
 #include <strings.h>
-#include <ctype.h>
 
 #define BUF_SIZE	2000
 char byte_order; /* 0=little, 1=big endian*/
