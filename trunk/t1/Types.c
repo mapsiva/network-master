@@ -20,10 +20,6 @@ SearchKeyword(tKeywordTableEntry* k, const char * name)
 	return 0;
 }
 
-DECLARE_KEYWORD_TABLE();
 
-DEFINE_KEYWORD_TABLE()
-	KEYWORD( "int"   , 0, 0),
-END_KEYWORD_TABLE;
 
 #endif 
