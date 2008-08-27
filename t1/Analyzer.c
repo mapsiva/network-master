@@ -16,21 +16,30 @@ Advance( CHAR_T* argv)
 {
     Token * token = (Token *)malloc (sizeof(Token));
     int aux;
+    
+   
     if(is_ip(argv))
     {
         token->value = (DWORD *) to_ip_byte (argv);
-        token->code = _IP;
+        token->code = _ADDRESS_IP;
         DWORD *t = to_ip_byte (argv);
-         printf ("IP %u\n", (int)(*t));
-         
+        printf ("IP\n");
         return token;
     }
-    
+     
     if(is_hexa(argv))
     {
         token->value = (DWORD *) to_mac_byte (argv);
         token->code = _HEXA;
         printf ("hexa\n");
+        return token;
+    }
+     
+    if(is_mac_address(argv))
+    {
+        token->value = (DWORD *) to_mac_byte (argv);
+        token->code = _MAC;
+        printf ("MAC\n");
         return token;
     }
     
@@ -76,6 +85,8 @@ Advance( CHAR_T* argv)
 int
 is_ip( CHAR_T * ip)
 {
+    if(strpbrk(":",(char *)ip))
+       return 0; 
     char * b, copy[16];
     
     strcpy ( (char *)copy, (char *)ip);
@@ -133,9 +144,29 @@ is_hexa ( CHAR_T * hex )
 int
 is_decimal ( CHAR_T * dec )
 {
-     if (strtoul((const char *)dec, NULL, 10) && !strpbrk(".",(char *)dec))
+     if (strtoul((const char *)dec, NULL, 10) && !strpbrk(".",(char *)dec) && !strpbrk(":",(char *)dec))
         return 1;
     return 0;
+}
+
+int 
+is_mac_address( CHAR_T * mac)
+{
+    char * b, copy[50];
+    
+    strcpy ( (char *)copy, (char *)mac);
+    
+    int count = 0 ;
+    b = strtok ((char *)copy,":");
+    while (b)
+    {
+        count ++;
+        if(!strtoul((const char *)b, NULL, 16))
+            return 0;
+       
+        b = strtok (NULL, ":");
+    }
+    return (count < 6)?0:1;
 }
 
 int
