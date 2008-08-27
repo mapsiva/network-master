@@ -26,45 +26,37 @@ int check_parameters(int argc, char *argv[], int *translation, int *modo, unsign
 	if (argc < 2) 
 		error_exit("Correct sintaxe is \"xnoop <filename> [<options>] [<filter>]\"\n");
 	
-	for (i=2; i<argc; i++)
+	i = 2;
+	while(i<argc)
 	{
 		if (!strcasecmp(argv[i], "-c"))
 		{
 			if (i >= *position)
 				(*position) = i+2;
 			(*npkgs) = atoi(argv[i+1]);
-			break;
 		}
-	}
-
-	for (i=2; i<argc; i++)
-	{
-		if (!strcasecmp(argv[i], "-n"))
+		else if (!strcasecmp(argv[i], "-n"))
 		{
 			if (i >= *position)
 				(*position) = i+1;
 			(*translation) = 0;
-			break;
 		}
-	}
-
-	for (i=2; i<argc; i++)
-	{
-		if (!strcmp(argv[i], "-v"))
+		else if (!strcmp(argv[i], "-v"))
 		{
 			if (i >= *position)
 				(*position) = i+1;
 			(*modo) = VERB;
-			break;
 		}
 		else if (!strcmp(argv[i], "-V"))
 		{
 			if (i >= *position)			
 				(*position) = i+1;
 			(*modo) = VERB_EXT;
-			break;
+			
 		}
-	}		
+		i++;
+	}	
+	
 	return 0;
 }
 
@@ -74,21 +66,23 @@ int main(int argc, char *argv[])
 	ETHERNET_HEADER * pkg_ethernet;
     IP_HEADER * pkg_ip;      
 	TCP_HEADER * pkg_tcp;
-	Stack * stack; 
-	int qtd_pkt 		= 0;
 	
+	Stack * stack; 
+	
+	int qtd_pkt 		= 0;	
 	int count_pkt_arp 	= 0;
 	int count_pkt_ip 	= 0;
 	int count_pkt_icmp 	= 0;
 	int count_pkt_udp 	= 0;
 	int count_pkt_tcp 	= 0;
 	int count_pkt_broad = 0;
+	int count_pkt_me	= 0;
 
 	int modo = 1;							/*indica o modo de funcionamento (BASIC)*/
 	int translation = 1;					/*indica que será utilizado a traducao de nomes*/
 	int position = 2;						/*indica a posicao da lista de parâmetros que começam os filtros */
 	
-	unsigned long npkgs_max = 100000;			/*indica a quantidade máxima de pacotes a serem analisados*/	
+	unsigned long npkgs_max = 100000;		/*indica a quantidade máxima de pacotes a serem analisados*/	
 	unsigned long npkgs = 1;
 	
 	check_parameters(argc, argv, &translation, &modo, &npkgs_max, &position);
@@ -154,7 +148,7 @@ int main(int argc, char *argv[])
 		        
 		        pkg_ip = (IP_HEADER *)( pkg_ethernet + 1 ); 
 		        
-		        trace_ip (pkg_ip, translation, modo);
+		        trace_ip (pkg_ip, translation, modo, &count_pkt_me);
 		        
 		        switch (pkg_ip->protocol)
 		        {
