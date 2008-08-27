@@ -18,11 +18,10 @@ trace_ip( IP_HEADER * pkg, int translation, int modo, int *pkg_for_me)
 {
     CHAR_T *ip, *name;
     
-    /*
     struct ifreq ifr;
 	struct sockaddr_in saddr;
 	int fd;
-    */
+    
     if (modo == VERB_EXT)
     {
 		printf("IP: ----- IP Header -----\n");
@@ -102,8 +101,8 @@ trace_ip( IP_HEADER * pkg, int translation, int modo, int *pkg_for_me)
 		printf ("%s ", (pkg->protocol==1)?"ICMP":(pkg->protocol==6)?"TCP":"UDP");
 	}
 	else /* modo == BASIC */
-	{	;	
-		/*
+	{	
+		
 		fd = socket(PF_INET, SOCK_STREAM, 0);
 		strcpy (ifr.ifr_name, "eth0");
 		ioctl (fd, SIOCGIFADDR, &ifr);
@@ -111,7 +110,7 @@ trace_ip( IP_HEADER * pkg, int translation, int modo, int *pkg_for_me)
 		
 		if(saddr.sin_addr.s_addr == pkg->destination_address)
 			(*pkg_for_me)++;
-		*/
+
 	}
     return 0;
 }
