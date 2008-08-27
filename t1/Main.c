@@ -78,6 +78,7 @@ int main(int argc, char *argv[])
 	int count_pkt_broad = 0;
 	int count_pkt_me	= 0;
 
+	int i;
 	int modo = 1;							/*indica o modo de funcionamento (BASIC)*/
 	int translation = 1;					/*indica que será utilizado a traducao de nomes*/
 	int position = 2;						/*indica a posicao da lista de parâmetros que começam os filtros */
@@ -92,7 +93,7 @@ int main(int argc, char *argv[])
 	
 	stack = make_stack();
 	
-	for (int i = position; i < argc; i++)
+	for (i = position; i < argc; i++)
 	{   
 	      
 	    Token *token = Advance ((CHAR_T *)argv[i]);
@@ -112,7 +113,7 @@ int main(int argc, char *argv[])
 	free(stack);
 	/*######################################################*/
 	
-	return 0;
+	//return 0;
 	if (!inf) 
 		error_exit("Could not open file: %s\n", argv[1]);	
 
@@ -185,7 +186,7 @@ int main(int argc, char *argv[])
 		printf("ICMP: %d\n",count_pkt_icmp);
 		printf("UDP: %d\n",count_pkt_udp);
 		printf("TCP: %d\n",count_pkt_tcp);
-		/*printf("To this host: %d",count_pkt_me);*/
+		printf("To this host: %d\n",count_pkt_me);
 	}
    	
    	return 0;

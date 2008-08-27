@@ -1,18 +1,18 @@
 CC     = gcc
-CFLAGS =  -std=c99 -pedantic -Wall -g
+CFLAGS = -Wall -g
 
-XNOOP  = Main
-PKG    = PackageHeader
-TYPES    = Types
-ETH    = Ethernet
-TCP     = Tcp
-IP    = Ip
-UTIL   = Util
-UDP     = Udp
-ICMP    = Icmp
-ARP     = Arp
-STACK   = Stack
-AN   = Analyzer
+XNOOP  		= Main
+PKG    		= PackageHeader
+TYPES    	= Types
+ETH    		= Ethernet
+TCP     	= Tcp
+IP    		= Ip
+UTIL   		= Util
+UDP     	= Udp
+ICMP    	= Icmp
+ARP     	= Arp
+STACK   	= Stack
+AN   		= Analyzer
 
 HEADERS =  $(PKG).h $(TYPES).h $(ETH).h $(TCP).h $(IP).h $(UTIL).h $(UDP).h $(ICMP).h $(ARP).h $(STACK).h $(AN).h
 OBJECTS = $(PKG).o $(TYPES).o $(ETH).o $(TCP).o $(IP).o $(UTIL).o $(UDP).o $(ICMP).o $(ARP).o $(STACK).o $(AN).o $(XNOOP).o
