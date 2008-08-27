@@ -11,11 +11,14 @@ enum _tokens
     _HEXA,
     _ADDRESS_IP,
     _MAC,
+    _KEYWORD,
     _EQ,
     _AND,
     _OR,
     _NOT,
     _OPERATOR,
+    _BIN_OPERATOR,
+    _ETHERNET,
     _IP,
     _UDP,
     _TCP,
@@ -50,6 +53,9 @@ is_decimal ( CHAR_T *);
 int
 is_operator ( CHAR_T *);
 
+int
+is_binary_operator( CHAR_T *);
+
 DWORD *
 to_mac_byte ( CHAR_T * );
 
@@ -57,5 +63,5 @@ DWORD *
 to_ip_byte( CHAR_T * );
 
 int
-is_key_word( CHAR_T * );
+is_keyword( CHAR_T * );
 #endif 
