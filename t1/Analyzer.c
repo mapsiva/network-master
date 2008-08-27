@@ -2,6 +2,7 @@
 #define ANALYZER_C_
 #include "Types.h"
 #include "Analyzer.h"
+#include "Ip.h"
 
 #include <ctype.h>
 #include <wctype.h>
@@ -18,8 +19,8 @@ Advance( CHAR_T* argv)
     {
         token->value = (DWORD *) to_ip_byte (argv);
         token->code = _IP;
-        
-         printf ("IP %d\n", is_ip(argv));
+        DWORD *t = to_ip_byte (argv);
+         printf ("IP %u\n", (int)(*t));
          
         return token;
     }
@@ -36,7 +37,7 @@ Advance( CHAR_T* argv)
     {
         token->value = (WORD *) atoi ((const char *)argv);
         token->code = _NUMBER;
-        printf ("decimal\n");
+        printf ("decimal %d\n", _IP);
         return token;
     }
     
@@ -94,7 +95,30 @@ is_ip( CHAR_T * ip)
 DWORD *
 to_ip_byte( CHAR_T * ip)
 {
-    return 0;
+    char * b,  copy[16];
+    DWORD *_ip = (DWORD *) malloc(sizeof(DWORD));
+    
+    BYTE *j;
+    
+    (*_ip) &= 0xF;
+   
+    j = (BYTE *)_ip;
+    
+    strcpy ( (char *)copy, (char *)ip);
+  
+    b = strtok ((char *)copy,".");
+    while (b)
+    {
+        if((int)atoi((const char *)b) < 0 || atoi((const char *)b) > 255)
+            return 0;
+        
+        *j = atoi((char *)b);
+        
+        j++;
+        
+        b = strtok (NULL, ".");
+    }
+    return _ip;
 }
 
 int
@@ -116,7 +140,8 @@ is_decimal ( CHAR_T * dec )
 int
 is_operator ( CHAR_T * op )
 {
-     if (*op == '*' || *op == '+' || *op == '-' || *op == '%' || *op == '/')
+     
+     if (strlen((const char *)op) == 1 && (*op == '*' || *op == '+' || *op == '-' || *op == '%' || *op == '/'))
         return 1;
     return 0;
 }
@@ -208,7 +233,10 @@ is_keyword( CHAR_T * keyword){
 }
 
 DWORD *
-to_mac_byte ( CHAR_T * hex ){return 0;}
+to_mac_byte ( CHAR_T * hex )
+{
+    return 0;
+}
 
 
 #endif 
