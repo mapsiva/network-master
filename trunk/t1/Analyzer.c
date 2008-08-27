@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 
 Token *
 Advance( CHAR_T* argv)
@@ -151,13 +152,13 @@ is_binary_operator( CHAR_T * operator){
 	
 	char *op = (char *) operator;
 
-	if (!strcmp(op, "AND") || !strcmp(op, "and"))
+	if (!strcasecmp (op, "AND"))
 		return _AND;	
-	else if (!strcmp(op, "EQ") || !strcmp(op, "eq"))
+	else if (!strcasecmp (op, "EQ"))
 		return _EQ;
-	else if (!strcmp(op, "OR") || !strcmp(op, "or"))
+	else if (!strcasecmp (op, "OR"))
 		return _OR;
-	else if (!strcmp(op, "NOT") || !strcmp(op, "not"))
+	else if (!strcasecmp (op, "NOT"))
 		return _NOT;
 	else
 		return 0;
@@ -172,20 +173,20 @@ is_keyword( CHAR_T * keyword){
 	{
 		if (toupper(*(keyw+1)) == 'P')
 		{
-			if (!strcmp (keyw, "IP") || !strcmp (keyw, "ip"))
+			if (!strcasecmp (keyw, "IP"))
 				return _IP;
-			else if (!strcmp (keyw, "IPTO") || !strcmp (keyw, "ipto"))
+			else if (!strcasecmp (keyw, "IPTO"))
 				return _IPTO;
-			else if (!strcmp (keyw, "IPFROM") || !strcmp (keyw, "ipfrom"))
+			else if (!strcasecmp (keyw, "IPFROM"))
 				return _IPFROM;
-			else if (!strcmp (keyw, "IPPROTO") || !strcmp (keyw, "ipproto"))
+			else if (!strcasecmp (keyw, "IPPROTO"))
 				return _IPPROTO;
 		}
 		else 
 		{
-			if (!strcmp(keyw, "ICMP") || !strcmp(keyw, "icmp"))
+			if (!strcasecmp (keyw, "ICMP"))
 				return _ICMP;			
-			else if (!strcmp(keyw, "ICMPTYPE") || !strcmp(keyw, "icmptype"))
+			else if (!strcasecmp (keyw, "ICMPTYPE"))
 				return _ICMPTYPE;
 			else
 				return 0;
@@ -193,38 +194,38 @@ is_keyword( CHAR_T * keyword){
 	}
 	else if (toupper(*keyw) == 'T')  /* TCP */
 	{
-		if (!strcmp(keyw, "TCP") || !strcmp(keyw, "tcp"))
+		if (!strcasecmp (keyw, "TCP"))
 			return _TCP;
-		else if (!strcmp(keyw, "TCPTOPORT") || !strcmp(keyw, "tcptoport"))
+		else if (!strcasecmp (keyw, "TCPTOPORT"))
 			return _TCPTOPORT;	
-		else if (!strcmp(keyw, "TCPFROMPORT") || !strcmp(keyw, "tcpfromport"))
+		else if (!strcasecmp (keyw, "TCPFROMPORT"))
 			return _TCPFROMPORT;
 		else 
 			return 0;
 	}	
 	else if (toupper(*keyw) == 'E') /* ETHERNET */
 	{
-		if (!strcmp(keyw, "ETHERNET") || !strcmp(keyw, "ethernet"))
+		if (!strcasecmp (keyw, "ETHERNET"))
 			return _ETHERNET;		
-		else if (!strcmp(keyw, "ETHERTYPE") || !strcmp(keyw, "ethertype"))
+		else if (!strcasecmp (keyw, "ETHERTYPE"))
 			return _ETHERTYPE;
 		else
 			return 0;
 	}
 	else if (toupper(*keyw) == 'A') /* ARP */
 	{
-		if (!strcmp(keyw, "ARP") || !strcmp(keyw, "arp"))
+		if (!strcasecmp (keyw, "ARP"))
 			return _ARP;			
 		else
 			return 0;
 	}
 	else if (toupper(*keyw) == 'U') /* UDP */
 	{
-		if (!strcmp(keyw, "UDP") || !strcmp(keyw, "udp"))
+		if (!strcasecmp (keyw, "UDP"))
 			return _UDP;
-		else if (!strcmp(keyw, "UDPTOPORT") || !strcmp(keyw, "udptoport"))
+		else if (!strcasecmp (keyw, "UDPTOPORT"))
 			return _UDPTOPORT;
-		else if (!strcmp(keyw, "UDPFROMPORT") || !strcmp(keyw, "udpfromport"))
+		else if (!strcasecmp (keyw, "UDPFROMPORT"))
 			return _UDPFROMPORT;
 		else 
 			return 0;
