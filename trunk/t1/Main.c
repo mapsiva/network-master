@@ -9,6 +9,7 @@
 #include "Arp.h"
 #include "Analyzer.h"
 #include "Stack.h"
+#include <strings.h>
 
 #define BUF_SIZE	2000
 char byte_order; /* 0=little, 1=big endian*/
@@ -18,40 +19,48 @@ FRAME_HEADER frame_header;
 
 char pkt_buf[BUF_SIZE];
 
-int check_parameters(int argc, char *argv[], int *translation, int *modo, unsigned long *npkgs)
+int check_parameters(int argc, char *argv[], int *translation, int *modo, unsigned long *npkgs, int *position)
 {
 	int i;
 	
 	if (argc < 2) 
 		error_exit("Correct sintaxe is \"xnoop <filename> [<options>] [<filter>]\"\n");
 	
-	for (i=1; i<argc; i++)
+	for (i=2; i<argc; i++)
 	{
-		if (strcmp(argv[i], "-c") == 0)
+		if (!strcasecmp(argv[i], "-c"))
 		{
+			if (i >= *position)
+				(*position) = i+2;
 			(*npkgs) = atoi(argv[i+1]);
 			break;
 		}
 	}
 
-	for (i=1; i<argc; i++)
+	for (i=2; i<argc; i++)
 	{
-		if (strcmp(argv[i], "-n") == 0)
+		if (!strcasecmp(argv[i], "-n"))
 		{
+			if (i >= *position)
+				(*position) = i+1;
 			(*translation) = 0;
 			break;
 		}
 	}
 
-	for (i=1; i<argc; i++)
+	for (i=2; i<argc; i++)
 	{
-		if (strcmp(argv[i], "-v") == 0)
+		if (!strcmp(argv[i], "-v"))
 		{
+			if (i >= *position)
+				(*position) = i+1;
 			(*modo) = VERB;
 			break;
 		}
-		else if (strcmp(argv[i], "-V") == 0)
+		else if (!strcmp(argv[i], "-V"))
 		{
+			if (i >= *position)			
+				(*position) = i+1;
 			(*modo) = VERB_EXT;
 			break;
 		}
@@ -77,18 +86,19 @@ int main(int argc, char *argv[])
 
 	int modo = 1;							/*indica o modo de funcionamento (BASIC)*/
 	int translation = 1;					/*indica que será utilizado a traducao de nomes*/
+	int position = 2;						/*indica a posicao da lista de parâmetros que começam os filtros */
+	
 	unsigned long npkgs_max = 100000;			/*indica a quantidade máxima de pacotes a serem analisados*/	
 	unsigned long npkgs = 1;
 	
-	check_parameters(argc, argv, &translation, &modo, &npkgs_max);
+	check_parameters(argc, argv, &translation, &modo, &npkgs_max, &position);
     
     /*######################################################*/
 	inf = fopen(argv[1], "rb");
 	
 	stack = make_stack();
 	
-	int i = 10;
-	for (int i = 2; i < argc; i++)
+	for (int i = position; i < argc; i++)
 	{   
 	    Token *token = Advance ((CHAR_T *)argv[i]);
 	     
