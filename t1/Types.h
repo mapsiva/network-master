@@ -96,4 +96,38 @@ enum
 };
 
 WORD to_word(void *);
+
+
+typedef struct tKeywordTableEntry
+{
+		CHAR_T* Name;
+		int Token;
+		long Code;
+
+}tKeywordTableEntry;
+
+tKeywordTableEntry*
+SearchKeyword(tKeywordTableEntry* k, const char * name);
+
+#define DECLARE_KEYWORD_TABLE(cls) \ \
+	tKeywordTableEntry _keywords[]; \
+	
+#define DEFINE_KEYWORD_TABLE() \
+tKeywordTableEntry* \
+FindKeyword(const char * name) \
+{ \
+	tKeywordTableEntry* kword = SearchKeyword(_keywords, name); \
+	return kword; \
+} \
+DEFINE_KEYWORD_TABLE_ENTRIES()
+
+#define DEFINE_KEYWORD_TABLE_ENTRIES() \
+tKeywordTableEntry _keywords[] = {
+
+#define KEYWORD(name, token, code) \
+	{name, token, code}
+
+#define END_KEYWORD_TABLE \
+	{0, -1, 0}}
+	
 #endif

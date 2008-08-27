@@ -109,14 +109,12 @@ int main(int argc, char *argv[])
 	   
 	    push (stack, token);   
 	}
-	Node *node;
 	
-	while ((node = pop (stack)))
-	{
-	    Token *t = (Token *)node->value;
+	if(FindKeyword ("int2"))
+	    printf("encontrou\n");
+	else
+	    printf("Nao encontrou\n");
 	    
-	    free (node);
-	}
 	flush (stack);
 	
 	free(stack);

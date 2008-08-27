@@ -30,7 +30,7 @@ Advance( CHAR_T* argv)
     {
         token->value = (DWORD *) to_mac_byte (argv);
         token->code = _HEXA;
-        printf ("hexa\n");
+        
         return token;
     }
      
@@ -39,9 +39,6 @@ Advance( CHAR_T* argv)
         token->value = (DWORD *) to_mac_byte (argv);
         token->code = _MAC;
         
-        DWORD *t = to_mac_byte (argv);
-        printf ("MAC %u\n", (int) *t);
-        
         return token;
     }
     
@@ -49,7 +46,7 @@ Advance( CHAR_T* argv)
     {
         token->value = (WORD *) atoi ((const char *)argv);
         token->code = _NUMBER;
-        printf ("decimal %d\n", _IP);
+       
         return token;
     }
     
@@ -57,8 +54,7 @@ Advance( CHAR_T* argv)
     {
         token->value =  (WORD *) aux;
         token->code = _OPERATOR;
-        
-        printf ("operador\n");
+      
         return token;
     }
     
@@ -66,8 +62,7 @@ Advance( CHAR_T* argv)
     {
         token->value = (WORD *) aux;
         token->code = _BIN_OPERATOR;
-        
-        printf ("bin operador\n");
+       
         return token;
     }
     
@@ -80,7 +75,6 @@ Advance( CHAR_T* argv)
         return token;
     }
     
-    printf ("Unknow Format\n");
     return 0;
 }
 
@@ -95,6 +89,7 @@ is_ip( CHAR_T * ip)
     
     int count = 0 ;
     b = strtok ((char *)copy,".");
+    
     while (b)
     {
         count ++;
@@ -102,6 +97,7 @@ is_ip( CHAR_T * ip)
             return 0;
         b = strtok (NULL, ".");
     }
+    
     return (count < 4)?0:1;
 }
 
@@ -294,8 +290,4 @@ is_keyword( CHAR_T * keyword){
 	}	
 	return 0;
 }
-
-
-
-
 #endif 
