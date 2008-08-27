@@ -7,7 +7,7 @@ char * _current;
 
 enum _tokens
 {
-    _NUMBER     = 0,
+    _NUMBER     = 1,
     _HEXA,
     _ADDRESS_IP,
     _MAC,
@@ -46,6 +46,9 @@ is_ip( CHAR_T * );
 
 int
 is_hexa ( CHAR_T * );
+
+int 
+is_mac_address( CHAR_T * );
 
 int
 is_decimal ( CHAR_T *);

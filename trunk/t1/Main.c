@@ -100,8 +100,9 @@ int main(int argc, char *argv[])
 	
 	for (int i = position; i < argc; i++)
 	{   
+	      
 	    Token *token = Advance ((CHAR_T *)argv[i]);
-	     
+	   
 	    push (stack, token);   
 	}
 	Node *node;
