@@ -22,8 +22,7 @@ Advance( CHAR_T* argv)
     {
         token->value = (DWORD *) to_ip_byte (argv);
         token->code = _ADDRESS_IP;
-        DWORD *t = to_ip_byte (argv);
-        printf ("IP\n");
+        
         return token;
     }
      
@@ -39,7 +38,10 @@ Advance( CHAR_T* argv)
     {
         token->value = (DWORD *) to_mac_byte (argv);
         token->code = _MAC;
-        printf ("MAC\n");
+        
+        DWORD *t = to_mac_byte (argv);
+        printf ("MAC %u\n", (int) *t);
+        
         return token;
     }
     
@@ -150,7 +152,7 @@ is_decimal ( CHAR_T * dec )
 }
 
 int 
-is_mac_address( CHAR_T * mac)
+is_mac_address( const CHAR_T * mac)
 {
     char * b, copy[50];
     
@@ -158,15 +160,44 @@ is_mac_address( CHAR_T * mac)
     
     int count = 0 ;
     b = strtok ((char *)copy,":");
+    
     while (b)
     {
         count ++;
-        if(!strtoul((const char *)b, NULL, 16))
+        
+        if(!strtoul((const char *)b, NULL, 16) && (toupper(*b) != '0' || toupper(*(b+1)) != '0'))
             return 0;
        
         b = strtok (NULL, ":");
     }
+    
     return (count < 6)?0:1;
+}
+
+DWORD *
+to_mac_byte ( const CHAR_T * mac )
+{
+    char * b,  copy[50];
+    DWORD *_mac = (DWORD *) malloc(sizeof(DWORD));
+    
+    BYTE *j;
+    
+    (*_mac) &= 0xF;
+   
+    j = (BYTE *)_mac;
+    
+    strcpy ( (char *)copy, (char *)mac);
+  
+    b = strtok ((char *)copy,":");
+    while (b)
+    {   
+        *j = strtoul((const char *)b, NULL, 16);
+        
+        j++;
+        
+        b = strtok (NULL, ":");
+    }
+    return _mac;
 }
 
 int
@@ -264,11 +295,7 @@ is_keyword( CHAR_T * keyword){
 	return 0;
 }
 
-DWORD *
-to_mac_byte ( CHAR_T * hex )
-{
-    return 0;
-}
+
 
 
 #endif 

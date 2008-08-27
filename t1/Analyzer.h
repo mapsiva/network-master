@@ -48,7 +48,10 @@ int
 is_hexa ( CHAR_T * );
 
 int 
-is_mac_address( CHAR_T * );
+is_mac_address( const CHAR_T * );
+
+DWORD *
+to_mac_byte ( const CHAR_T * );
 
 int
 is_decimal ( CHAR_T *);
@@ -59,8 +62,6 @@ is_operator ( CHAR_T *);
 int
 is_binary_operator( CHAR_T *);
 
-DWORD *
-to_mac_byte ( CHAR_T * );
 
 DWORD *
 to_ip_byte( CHAR_T * );
