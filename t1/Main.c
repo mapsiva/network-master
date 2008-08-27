@@ -9,7 +9,14 @@
 #include "Arp.h"
 #include "Analyzer.h"
 #include "Stack.h"
+#include "Types.h"
 #include <strings.h>
+
+DECLARE_KEYWORD_TABLE();
+
+DEFINE_KEYWORD_TABLE()
+	KEYWORD( (CHAR_T*)"int"   , 0, 0),
+END_KEYWORD_TABLE;
 
 #define BUF_SIZE	2000
 char byte_order; /* 0=little, 1=big endian*/
@@ -110,7 +117,7 @@ int main(int argc, char *argv[])
 	    push (stack, token);   
 	}
 	
-	if(FindKeyword ("int2"))
+	if(FindKeyword ("int"))
 	    printf("encontrou\n");
 	else
 	    printf("Nao encontrou\n");
