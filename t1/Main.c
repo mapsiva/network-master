@@ -10,6 +10,7 @@
 #include "Analyzer.h"
 #include "Stack.h"
 #include <strings.h>
+#include <ctype.h>
 
 #define BUF_SIZE	2000
 char byte_order; /* 0=little, 1=big endian*/
@@ -21,7 +22,7 @@ char pkt_buf[BUF_SIZE];
 
 int check_parameters(int argc, char *argv[], int *translation, int *modo, unsigned long *npkgs, int *position)
 {
-	int i;
+	int i, aux;
 	
 	if (argc < 2) 
 		error_exit("Correct sintaxe is \"xnoop <filename> [<options>] [<filter>]\"\n");
@@ -31,9 +32,18 @@ int check_parameters(int argc, char *argv[], int *translation, int *modo, unsign
 	{
 		if (!strcasecmp(argv[i], "-c"))
 		{
-			if (i >= *position)
-				(*position) = i+2;
-			(*npkgs) = atoi(argv[i+1]);
+			if ((i+1) < argc)
+			{
+				aux = atoi(argv[i+1]);
+				if (aux)
+					(*npkgs) = aux;
+				else
+					error_exit("Correct sintaxe for option -c is \"-c <number_packages>\"\n");
+				if (i >= *position)
+					(*position) = i+2;
+			}
+			else
+				error_exit("Correct sintaxe for option -c is \"-c <number_packages>\"\n");
 		}
 		else if (!strcasecmp(argv[i], "-n"))
 		{
