@@ -23,6 +23,7 @@ pop ( Stack * );
 Stack*
 make_stack ();
 
-
+void
+flush ( Stack * );
 
 #endif 

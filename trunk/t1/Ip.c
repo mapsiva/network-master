@@ -123,7 +123,7 @@ format_address(WORD  address)
     
     ip = (CHAR_T*) malloc (16);
     
-    sprintf((char *)ip, "%u.%u.%u.%u", *IP, *IP+1, *IP+2, *IP+3);
+    sprintf((char *)ip, "%u.%u.%u.%u", *IP, *(IP+1), *(IP+2), *(IP+3));
     
     return ip;
 }

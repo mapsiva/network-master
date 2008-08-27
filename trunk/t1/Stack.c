@@ -2,6 +2,7 @@
 #define STACK_C_
 #include "Stack.h"
 #include "stdlib.h"
+#include <stdio.h>
 
 void
 push ( Stack * stack, void * value)
@@ -36,6 +37,15 @@ make_stack ()
      return _stack;
 }
 
-
+void
+flush (Stack * stack)
+{
+    Node * _node = pop(stack);
+    while (_node)
+    {
+        free (_node);
+        _node = pop(stack);
+    }   
+}
 
 #endif 

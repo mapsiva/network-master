@@ -8,6 +8,7 @@
 #include "Icmp.h"
 #include "Arp.h"
 #include "Analyzer.h"
+#include "Stack.h"
 
 #define BUF_SIZE	2000
 char byte_order; /* 0=little, 1=big endian*/
@@ -64,7 +65,7 @@ int main(int argc, char *argv[])
 	ETHERNET_HEADER * pkg_ethernet;
     IP_HEADER * pkg_ip;      
 	TCP_HEADER * pkg_tcp;
-	 
+	Stack * stack; 
 	int qtd_pkt 		= 0;
 	
 	int count_pkt_arp 	= 0;
@@ -81,17 +82,31 @@ int main(int argc, char *argv[])
 	
 	check_parameters(argc, argv, &translation, &modo, &npkgs_max);
     
+    /*######################################################*/
 	inf = fopen(argv[1], "rb");
+	
+	stack = make_stack();
+	
+	int i = 10;
 	for (int i = 2; i < argc; i++)
-	{
-	   
-	    
-	    printf("Token => %s = ", argv[i]);
-	    
-	     Token *token = Advance ((CHAR_T *)argv[i]);
+	{   
+	    Token *token = Advance ((CHAR_T *)argv[i]);
 	     
-	    free (token);
+	    push (stack, token);   
 	}
+	Node *node;
+	
+	while ((node = pop (stack)))
+	{
+	    Token *t = (Token *)node->value;
+	    
+	    free (node);
+	}
+	flush (stack);
+	
+	free(stack);
+	/*######################################################*/
+	
 	return 0;
 	if (!inf) 
 		error_exit("Could not open file: %s\n", argv[1]);	
