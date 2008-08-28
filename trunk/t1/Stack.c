@@ -13,7 +13,9 @@ push ( Stack * stack, void * value)
     
     _node->next = stack->top;
     
-    stack->top = _node; 
+    stack->top = _node;
+    
+    stack->length++;
 }
 
 Node *
@@ -22,7 +24,10 @@ pop (Stack * stack)
     Node * _node = stack->top;
     
     if (stack->top)
+    {
         stack->top = _node->next;
+        stack->length--;
+    }
     
     return _node;
 }
@@ -33,6 +38,8 @@ make_stack ()
      Stack * _stack =  (Stack *) malloc(sizeof(Stack));
      
      _stack->top = NULL;
+     
+     _stack->length = 0;
      
      return _stack;
 }
@@ -45,7 +52,8 @@ flush (Stack * stack)
     {
         free (_node);
         _node = pop(stack);
-    }   
+    }
+    stack->length = 0;
 }
 
 #endif 
