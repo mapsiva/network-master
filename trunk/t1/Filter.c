@@ -42,7 +42,7 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
         {
             case _NUMBER:
             case _HEXA:
-            	printf("%llu ", token->value);
+            	//printf("%llu ", token->value);
                 push(stack, token->value);
                 break;
             case _ADDRESS_IP:
@@ -78,11 +78,11 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                 break;
             case _BIN_OPERATOR:
             case _KEYWORD:
-                printf ("keyword\n");                                
+                //printf ("keyword\n");                                
                 switch ((int)token->value)
                 {
                     case _EQ:
-                    	printf("eq ");
+                    	//printf("eq ");
                         if( stack->length < 2 )
                             error_exit ("no data for operation [EQ]");
                         op1 = pop( stack );
@@ -91,7 +91,7 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                         a = op1->value;
                         b = op1->value;
                         
-                        printf("[[[ %llu %llu ]]]\n", a, b);
+                        //printf("[[[ %llu %llu ]]]\n", a, b);
                         data = (a == b);
                        
                         if(a == b)
@@ -143,22 +143,22 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                     		push (stack, 0);
                     	break;
                     case _ARP:        
-                    	printf("arp\n");   
+                    	//printf("arp\n");   
                     	//printf("%d", typeid(ntohs(pkg->type)).name());    
-                    	printf("\n%d\nasas", (int)pkg);
+                    	//printf("\n%d\nasas", (int)pkg);
                     	if ((unsigned int)ntohs(pkg->type) == ARP)
                     	{
-                    		printf("pkg = arp");                    		
+                    		//printf("pkg = arp");                    		
                     		push (stack, 1);
                     	}
                     	else
                     	{
-                    		printf("pkg != arp");                    		
+                    		//printf("pkg != arp");                    		
                     		push (stack, 0);
                     	}
                     	break;
                     case _UDP:
-                    	printf("udp\n");
+                    	//printf("udp\n");
                     	if (pkg_ip->protocol == UDP)
                     		push (stack, 1);
                     	else
@@ -183,7 +183,7 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                     	push (stack, (*pkg->sender));
                     	break;
                     case _ETHERTYPE:
-                    	push (stack, ntohs(pkg->type));
+                    	push (stack, (unsigned int)ntohs(pkg->type));
                     	break;
                     case _IPTO:
                     	if (ntohs(pkg->type) == IP)
@@ -199,7 +199,7 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                     	break;
                     case _IPPROTO:
                     	if (ntohs(pkg->type) == IP)
-                    		push (stack, pkg_ip->protocol);
+                    		push (stack, (unsigned int)pkg_ip->protocol);
                     	else
                     		push (stack, 0);
                     	break;
