@@ -1,6 +1,7 @@
 #ifndef FILTER_H_
 #define FILTER_H_
 
+#include "Types.h"
 #include "PackageHeader.h"
 #include "Ethernet.h"
 #include "Tcp.h"
@@ -10,33 +11,10 @@
 #include "Arp.h"
 #include "Analyzer.h"
 #include "Stack.h"
-#include "Types.h"
+
 
 #include "Filter.h"
 
-DECLARE_KEYWORD_TABLE();
-
-DEFINE_KEYWORD_TABLE()
-	KEYWORD( (CHAR_T*)"IP" 			, _IP, 			_KEYWORD),
-	KEYWORD( (CHAR_T*)"IPTO" 		, _IPTO, 		_KEYWORD),
-	KEYWORD( (CHAR_T*)"IPFROM" 		, _IPFROM, 		_KEYWORD),
-	KEYWORD( (CHAR_T*)"IPPROTO"   	, _IPPROTO, 	_KEYWORD),
-	KEYWORD( (CHAR_T*)"ICMP"   		, _ICMP, 		_KEYWORD),
-	KEYWORD( (CHAR_T*)"ICMPTYPE"   	, _ICMPTYPE, 	_KEYWORD),
-	KEYWORD( (CHAR_T*)"TCP"   		, _TCP, 		_KEYWORD),
-	KEYWORD( (CHAR_T*)"TCPTOPORT"   , _TCPTOPORT, 	_KEYWORD),
-	KEYWORD( (CHAR_T*)"TCPFROMPORT" , _TCPFROMPORT, _KEYWORD),
-	KEYWORD( (CHAR_T*)"ETHERNET"   	, _ETHERNET, 	_KEYWORD),
-	KEYWORD( (CHAR_T*)"ETHERTYPE"   , _ETHERTYPE, 	_KEYWORD),
-	KEYWORD( (CHAR_T*)"ARP"   		, _ARP, 		_KEYWORD),	
-	KEYWORD( (CHAR_T*)"UDP"   		, _UDP, 		_KEYWORD),
-	KEYWORD( (CHAR_T*)"UDPTOPORT"   , _UDPTOPORT, 	_KEYWORD),
-	KEYWORD( (CHAR_T*)"UDPFROMPORT" , _UDPFROMPORT, _KEYWORD),
-	KEYWORD( (CHAR_T*)"OR"   		, _OR, 			_BIN_OPERATOR),
-	KEYWORD( (CHAR_T*)"AND"   		, _AND, 		_BIN_OPERATOR),
-	KEYWORD( (CHAR_T*)"EQ"   		, _EQ, 			_BIN_OPERATOR),
-	KEYWORD( (CHAR_T*)"NOT"   		, _NOT, 		_BIN_OPERATOR),
-END_KEYWORD_TABLE;
 
 
 int
@@ -48,7 +26,7 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
     Token *token;
     Node *op1, *op2;
     int data;
-    DWORD ddata;
+    DWORD *a, *b;
     IP_HEADER * pkg_ip;
     TCP_HEADER * pkg_tcp;
     UDP_HEADER * pkg_udp;
@@ -63,7 +41,7 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
 	{   
          printf("[%s][%d] ", argv[i], position);
         token = Advance ((CHAR_T *)argv[i]);
-         printf("DATA_> %d\n", (int)token->value);
+         printf("DATA_> %d\n", (int)token->code);
         switch (token->code)
         {
             case _NUMBER:
@@ -108,43 +86,59 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                 push (stack, &data);
                
                 break;
-               
+            case _BIN_OPERATOR:
             case _KEYWORD:
+                printf ("igual");
                 if((key_word = FindKeyword ((const char *)token->name)))
                 {
+                    
                     switch (key_word->Token)
                     {
                         case _EQ:
+                          
                             if( stack->length < 2 )
                                 error_exit ("no data for operation [EQ]");
                             op1 = pop( stack );
                             op2 = pop( stack );
-                            
-                            if((DWORD)(op1->value) == (DWORD)(op2->value))
-                                 push (stack, 1);
-                            else
-                                 push (stack, 0);
                            
+                            a = (DWORD *)&(op1->value);
+                            b = (DWORD *)&op1->value;
+                            
+                             printf("[[[ %llu ]]]\n", *b);
+                            data = (*a == *b);
+                           
+                            if(*a == *b)
+                                 push (stack, (int *)1);
+                            else
+                                 push (stack, (int *)0);
+                             printf("LAGLL\n");
                             break;
                         case _AND:
                             if( stack->length < 2 )
-                                error_exit ("no data for operation [EQ]");
+                                error_exit ("no data for operation [AND]");
                                 
                             op1 = pop( stack );
                             op2 = pop( stack );
                             
-                           data = ((DWORD)(op1->value) & (DWORD)(op2->value));
+                            a = (DWORD *)op1->value;
+                            b = (DWORD *)op1->value;
+                            
+                           data = (*a) & (*b);
                             push (stack, &data);
                             
                             break;
                         case _OR:
                             if( stack->length < 2 )
-                                error_exit ("no data for operation [EQ]");
+                                error_exit ("no data for operation [OR]");
                                 
                             op1 = pop( stack );
                             op2 = pop( stack );
                             
-                           // data = ((DWORD *)(op1->value) | (DWORD *)(op2->value));
+                            a = (DWORD *)op1->value;
+                            b = (DWORD *)op1->value;
+                           
+                            data = *a | *b;
+                           
                             push (stack, &data);
                             
                             break;

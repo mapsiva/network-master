@@ -5,6 +5,8 @@
 
 char * _current;
 
+
+
 Token *
 Advance( CHAR_T* argv);
 
@@ -33,6 +35,5 @@ is_binary_operator( CHAR_T *);
 DWORD *
 to_ip_byte( CHAR_T * );
 
-int
-is_keyword( CHAR_T * );
+
 #endif 

@@ -147,8 +147,11 @@ typedef struct tKeywordTableEntry
 
 tKeywordTableEntry*
 SearchKeyword(tKeywordTableEntry* k, const char * name);
+tKeywordTableEntry* 
+FindKeyword(const char * name) ;
 
-#define DECLARE_KEYWORD_TABLE(cls) \ \
+
+#define DECLARE_KEYWORD_TABLE() \ \
 	tKeywordTableEntry _keywords[]; \
 	
 #define DEFINE_KEYWORD_TABLE() \
@@ -169,4 +172,7 @@ tKeywordTableEntry _keywords[] = {
 #define END_KEYWORD_TABLE \
 	{0, -1, 0}}
 	
+	
+
+
 #endif

@@ -11,13 +11,16 @@
 #include <string.h>
 #include <strings.h>
 
+
 Token *
 Advance( CHAR_T* argv)
 {
     Token * token = (Token *)malloc (sizeof(Token));
-    int aux;
+    tKeywordTableEntry *key_word;
     
+    int aux;
    
+    
     if(is_ip(argv))
     {
         token->value = (DWORD *) to_ip_byte (argv);
@@ -58,18 +61,14 @@ Advance( CHAR_T* argv)
         return token;
     }
     
-    if((aux = is_binary_operator(argv)))
-    {
-        token->value = (WORD *) aux;
-        token->code = _BIN_OPERATOR;
-       
-        return token;
-    }
+   
     
-    if((aux = is_keyword(argv)))
+    if((key_word = FindKeyword ((const char *)argv)))
     {
-        token->value = (WORD *) aux;
-        token->code = _KEYWORD;
+        
+        token->name = key_word->Name;
+        token->value = (WORD *) key_word->Token;
+        token->code = key_word->Code;
         
         return token;
     }
@@ -239,72 +238,5 @@ is_binary_operator( CHAR_T * operator){
 		return 0;
 }
 
-int
-is_keyword( CHAR_T * keyword){
-	
-	char *keyw = (char *) keyword;
-	
-	if (toupper(*keyw) == 'I') /* IP */
-	{
-		if (toupper(*(keyw+1)) == 'P')
-		{
-			if (!strcasecmp (keyw, "IP"))
-				return _IP;
-			else if (!strcasecmp (keyw, "IPTO"))
-				return _IPTO;
-			else if (!strcasecmp (keyw, "IPFROM"))
-				return _IPFROM;
-			else if (!strcasecmp (keyw, "IPPROTO"))
-				return _IPPROTO;
-		}
-		else 
-		{
-			if (!strcasecmp (keyw, "ICMP"))
-				return _ICMP;			
-			else if (!strcasecmp (keyw, "ICMPTYPE"))
-				return _ICMPTYPE;
-			else
-				return 0;
-		}			
-	}
-	else if (toupper(*keyw) == 'T')  /* TCP */
-	{
-		if (!strcasecmp (keyw, "TCP"))
-			return _TCP;
-		else if (!strcasecmp (keyw, "TCPTOPORT"))
-			return _TCPTOPORT;	
-		else if (!strcasecmp (keyw, "TCPFROMPORT"))
-			return _TCPFROMPORT;
-		else 
-			return 0;
-	}	
-	else if (toupper(*keyw) == 'E') /* ETHERNET */
-	{
-		if (!strcasecmp (keyw, "ETHERNET"))
-			return _ETHERNET;		
-		else if (!strcasecmp (keyw, "ETHERTYPE"))
-			return _ETHERTYPE;
-		else
-			return 0;
-	}
-	else if (toupper(*keyw) == 'A') /* ARP */
-	{
-		if (!strcasecmp (keyw, "ARP"))
-			return _ARP;			
-		else
-			return 0;
-	}
-	else if (toupper(*keyw) == 'U') /* UDP */
-	{
-		if (!strcasecmp (keyw, "UDP"))
-			return _UDP;
-		else if (!strcasecmp (keyw, "UDPTOPORT"))
-			return _UDPTOPORT;
-		else if (!strcasecmp (keyw, "UDPFROMPORT"))
-			return _UDPFROMPORT;
-		else 
-			return 0;
-	}	
-	return 0;
-}
+
 #endif 
