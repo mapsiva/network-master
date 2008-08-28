@@ -30,18 +30,18 @@ trace_ip( IP_HEADER * pkg, int translation, int modo, int *pkg_for_me, int broad
 		
 		ip_view_service(pkg);
 
-		printf("IP: Total length =  %u bytes\n", ntohs(pkg->total_length));
-		printf("IP: Identification =  %u \n", ntohs(pkg->identification));
+		printf("IP: Total length = %u bytes\n", ntohs(pkg->total_length));
+		printf("IP: Identification = %u \n", ntohs(pkg->identification));
 		
 		ip_view_flags(pkg);
 		
-		printf("IP: Fragment offset =  %u bytes \n", IP_OFFSET(pkg));
-		printf("IP: Time to alive =  %u seconds/hops \n", (pkg->time_alive));
-		printf("IP: Protocol =  %u (%s)\n", (pkg->protocol), ((pkg->protocol==ICMP)?"ICMP":(pkg->protocol==TCP)?"TCP":"UDP"));
-		printf("IP: Header ckecksum =  %X \n", ntohs(pkg->checksum));
+		printf("IP: Fragment offset = %u bytes \n", IP_OFFSET(pkg));
+		printf("IP: Time to alive = %u seconds/hops \n", (pkg->time_alive));
+		printf("IP: Protocol = %u (%s)\n", (pkg->protocol), ((pkg->protocol==ICMP)?"ICMP":(pkg->protocol==TCP)?"TCP":"UDP"));
+		printf("IP: Header ckecksum = %X \n", ntohs(pkg->checksum));
 
 		ip = format_address(pkg->source_address);
-		printf("IP: Source address =  %s", ip );
+		printf("IP: Source address      = %s", ip );
 		free (ip);
 		if (translation && (name = resolve_address(pkg->source_address)) != NULL )
 		{
@@ -51,7 +51,7 @@ trace_ip( IP_HEADER * pkg, int translation, int modo, int *pkg_for_me, int broad
 		printf("\n");	
 
 		ip = format_address(pkg->destination_address);
-		printf("IP: Destination address =  %s", ip);
+		printf("IP: Destination address = %s", ip);
 		free (ip);
 		if (translation && (name = resolve_address(pkg->destination_address)) != NULL )
 		{			
