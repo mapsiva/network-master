@@ -52,7 +52,7 @@ Advance( CHAR_T* argv)
     
     if((aux = is_operator(argv)))
     {
-        token->value =  (WORD *) aux;
+        token->value = (WORD *) aux;
         token->code = _OPERATOR;
       
         return token;
@@ -199,8 +199,26 @@ int
 is_operator ( CHAR_T * op )
 {
      
-     if (strlen((const char *)op) == 1 && (*op == '*' || *op == '+' || *op == '-' || *op == '%' || *op == '/'))
-        return 1;
+     if (strlen((const char *)op)  > 1)
+        return 0;
+     
+     if ((*op == '*'))
+        return _MULT;
+     
+     if (( *op == '+') )
+        return _SUM;
+     
+     if ((*op == '-'))
+        return _MINUS;
+     
+     if ((*op == '%'))
+        return _MOD;
+        
+     if ((*op == '/'))
+        return _DIV;
+        
+     if ((*op == '/'))
+        return _EQ;
     return 0;
 }
 

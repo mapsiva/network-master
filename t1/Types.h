@@ -9,6 +9,7 @@ typedef unsigned long long DWORD;
 
 typedef struct
 {
+    CHAR_T * name;
     int code;
     void * value;
 }Token;
@@ -85,6 +86,11 @@ enum _tokens
     _OR,
     _NOT,
     _OPERATOR,
+    _DIV,
+    _MOD,
+    _SUM,
+    _MINUS,
+    _MULT,
     _BIN_OPERATOR,
     _ETHERNET,
     _IP,
@@ -104,6 +110,7 @@ enum _tokens
     _TCPFROMPORT,
     _ICMPTYPE
 };
+
 
 /* ip PRECENDENCE
 111 - Network Control
@@ -134,7 +141,7 @@ typedef struct tKeywordTableEntry
 {
 		CHAR_T* Name;
 		int Token;
-		long Code;
+		int Code;
 
 }tKeywordTableEntry;
 
