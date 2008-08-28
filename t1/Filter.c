@@ -23,6 +23,8 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
     Node *op1, *op2;
     int data;
     DWORD a, b;
+    DWORD *_mac;
+    BYTE *j;
     IP_HEADER * pkg_ip;
     TCP_HEADER * pkg_tcp;
     UDP_HEADER * pkg_udp;
@@ -177,7 +179,22 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                     		push (stack, 0);
                     	break;
                     case _ETHERTO:
-                    	push (stack, (*pkg->receiver));                    	
+                    	printf("etherto\n");
+                    	exit(0);
+                    	_mac = (DWORD *) malloc(sizeof(DWORD));
+                    	
+                    	(*_mac) &= 0xF;
+                    	
+                    	j = (BYTE *)_mac;
+                    	
+                    	for (i=0; i<6; i++)
+                    		*(j + i) = *(pkg->receiver + i);
+                    	
+                    	push (stack, (*_mac)); 
+                    	
+                    	op1 = pop (stack);
+                    	printf("%llu\n", op1->value);
+                    	exit(0);                   	
                     	break;
                     case _ETHERFROM:
                     	push (stack, (*pkg->sender));
