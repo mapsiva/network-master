@@ -154,95 +154,95 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                             
                             op1 = pop( stack );
                                                         
-                            push(stack, !op1->value);
+                            push(stack, (void *)!op1->value);
                             
-                            break;                        
+                            break;                    
                         case _IP:
                         	if (ntohs(pkg->type) == IP)
-                        		push (stack, 1);
+                        		push (stack, (void*)1);
                         	else
-                        		push (stack, 0);
+                        		push (stack, (void*)0);
                         	break;
                         case _ARP:
                         	if (ntohs(pkg->type) == ARP)
-                        		push (stack, 1);
+                        		push (stack, (void*)1);
                         	else
-                        		push (stack, 0);
+                        		push (stack, (void*)0);
                         	break;
                         case _UDP:
                         	if (pkg_ip->protocol == UDP)
-                        		push (stack, 1);
+                        		push (stack, (void*)1);
                         	else
-                        		push (stack, 0);
+                        		push (stack, (void*)0);
                         	break;                        
                         case _TCP:
 							if (pkg_ip->protocol == TCP)
-                        		push (stack, 1);
+                        		push (stack, (void*)1);
                         	else
-                        		push (stack, 0);
+                        		push (stack, (void*)0);
                         	break; 
                         case _ICMP: 
                         	if (pkg_ip->protocol == ICMP)
-                        		push (stack, 1);
+                        		push (stack, (void*)1);
                         	else
-                        		push (stack, 0);
+                        		push (stack, (void*)0);
                         	break;
                         case _ETHERTO:
-                        	push (stack, pkg->pkg->receiver);
+                        	push (stack, (void*)pkg->receiver);
                         	break;
                         case _ETHERFROM:
-                        	push (stack, pkg->pkg->sender);
+                        	push (stack, (void*)pkg->sender);
                         	break;
                         case _ETHERTYPE:
-                        	push ((unsigned int) ntohs(pkg->type));
+                        	push (stack, (void*) (unsigned int) ntohs(pkg->type));
                         	break;
                         case _IPTO:
                         	if (ntohs(pkg->type) == IP)
-                        		push (stack, pkg_ip->destination_address);
+                        		push (stack, (void*)pkg_ip->destination_address);
                         	else
-                        		push (stack, 0);
+                        		push (stack, (void*)0);
                         	break;
                         case _IPFROM:
                         	if (ntohs(pkg->type) == IP)
-                        		push (stack, pkg_ip->source_address);
+                        		push (stack, (void*)pkg_ip->source_address);
                         	else
-                        		push (stack, 0);
+                        		push (stack, (void*)0);
                         	break;
                         case _IPPROTO:
                         	if (ntohs(pkg->type) == IP)
-                        		push (stack, pkg_ip->protocol);
+                        		push (stack, (void*)pkg_ip->protocol);
                         	else
-                        		push (stack, 0);
+                        		push (stack, (void*)0);
                         	break;
                         case _UDPTOPORT:
                         	if (pkg_ip->protocol == UDP)
-                        		push (stack, ntohs(pkg_udp->dest_port));
+                        		push (stack, (void*)ntohs(pkg_udp->dest_port));
                         	else
-                        		push (stack, 0);
+                        		push (stack, (void*)0);
                         	break;
                         case _UDPFROMPORT:
                         	if (pkg_ip->protocol == UDP)
-                        		push (stack, ntohs(pkg_udp->src_port));
+                        		push (stack, (void*)ntohs(pkg_udp->src_port));
                         	else
-                        		push (stack, 0);
+                        		push (stack, (void*)0);
                         	break;
                         case _TCPTOPORT:
                         	if (pkg_ip->protocol == TCP)
-                        		push (stack, ntohs(pkg_tcp->dest_port));
+                        		push (stack, (void*)ntohs(pkg_tcp->dest_port));
                         	else
-                        		push (stack, 0);
+                        		push (stack, (void*)0);
                         	break;
                         case _TCPFROMPORT:
                         	if (pkg_ip->protocol == TCP)
-                        		push (stack, ntohs(pkg_tcp->dest_port));
+                        		push (stack, (void*)ntohs(pkg_tcp->dest_port));
                         	else
-                        		push (stack, 0);
+                        		push (stack, (void*)0);
                         	break;
                         case _ICMPTYPE:
                         	if (pkg_ip->protocol == ICMP)
-                        		push (stack, ntohs(pkg_icmp->type));
+                        		push (stack, (void*)ntohs(pkg_icmp->type));
                         	else
-                        		push (stack, 0);
+                        		push (stack, (void*)0);
                             break;
                     }
                 }
