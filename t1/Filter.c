@@ -59,7 +59,7 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                 switch ((int)token->value)
                 {
                     case _SUM:
-                        data = ((WORD)(op1->value))+((WORD)(op2->value));                        
+                        data = ((WORD)(op1->value))+((WORD)(op2->value));
                         break;
                     case _MULT:
                         data = ((WORD)(op1->value)*(WORD)(op2->value));
