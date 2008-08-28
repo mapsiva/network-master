@@ -23,7 +23,7 @@ Advance( CHAR_T* argv)
     
     if(is_ip(argv))
     {
-        token->value = (DWORD *) to_ip_byte (argv);
+        token->value = (*to_ip_byte (argv));
         token->code = _ADDRESS_IP;
         
         return token;
@@ -31,7 +31,7 @@ Advance( CHAR_T* argv)
      
     if(is_hexa(argv))
     {
-        token->value = (DWORD *) to_mac_byte (argv);
+        token->value = (*to_mac_byte (argv));
         token->code = _HEXA;
         
         return token;
@@ -39,7 +39,7 @@ Advance( CHAR_T* argv)
      
     if(is_mac_address(argv))
     {
-        token->value = (DWORD *) to_mac_byte (argv);
+        token->value = (*to_mac_byte (argv));
         token->code = _MAC;
         
         return token;
@@ -47,27 +47,25 @@ Advance( CHAR_T* argv)
     
     if(is_decimal(argv))
     {
-        token->value = (WORD *) atoi ((const char *)argv);
+        token->value = (WORD) atoi ((const char *)argv);
         token->code = _NUMBER;
+        //printf("%d ", atoi ((const char *)argv));
        
         return token;
     }
     
     if((aux = is_operator(argv)))
     {
-        token->value = (WORD *) aux;
+        token->value = (WORD) aux;
         token->code = _OPERATOR;
       
         return token;
-    }
-    
-   
+    }  
     
     if((key_word = FindKeyword ((const char *)argv)))
-    {
-        
+    {        
         token->name = key_word->Name;
-        token->value = (WORD *) key_word->Token;
+        token->value = (WORD) key_word->Token;
         token->code = key_word->Code;
         
         return token;

@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 void
-push ( Stack * stack, void * value)
+push ( Stack * stack, DWORD value)
 {
     Node * _node =  (Node *) malloc(sizeof(Node));
    

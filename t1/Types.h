@@ -11,7 +11,7 @@ typedef struct
 {
     CHAR_T * name;
     int code;
-    void * value;
+    DWORD value;
 }Token;
 
 
