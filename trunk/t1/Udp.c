@@ -20,7 +20,7 @@ trace_udp( UDP_HEADER * pkg, int modo)
 		
 		view_data_udp ( pkg );
 		
-		printf ("UDP:\n");
+		printf ("UDP:\n\n");
     }
     else if(modo == VERB)
 	{

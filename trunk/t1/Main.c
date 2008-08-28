@@ -61,8 +61,7 @@ int check_parameters(int argc, char *argv[], int *translation, int *modo, unsign
 		{
 			if (i >= *position)			
 				(*position) = i+1;
-			(*modo) = VERB_EXT;
-			
+			(*modo) = VERB_EXT;			
 		}
 		i++;
 	}	
