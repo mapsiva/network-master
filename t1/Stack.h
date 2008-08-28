@@ -11,6 +11,7 @@ typedef struct NODE
 typedef struct STACK
 {
    Node *top;
+   int length;
 }Stack;
 
 
