@@ -4,7 +4,7 @@
 
 typedef struct NODE
 {
-   void * value;
+   DWORD value;
    struct NODE *next;
 }Node;
 
@@ -16,7 +16,7 @@ typedef struct STACK
 
 
 void
-push ( Stack *, void *);
+push ( Stack *, DWORD);
 
 Node *
 pop ( Stack * );
