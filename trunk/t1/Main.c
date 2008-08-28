@@ -89,12 +89,14 @@ int main(int argc, char *argv[])
 	int count_pkt_me	= 0;
 
 	int i;
+	int is_broadcast;
 	int modo = 1;							/*indica o modo de funcionamento (BASIC)*/
 	int translation = 1;					/*indica que será utilizado a traducao de nomes*/
 	int position = 2;						/*indica a posicao da lista de parâmetros que começam os filtros */
 	
 	unsigned long npkgs_max = 100000;		/*indica a quantidade máxima de pacotes a serem analisados*/	
 	unsigned long npkgs = 1;
+	is_broadcast = 0;	
 	
 	check_parameters(argc, argv, &translation, &modo, &npkgs_max, &position);
     
@@ -108,14 +110,15 @@ int main(int argc, char *argv[])
 	      
 	    Token *token = Advance ((CHAR_T *)argv[i]);
 	   
-	    push (stack, token);   
+	    push (stack, token); 
+	   
 	}
-	
+	/*
 	if(FindKeyword ("int"))
 	    printf("encontrou\n");
 	else
 	    printf("Nao encontrou\n");
-	    
+	*/    
 	flush (stack);
 	
 	free(stack);
@@ -144,7 +147,7 @@ int main(int argc, char *argv[])
 		
 		/*Capturando um pacote ethernet*/
 		pkg_ethernet = (ETHERNET_HEADER *)pkt_buf;
-		trace_ethernet (pkg_ethernet, qtd_pkt,  &frame_header, modo, &count_pkt_broad);
+		trace_ethernet (pkg_ethernet, qtd_pkt,  &frame_header, modo, &count_pkt_broad, &is_broadcast);
 		
 		/*Verifica o tipo do pacote ethernet*/
 		switch (ntohs (pkg_ethernet->type))
@@ -157,7 +160,7 @@ int main(int argc, char *argv[])
 		        
 		        pkg_ip = (IP_HEADER *)( pkg_ethernet + 1 ); 
 		        
-		        trace_ip (pkg_ip, translation, modo, &count_pkt_me);
+		        trace_ip (pkg_ip, translation, modo, &count_pkt_me, is_broadcast);
 		        
 		        switch (pkg_ip->protocol)
 		        {
@@ -177,7 +180,7 @@ int main(int argc, char *argv[])
 		        }
 		        break;
 		    case ARP:
-		        trace_arp ((ARP_HEADER *)(pkg_ethernet + 1), translation, modo);
+		        trace_arp ((ARP_HEADER *)(pkg_ethernet + 1), translation, modo, is_broadcast);
 		       	count_pkt_arp++;
 		        break;
 		}	

@@ -17,7 +17,7 @@ typedef struct
 } ARP_HEADER;
 
 CHAR_T*
-trace_arp( ARP_HEADER *, int, int);
+trace_arp( ARP_HEADER *, int, int, int);
 
 void 
 view_type_arp ( ARP_HEADER *);
