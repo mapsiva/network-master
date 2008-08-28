@@ -91,16 +91,16 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                         op2 = pop( stack );
                        
                         a = op1->value;
-                        b = op1->value;
+                        b = op2->value;
                         
-                        //printf("[[[ %llu %llu ]]]\n", a, b);
+                        
                         data = (a == b);
                        
                         if(a == b)
                              push (stack, 1);
                         else
                              push (stack, 0);
-                        //printf("LAGLL\n");
+                      
                         break;
                     case _AND:
                         if( stack->length < 2 )
@@ -110,7 +110,7 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                         op2 = pop( stack );
                         
                         a = op1->value;
-                        b = op1->value;
+                        b = op2->value;
                         
                        	data = a & b;
 
@@ -120,17 +120,17 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                     case _OR:
                         if( stack->length < 2 )
                             error_exit ("no data for operation [OR]");
-                            
+                        
+                        
                         op1 = pop( stack );
                         op2 = pop( stack );
                         
                         a = op1->value;
-                        b = op1->value;
-                       
-                        data = a | b;
-                       
-                        push (stack, data);
+                        b = op2->value;
+                   
                         
+                        push (stack,  (a | b));
+                      
                         break;
                     case _NOT:
                     	if( stack->length < 1 )
@@ -161,24 +161,25 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                     	break;
                     case _UDP:
                     	//printf("udp\n");
-                    	if (pkg_ip->protocol == UDP)
+                    	if ((unsigned int)ntohs(pkg->type) == IP && pkg_ip->protocol == UDP)
                     		push (stack, 1);
                     	else
                     		push (stack, 0);
                     	break;                        
                     case _TCP:
-						if (pkg_ip->protocol == TCP)
+						if ((unsigned int)ntohs(pkg->type) == IP && pkg_ip->protocol == TCP)
                     		push (stack, 1);
                     	else
                     		push (stack, 0);
                     	break; 
                     case _ICMP: 
-                    	if (pkg_ip->protocol == ICMP)
+                    	if ((unsigned int)ntohs(pkg->type) == IP && pkg_ip->protocol == ICMP)
                     		push (stack, 1);
                     	else
                     		push (stack, 0);
                     	break;
                     case _ETHERTO:
+
                     	printf("etherto\n");
                     	exit(0);
                     	_mac = (DWORD *) malloc(sizeof(DWORD));
@@ -195,6 +196,7 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                     	op1 = pop (stack);
                     	printf("%llu\n", op1->value);
                     	exit(0);                   	
+
                     	break;
                     case _ETHERFROM:
                     	push (stack, (*pkg->sender));
@@ -228,7 +230,7 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                     		push (stack, (unsigned int)pkg_ip->protocol);
                     	else
                     		push (stack, 0);
-                    	break;
+                    	
                     	//op1 = pop (stack);
                     	//printf("%llu\n", op1->value);
                     	//exit(0);                    	
@@ -285,11 +287,13 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
         }
 	}
 	
-	if (stack->length == 1 && (stack->top)->value == 1)
+	if (stack->length == 1 && ((stack->top)->value == 1))
 	{
 		flush(stack);
+		
 		return 1;
 	}
+	
 	flush(stack);
     return 0;
 }
