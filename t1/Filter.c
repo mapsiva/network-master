@@ -177,31 +177,44 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                     		push (stack, 0);
                     	break;
                     case _ETHERTO:
-                    	push (stack, (*pkg->receiver));
+                    	push (stack, (*pkg->receiver));                    	
                     	break;
                     case _ETHERFROM:
                     	push (stack, (*pkg->sender));
                     	break;
                     case _ETHERTYPE:
                     	push (stack, (unsigned int)ntohs(pkg->type));
+                    	//op1 = pop (stack);
+                    	//printf("%llu\n", op1->value);
+                    	//exit(0);
                     	break;
                     case _IPTO:
                     	if (ntohs(pkg->type) == IP)
                     		push (stack, pkg_ip->destination_address);
                     	else
                     		push (stack, 0);
+                    	//op1 = pop (stack);
+                    	//printf("%llu\n", op1->value);
+                    	//exit(0);                    	
                     	break;
                     case _IPFROM:
                     	if (ntohs(pkg->type) == IP)
                     		push (stack, pkg_ip->source_address);
                     	else
                     		push (stack, 0);
+                    	//op1 = pop (stack);
+                    	//printf("%llu\n", op1->value);
+                    	//exit(0);                    	
                     	break;
-                    case _IPPROTO:
+                    case _IPPROTO:                    	
                     	if (ntohs(pkg->type) == IP)
                     		push (stack, (unsigned int)pkg_ip->protocol);
                     	else
                     		push (stack, 0);
+                    	break;
+                    	//op1 = pop (stack);
+                    	//printf("%llu\n", op1->value);
+                    	//exit(0);                    	
                     	break;
                     case _UDPTOPORT:
                     	if (pkg_ip->protocol == UDP)
@@ -209,30 +222,45 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                     	else
                     		push (stack, 0);
                     	break;
+                    	//op1 = pop (stack);
+                    	//printf("%llu\n", op1->value);
+                    	//exit(0);
                     case _UDPFROMPORT:
                     	if (pkg_ip->protocol == UDP)
                     		push (stack, (unsigned int)ntohs(pkg_udp->src_port));
                     	else
                     		push (stack, 0);
                     	break;
+                    	//op1 = pop (stack);
+                    	//printf("%llu\n", op1->value);
+                    	//exit(0);
                     case _TCPTOPORT:
                     	if (pkg_ip->protocol == TCP)
                     		push (stack, (unsigned int)ntohs(pkg_tcp->dest_port));
                     	else
                     		push (stack, 0);
                     	break;
+                    	//op1 = pop (stack);
+                    	//printf("%llu\n", op1->value);
+                    	//exit(0);
                     case _TCPFROMPORT:
                     	if (pkg_ip->protocol == TCP)
                     		push (stack, (unsigned int)ntohs(pkg_tcp->src_port));
                     	else
                     		push (stack, 0);
                     	break;
+                    	//op1 = pop (stack);
+                    	//printf("%llu\n", op1->value);
+                    	//exit(0);
                     case _ICMPTYPE:
                     	if (pkg_ip->protocol == ICMP)
                     		push (stack, (unsigned int)ntohs(pkg_icmp->type));
                     	else
                     		push (stack, 0);
                         break;
+                        //op1 = pop (stack);
+                    	//printf("%llu\n", op1->value);
+                    	//exit(0);
                 }
                 break;
         	default:
