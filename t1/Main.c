@@ -100,6 +100,7 @@ int main(int argc, char *argv[])
     
 	inf = fopen(argv[1], "rb");
 	
+
 	//return 0;
 	if (!inf) 
 		error_exit("Could not open file: %s\n", argv[1]);	
@@ -122,7 +123,9 @@ int main(int argc, char *argv[])
 		/*Capturando um pacote ethernet*/
 		pkg_ethernet = (ETHERNET_HEADER *)pkt_buf;
 
+
 		/*Verifica se o pacote satifaz os filtros*/
+
 		if(!filter (pkg_ethernet, argc, argv, position))
 		    continue;
 		
