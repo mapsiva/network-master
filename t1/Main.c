@@ -125,14 +125,15 @@ int main(int argc, char *argv[])
 
 
 		/*Verifica se o pacote satifaz os filtros*/
-
+        
+        npkgs++;
 		if(position < argc)
 		{
 			if (!filter (pkg_ethernet, argc, argv, position))
 		    	continue;
 		}
 		
-		npkgs++;
+		
 
 		trace_ethernet (pkg_ethernet, qtd_pkt,  &frame_header, modo, &count_pkt_broad, &is_broadcast);
 		
