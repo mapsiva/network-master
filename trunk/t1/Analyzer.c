@@ -71,7 +71,6 @@ Advance( CHAR_T* argv)
         token->value = (WORD *) aux;
         token->code = _KEYWORD;
         
-        printf ("keyword\n");
         return token;
     }
     
