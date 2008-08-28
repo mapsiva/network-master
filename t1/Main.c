@@ -86,7 +86,6 @@ int main(int argc, char *argv[])
 	int count_pkt_tcp 	= 0;
 	int count_pkt_broad = 0;
 	int count_pkt_me	= 0;
-
 	
 	int is_broadcast;
 	int modo = 1;							/*indica o modo de funcionamento (BASIC)*/
@@ -99,12 +98,8 @@ int main(int argc, char *argv[])
 	
 	check_parameters(argc, argv, &translation, &modo, &npkgs_max, &position);
     
-    /*######################################################*/
 	inf = fopen(argv[1], "rb");
 	
-	
-
-
 	//return 0;
 	if (!inf) 
 		error_exit("Could not open file: %s\n", argv[1]);	
@@ -116,11 +111,7 @@ int main(int argc, char *argv[])
 		invert_file_header(&file_header);
 	
 	while (fread(&frame_header, sizeof(FRAME_HEADER), 1, inf) && npkgs <= npkgs_max) 
-	{
-		
-		
-		
-		
+	{	
 		if (file_header.magic_number != 0xa1b2c3d4) 
 			invert_pkt_header(&frame_header);
 		
@@ -131,14 +122,13 @@ int main(int argc, char *argv[])
 		/*Capturando um pacote ethernet*/
 		pkg_ethernet = (ETHERNET_HEADER *)pkt_buf;
 
-		
+		/*Verifica se o pacote satifaz os filtros*/
 		if(!filter (pkg_ethernet, argc, argv, position))
-		    exit(0);
+		    continue;
 		
 		npkgs++;
 
 		trace_ethernet (pkg_ethernet, qtd_pkt,  &frame_header, modo, &count_pkt_broad, &is_broadcast);
-
 		
 		/*Verifica o tipo do pacote ethernet*/
 		switch (ntohs (pkg_ethernet->type))
