@@ -1,11 +1,11 @@
 #ifndef IP_C_
 #define IP_C_
 #include "Types.h"
-#include "Ethernet.h"
 #include "Ip.h"	
 #include "Util.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <netdb.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
@@ -14,10 +14,9 @@
 #include <arpa/inet.h>
 
 CHAR_T*
-trace_ip( IP_HEADER * pkg, int translation, int modo, int *pkg_for_me)
+trace_ip( IP_HEADER * pkg, int translation, int modo, int *pkg_for_me, int broadcast)
 {
-    CHAR_T *ip, *name;
-    
+    CHAR_T *ip, *name;    
 
     struct ifreq ifr;
 	struct sockaddr_in saddr;
@@ -62,8 +61,7 @@ trace_ip( IP_HEADER * pkg, int translation, int modo, int *pkg_for_me)
 		printf("\n");	
 	}
 	else if(modo == VERB)
-	{
-		
+	{		
 		if (translation && (name = resolve_address(pkg->source_address)) != NULL )
 		{
 			printf("%s -> ", name);
@@ -76,7 +74,7 @@ trace_ip( IP_HEADER * pkg, int translation, int modo, int *pkg_for_me)
 			free (ip);
 		}
 		
-		if (ip_is_broadcast(&pkg->destination_address))
+		if (broadcast)
 		{
 			if (translation)
 				printf("(brodcast) ");

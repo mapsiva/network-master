@@ -11,7 +11,7 @@ typedef struct
 }ETHERNET_HEADER;		
 
 CHAR_T*
-trace_ethernet(ETHERNET_HEADER *, int,  FRAME_HEADER *, int, int *); 
+trace_ethernet(ETHERNET_HEADER *, int,  FRAME_HEADER *, int, int*, int*); 
 
 int is_broadcast(BYTE *);
 

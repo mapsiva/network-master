@@ -2,13 +2,13 @@
 #define ARP_C_
 #include "Arp.h"
 #include "Ip.h"
-#include "Ethernet.h"
 #include "Types.h"
 #include <netdb.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 CHAR_T*
-trace_arp( ARP_HEADER * pkg, int translation, int modo)
+trace_arp( ARP_HEADER * pkg, int translation, int modo, int broadcast)
 {
     CHAR_T *ip, *name;
     if (modo == VERB_EXT)
@@ -24,7 +24,7 @@ trace_arp( ARP_HEADER * pkg, int translation, int modo)
 		printf ("ARP: Sender’s hardware address \t= %.02X:%02X:%02X:%02X:%02X:%.02X\n", pkg->sender_hardware_addr[0], pkg->sender_hardware_addr[1], pkg->sender_hardware_addr[2], pkg->sender_hardware_addr[3], pkg->sender_hardware_addr[4], pkg->sender_hardware_addr[5]);	
 
 		ip = format_address(pkg->sender_ip_addr);
-		printf("ARP: Sender’s protocol address =  %s", ip );
+		printf("ARP: Sender’s protocol address  = %s", ip );
 		free (ip);
 		if (translation && (name = resolve_address(pkg->sender_ip_addr)) != NULL )
 		{
@@ -32,19 +32,17 @@ trace_arp( ARP_HEADER * pkg, int translation, int modo)
 			free(name);
 		}
 		
-		printf("\n");
-
-		printf ("ARP: Target hardware address \t= %02X:%02X:%02X:%02X:%02X:%02X %s\n", pkg->target_hardware_addr[0], pkg->target_hardware_addr[1], pkg->target_hardware_addr[2], pkg->target_hardware_addr[3], pkg->target_hardware_addr[4], pkg->target_hardware_addr[5], (is_broadcast(pkg->target_hardware_addr)?"(brodcast)":""));
+		printf ("\nARP: Target hardware address \t= %02X:%02X:%02X:%02X:%02X:%02X\n", pkg->target_hardware_addr[0], pkg->target_hardware_addr[1], pkg->target_hardware_addr[2], pkg->target_hardware_addr[3], pkg->target_hardware_addr[4], pkg->target_hardware_addr[5]);
 
 		ip = format_address(pkg->target_ip_addr);
-		printf("ARP: Target protocol address =  %s", ip );
+		printf("ARP: Target protocol address    = %s", ip );
 		free (ip);
 		if (translation && (name = resolve_address(pkg->target_ip_addr)) != NULL )
 		{
 			printf(", %s", name);
 			free(name);
 		}
-		printf("ARP:\n\n");
+		printf("\nARP:\n\n");
 	}
 	else if (modo == VERB)
 	{
@@ -62,7 +60,7 @@ trace_arp( ARP_HEADER * pkg, int translation, int modo)
 		}
 		
 		/*Resolving IP or Name of Target*/
-		if (ip_is_broadcast(&pkg->target_ip_addr))
+		if (broadcast)
 		{
 			if (translation)
 				printf("(brodcast) ");
