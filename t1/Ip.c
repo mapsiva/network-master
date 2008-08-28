@@ -128,8 +128,7 @@ resolve_address(WORD  address)
      {
      	name = (CHAR_T*) malloc (100);
         sprintf((char *)name, "%s", resolved->h_name);
-     }
-     
+     }     
      return name;
 }
 
@@ -148,7 +147,7 @@ format_address(WORD  address)
 void
 ip_view_flags (IP_HEADER * pkg)
 {  
-	printf("IP: Flags =  0x%X \n", pkg->fragment & BIN64);
+	printf("IP: Flags =  0x%X \n", (pkg->fragment & 0x0060) >> 5);
 	printf("IP: \t.%d.. .... = %s fragment\n", (pkg->fragment & BIN64) >> 6, ((pkg->fragment & BIN64) >> 6)?"don't":"may");
 	printf("IP: \t..%d. .... = %s fragment\n", (pkg->fragment & BIN32) >> 5, ((pkg->fragment & BIN32) >> 5)?"more":"last");
 }
@@ -166,7 +165,7 @@ ip_view_service (IP_HEADER * pkg)
 int 
 ip_is_broadcast (WORD *ip)
 {
-    return (*ip == 255) && (*(ip+1) == 255) && (*(ip+2) == 255) && (*(ip+3) == 255) ;
+    return (*ip == 255) && (*(ip+1) == 255) && (*(ip+2) == 255) && (*(ip+3) == 255);
 }
 
 char * get_precedence_name(SWORD service)
