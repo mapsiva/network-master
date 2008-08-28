@@ -103,17 +103,7 @@ int main(int argc, char *argv[])
 	inf = fopen(argv[1], "rb");
 	
 	
-<<<<<<< .mine
 
-=======
-	for (i = position; i < argc; i++)
-	{   
-	      
-	    Token *token = Advance ((CHAR_T *)argv[i]);
-	   
-	    push (stack, token); 
-	   
-	}
 
 	//return 0;
 	if (!inf) 
