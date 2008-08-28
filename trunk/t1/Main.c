@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 
 		/*Verifica se o pacote satifaz os filtros*/
 
-		if(!filter (pkg_ethernet, argc, argv, position))
+		if(!filter (pkg_ethernet, argc, argv, position) && position == (argc+1))
 		    continue;
 		
 		npkgs++;
