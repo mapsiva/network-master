@@ -10,6 +10,8 @@
 #include "Analyzer.h"
 #include "Stack.h"
 #include "Types.h"
+#include "Filter.h"
+
 #include <strings.h>
 
 #define BUF_SIZE	2000
@@ -76,8 +78,6 @@ int main(int argc, char *argv[])
     IP_HEADER * pkg_ip;      
 	TCP_HEADER * pkg_tcp;
 	
-	Stack * stack; 
-	
 	int qtd_pkt 		= 0;	
 	int count_pkt_arp 	= 0;
 	int count_pkt_ip 	= 0;
@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 	int count_pkt_broad = 0;
 	int count_pkt_me	= 0;
 
-	int i;
+	
 	int is_broadcast;
 	int modo = 1;							/*indica o modo de funcionamento (BASIC)*/
 	int translation = 1;					/*indica que será utilizado a traducao de nomes*/
@@ -102,8 +102,10 @@ int main(int argc, char *argv[])
     /*######################################################*/
 	inf = fopen(argv[1], "rb");
 	
-	stack = make_stack();
 	
+<<<<<<< .mine
+
+=======
 	for (i = position; i < argc; i++)
 	{   
 	      
@@ -112,17 +114,7 @@ int main(int argc, char *argv[])
 	    push (stack, token); 
 	   
 	}
-	/*
-	if(FindKeyword ("int"))
-	    printf("encontrou\n");
-	else
-	    printf("Nao encontrou\n");
-	*/    
-	flush (stack);
-	
-	free(stack);
-	/*######################################################*/
-	
+
 	//return 0;
 	if (!inf) 
 		error_exit("Could not open file: %s\n", argv[1]);	
@@ -135,7 +127,9 @@ int main(int argc, char *argv[])
 	
 	while (fread(&frame_header, sizeof(FRAME_HEADER), 1, inf) && npkgs <= npkgs_max) 
 	{
-		npkgs++;
+		
+		
+		
 		
 		if (file_header.magic_number != 0xa1b2c3d4) 
 			invert_pkt_header(&frame_header);
@@ -146,7 +140,15 @@ int main(int argc, char *argv[])
 		
 		/*Capturando um pacote ethernet*/
 		pkg_ethernet = (ETHERNET_HEADER *)pkt_buf;
+
+		
+		if(!filter (pkg_ethernet, argc, argv, position))
+		    exit(0);
+		
+		npkgs++;
+
 		trace_ethernet (pkg_ethernet, qtd_pkt,  &frame_header, modo, &count_pkt_broad, &is_broadcast);
+
 		
 		/*Verifica o tipo do pacote ethernet*/
 		switch (ntohs (pkg_ethernet->type))
