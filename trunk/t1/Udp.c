@@ -50,7 +50,7 @@ view_data_udp ( UDP_HEADER * pkg)
         printf("\"");
         for(j = 0; j< 16; j++ )
         {
-            if((int)(*byteCHAR) <=20)
+            if((int)(*byteCHAR) <=32)
                 printf(".");
             else
                 printf("%c", (char)(*(byteCHAR)));

@@ -3,10 +3,6 @@
 #include "Types.h"
 #include "strings.h"
 
-
-
-
-
 WORD to_word(void * value)
 {
 	return (WORD) ((void*)value); 
