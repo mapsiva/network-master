@@ -56,7 +56,7 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                 break;
              case _OPERATOR:
                 if( stack->length < 2 )
-                    error_exit ("no data for operation");
+                    error_exit ("No data for operation [+,-,* or /].\n");
                 
                 op1 = pop( stack );
                 op2 = pop( stack );
@@ -76,7 +76,9 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                         data = ((WORD)(op1->value)%(WORD)(op2->value));
                     	break;
                     case _DIV:
-                        data = ((WORD)(op1->value)/(WORD)(op2->value));
+                    	if (op2->value == 0)
+                    		error_exit("Error: Division by zero!\n");
+                        data = ((WORD)(op1->value)/(WORD)(op2->value));                        
                     case _EQ:
                         data = ((DWORD)(op1->value)==(DWORD)(op2->value));
                         break;
@@ -91,12 +93,14 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                     case _EQ:
                     	//printf("eq ");
                         if( stack->length < 2 )
-                            error_exit ("no data for operation [EQ]");
+                            error_exit ("No data for operation [EQ].\n");
                         op1 = pop( stack );
                         op2 = pop( stack );
                        
                         a = op1->value;
                         b = op2->value;
+                        
+                        //printf("[%llu , %llu] = %d", a, b, (a==b));
                        
                         if(a == b)
                              push (stack, 1);
@@ -106,7 +110,7 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                         break;
                     case _AND:
                         if( stack->length < 2 )
-                            error_exit ("no data for operation [AND]");
+                            error_exit ("No data for operation [AND].\n");
                             
                         op1 = pop( stack );
                         op2 = pop( stack );
@@ -121,7 +125,7 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                         break;
                     case _OR:
                         if( stack->length < 2 )
-                            error_exit ("no data for operation [OR]");
+                            error_exit ("No data for operation [OR].\n");
                         
                         
                         op1 = pop( stack );
@@ -136,7 +140,7 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                         break;
                     case _NOT:
                     	if( stack->length < 1 )
-                            error_exit ("no data for operation [NOT]");                            
+                            error_exit ("No data for operation [NOT].\n");                            
                         op1 = pop( stack );                                                        
                         push(stack, !op1->value);                            
                         break;                    
@@ -255,12 +259,12 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                     	if ((unsigned int)ntohs(pkg->type) == IP && pkg_ip->protocol == ICMP)
                     		push (stack, (WORD)(pkg_icmp->type));
                     	else
-                    		push (stack, 0);
+                    		push (stack, -1);
                         break;
                 }
                 break;
         	default:
-        		printf("unknow");
+        		printf("Unknow\n");
         }
 	}
 	
