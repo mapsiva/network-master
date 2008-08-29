@@ -20,7 +20,7 @@ Advance( CHAR_T* argv)
     
     int aux;
    
-    
+   
     if(is_ip(argv))
     {
         token->value = (*to_ip_byte (argv));
@@ -28,12 +28,12 @@ Advance( CHAR_T* argv)
         
         return token;
     }
-     
+      
     if(is_hexa(argv))
     {
-        token->value = (*to_mac_byte (argv));
+        token->value = strtoul((const char *)argv, NULL, 16);
         token->code = _HEXA;
-        
+       
         return token;
     }
      
@@ -44,7 +44,7 @@ Advance( CHAR_T* argv)
         
         return token;
     }
-    
+   
     if(is_decimal(argv))
     {
         token->value = (WORD) atoi ((const char *)argv);
@@ -138,9 +138,14 @@ is_hexa ( CHAR_T * hex )
 int
 is_decimal ( CHAR_T * dec )
 {
-     if (strtoul((const char *)dec, NULL, 10) && !strpbrk(".",(char *)dec) && !strpbrk(":",(char *)dec))
-        return 1;
-    return 0;
+    int i;
+    
+    for (i = 0; i < strlen ((char *)dec); i++)
+    {
+        if(!isdigit(*(dec+i)))          
+           return 0;
+    }
+    return 1;
 }
 
 int 
@@ -159,10 +164,11 @@ is_mac_address( const CHAR_T * mac)
         
         if(!strtoul((const char *)b, NULL, 16) && (toupper(*b) != '0' || toupper(*(b+1)) != '0'))
             return 0;
-       
+     
         b = strtok (NULL, ":");
+         
     }
-    
+     
     return (count < 6)?0:1;
 }
 
@@ -214,7 +220,7 @@ is_operator ( CHAR_T * op )
      if ((*op == '/'))
         return _DIV;
         
-     if ((*op == '/'))
+     if ((*op == '='))
         return _EQ;
     return 0;
 }
