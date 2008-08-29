@@ -18,60 +18,51 @@ Advance( CHAR_T* argv)
     Token * token = (Token *)malloc (sizeof(Token));
     tKeywordTableEntry *key_word;
     
-    int aux;
-   
+    int aux;   
    
     if(is_ip(argv))
     {
         token->value = (*to_ip_byte (argv));
         token->code = _ADDRESS_IP;
-        
-        return token;
+        token->name = argv;
     }
-      
-    if(is_hexa(argv))
+    else if(is_hexa(argv))
     {
         token->value = strtoul((const char *)argv, NULL, 16);
         token->code = _HEXA;
-       
-        return token;
+        token->name = argv;
     }
-     
-    if(is_mac_address(argv))
+    else if(is_mac_address(argv))
     {
         token->value = (*to_mac_byte (argv));
         token->code = _MAC;
-        
-        return token;
+        token->name = argv;
     }
-   
-    if(is_decimal(argv))
+    else if(is_decimal(argv))
     {
         token->value = (WORD) atoi ((const char *)argv);
-        token->code = _NUMBER;
-        //printf("%d ", atoi ((const char *)argv));
-       
-        return token;
+        token->code = _NUMBER;       
     }
-    
-    if((aux = is_operator(argv)))
+    else if((aux = is_operator(argv)))
     {
         token->value = (WORD) aux;
         token->code = _OPERATOR;
-      
-        return token;
+        token->name = argv;
     }  
-    
-    if((key_word = FindKeyword ((const char *)argv)))
+    else if((key_word = FindKeyword ((const char *)argv)))
     {        
         token->name = key_word->Name;
         token->value = (WORD) key_word->Token;
         token->code = key_word->Code;
-        
-        return token;
+    }
+    else
+    {
+		token->code = 0;
+		token->name = argv;
+		token->value = 0;
     }
     
-    return 0;
+    return token;
 }
 
 int
@@ -208,7 +199,7 @@ is_operator ( CHAR_T * op )
      if ((*op == '*'))
         return _MULT;
      
-     if (( *op == '+') )
+     if (( *op == '+'))
         return _SUM;
      
      if ((*op == '-'))

@@ -16,7 +16,7 @@ trace_udp( UDP_HEADER * pkg, int modo)
 		printf("UDP: Source Port = %u\n", ntohs(pkg->src_port));
 		printf("UDP: Destination Port = %u\n", ntohs(pkg->dest_port));
 		printf("UDP: Length = %u\n", ntohs(pkg->length));
-		printf("UDP: Cheksum = %u\n", ntohs(pkg->checksum));
+		printf("UDP: Cheksum = 0%04X\n", ntohs(pkg->checksum));
 		
 		view_data_udp ( pkg );
 		

@@ -16,7 +16,7 @@ trace_icmp( ICMP_HEADER * pkg, int translation, int modo)
 		printf("ICMP:\n");
 		view_type_icmp ( pkg, modo);
 		printf("ICMP: code = %u\n", pkg->code);
-		printf("ICMP: Cheksum = %04X\n", ntohs(pkg->checksum));
+		printf("ICMP: Cheksum = 0%04X\n", ntohs(pkg->checksum));
 		printf("ICMP:\n\n");
 	}
 	else if (modo == VERB)
