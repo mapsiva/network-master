@@ -39,7 +39,10 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
 	{   
          //printf("[%s][%d] ", argv[i], position);
         token = Advance ((CHAR_T *)argv[i]);
-         //printf("DATA_> %d\n", (int)token->code);
+        
+        if(!token)
+             error_exit ("Correct sintaxe is \"xnoop <filename> [<options>] [<filter>]\"\n");
+            
         switch (token->code)
         {
             case _NUMBER:
@@ -74,6 +77,8 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                     	break;
                     case _DIV:
                         data = ((WORD)(op1->value)/(WORD)(op2->value));
+                    case _EQ:
+                        data = ((DWORD)(op1->value)==(DWORD)(op2->value));
                         break;
                 }            
                 push (stack, data);               
@@ -92,9 +97,6 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                        
                         a = op1->value;
                         b = op2->value;
-                        
-                        
-                        data = (a == b);
                        
                         if(a == b)
                              push (stack, 1);
@@ -145,22 +147,14 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                     		push (stack, 0);
                     	break;
                     case _ARP:        
-                    	//printf("arp\n");   
-                    	//printf("%d", typeid(ntohs(pkg->type)).name());    
-                    	//printf("\n%d\nasas", (int)pkg);
+ 
                     	if ((unsigned int)ntohs(pkg->type) == ARP)
-                    	{
-                    		//printf("pkg = arp");                    		
                     		push (stack, 1);
-                    	}
-                    	else
-                    	{
-                    		//printf("pkg != arp");                    		
+                    	else                  		
                     		push (stack, 0);
-                    	}
                     	break;
                     case _UDP:
-                    	//printf("udp\n");
+                    
                     	if ((unsigned int)ntohs(pkg->type) == IP && pkg_ip->protocol == UDP)
                     		push (stack, 1);
                     	else
@@ -179,107 +173,90 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                     		push (stack, 0);
                     	break;
                     case _ETHERTO:
-
-                    	printf("etherto\n");
-                    	exit(0);
+                    case _ETHERFROM:
+                    	
                     	_mac = (DWORD *) malloc(sizeof(DWORD));
                     	
                     	(*_mac) &= 0xF;
                     	
                     	j = (BYTE *)_mac;
                     	
-                    	for (i=0; i<6; i++)
-                    		*(j + i) = *(pkg->receiver + i);
-                    	
-                    	push (stack, (*_mac)); 
-                    	
-                    	op1 = pop (stack);
-                    	printf("%llu\n", op1->value);
-                    	exit(0);                   	
-
-                    	break;
-                    case _ETHERFROM:
-                    	push (stack, (*pkg->sender));
+                    	int k;
+                    	for (k=0; k<6; k++)
+                    	{
+                    		if((int)token->value == _ETHERTO)
+                    		    *(j + k) = *(pkg->receiver + k);
+                    		else
+                    		    *(j + k) = *(pkg->sender + k);
+                    		
+                    	}
+                    	push (stack, (*_mac));  	
                     	break;
                     case _ETHERTYPE:
-                    	push (stack, (unsigned int)ntohs(pkg->type));
-                    	//op1 = pop (stack);
-                    	//printf("%llu\n", op1->value);
-                    	//exit(0);
+                        if((unsigned int)ntohs(pkg->type) == IP)
+                    	    push (stack, IP );
+                    	else
+                    	    push (stack, ARP );
+                    	    
+                    	
                     	break;
                     case _IPTO:
                     	if (ntohs(pkg->type) == IP)
                     		push (stack, pkg_ip->destination_address);
                     	else
                     		push (stack, 0);
-                    	//op1 = pop (stack);
-                    	//printf("%llu\n", op1->value);
-                    	//exit(0);                    	
+                    	                    	
                     	break;
                     case _IPFROM:
                     	if (ntohs(pkg->type) == IP)
                     		push (stack, pkg_ip->source_address);
                     	else
                     		push (stack, 0);
-                    	//op1 = pop (stack);
-                    	//printf("%llu\n", op1->value);
-                    	//exit(0);                    	
+                    	                    	
                     	break;
                     case _IPPROTO:                    	
+                    	
                     	if (ntohs(pkg->type) == IP)
                     		push (stack, (unsigned int)pkg_ip->protocol);
                     	else
                     		push (stack, 0);
                     	
-                    	//op1 = pop (stack);
-                    	//printf("%llu\n", op1->value);
-                    	//exit(0);                    	
+                    	                  	
                     	break;
                     case _UDPTOPORT:
-                    	if (pkg_ip->protocol == UDP)
+                    	if ((unsigned int)ntohs(pkg->type) == IP && pkg_ip->protocol == UDP)
                     		push (stack, (unsigned int)ntohs(pkg_udp->dest_port));
                     	else
                     		push (stack, 0);
                     	break;
-                    	//op1 = pop (stack);
-                    	//printf("%llu\n", op1->value);
-                    	//exit(0);
+                    	
                     case _UDPFROMPORT:
-                    	if (pkg_ip->protocol == UDP)
+                    	if ((unsigned int)ntohs(pkg->type) == IP && pkg_ip->protocol == UDP)
                     		push (stack, (unsigned int)ntohs(pkg_udp->src_port));
                     	else
                     		push (stack, 0);
                     	break;
-                    	//op1 = pop (stack);
-                    	//printf("%llu\n", op1->value);
-                    	//exit(0);
+                    	
                     case _TCPTOPORT:
-                    	if (pkg_ip->protocol == TCP)
+                    	if ((unsigned int)ntohs(pkg->type) == IP && pkg_ip->protocol == TCP)
                     		push (stack, (unsigned int)ntohs(pkg_tcp->dest_port));
                     	else
                     		push (stack, 0);
                     	break;
-                    	//op1 = pop (stack);
-                    	//printf("%llu\n", op1->value);
-                    	//exit(0);
+                    	
                     case _TCPFROMPORT:
-                    	if (pkg_ip->protocol == TCP)
+                    	if ((unsigned int)ntohs(pkg->type) == IP && pkg_ip->protocol == TCP)
                     		push (stack, (unsigned int)ntohs(pkg_tcp->src_port));
                     	else
                     		push (stack, 0);
                     	break;
-                    	//op1 = pop (stack);
-                    	//printf("%llu\n", op1->value);
-                    	//exit(0);
+             
                     case _ICMPTYPE:
-                    	if (pkg_ip->protocol == ICMP)
-                    		push (stack, (unsigned int)ntohs(pkg_icmp->type));
+                    	if ((unsigned int)ntohs(pkg->type) == IP && pkg_ip->protocol == ICMP)
+                    		push (stack, (WORD)(pkg_icmp->type));
                     	else
                     		push (stack, 0);
                         break;
-                        //op1 = pop (stack);
-                    	//printf("%llu\n", op1->value);
-                    	//exit(0);
                 }
                 break;
         	default:
@@ -293,6 +270,9 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
 		
 		return 1;
 	}
+	else if (stack->length > 1)
+	    error_exit ("Correct sintaxe is \"xnoop <filename> [<options>] [<filter>]\"\n");
+	
 	
 	flush(stack);
     return 0;
