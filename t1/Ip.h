@@ -1,25 +1,13 @@
-/*
-
-    0                   1                   2                   3   
-    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |Version|  IHL  |Type of Service|          Total Length         |
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |         Identification        |Flags|      Fragment Offset    |
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |  Time to Live |    Protocol   |         Header Checksum       |
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |                       Source Address                          |
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |                    Destination Address                        |
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |                    Options                    |    Padding    |
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-
-	IP HEADER
-
+/**
+	Universidade Federal de Mato Grosso do Sul
+	Mestrado em Ciência da Computação DCT - UFMS
+	Redes de Computadores 2008
+	
+	Márcio Aparecido Inacio da Silva
+	Maxwell Sampaio dos Santos
+	
+	Xnoop - Analizador de Pacotes [Trabalho 1]
 */
-
 #ifndef IP_H_
 #define IP_H_
 #include "Types.h"
