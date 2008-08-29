@@ -4,6 +4,8 @@
 #include "Types.h"
 #include <netdb.h>
 #include <stdio.h>
+#include <string.h>
+
 
 CHAR_T*
 trace_tcp( TCP_HEADER * pkg, int modo)
@@ -27,7 +29,7 @@ trace_tcp( TCP_HEADER * pkg, int modo)
 		view_flags ( pkg );
 		
 		printf("TCP: Window = %u\n", ntohs(pkg->window));
-		printf("TCP: Cheksum = %u\n", ntohs(pkg->checksum));
+		printf("TCP: Cheksum = 0%04X\n", ntohs(pkg->checksum));
 		printf("TCP: Urgent Pointer = %u\n", ntohs(pkg->urgent_pointer));
 	   
 		if ((((pkg->offset >> 12)& 0x000F)<< 2) == sizeof (WORD))
@@ -62,8 +64,8 @@ view_service( SWORD port, int modo)
     }
     else if (modo == VERB)
     {
-    	if(serv != NULL)
-			printf("(%s) ", serv->s_name);
+    	if(serv != NULL && ntohs( port )<=1024)
+			printf("%s ", serv->s_name);
     }
 }
 

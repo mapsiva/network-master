@@ -37,17 +37,12 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
     
     for (i = position; i < argc; i++)
 	{   
-         //printf("[%s][%d] ", argv[i], position);
-        token = Advance ((CHAR_T *)argv[i]);
-        
-        if(!token)
-             error_exit ("Correct sintaxe is \"xnoop <filename> [<options>] [<filter>]\"\n");
+        token = Advance ((CHAR_T *)argv[i]);       
             
         switch (token->code)
         {
             case _NUMBER:
             case _HEXA:
-            	//printf("%llu ", token->value);
                 push(stack, token->value);
                 break;
             case _ADDRESS_IP:
@@ -56,7 +51,7 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                 break;
              case _OPERATOR:
                 if( stack->length < 2 )
-                    error_exit ("No data for operation [+,-,* or /].\n");
+                    error_exit ("Error: Incorrect Filter. No data for operation [%s].\n", token->name);
                 
                 op1 = pop( stack );
                 op2 = pop( stack );
@@ -86,21 +81,17 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                 push (stack, data);               
                 break;
             case _BIN_OPERATOR:
-            case _KEYWORD:
-                //printf ("keyword\n");                                
+            case _KEYWORD:                       
                 switch ((int)token->value)
                 {
                     case _EQ:
-                    	//printf("eq ");
                         if( stack->length < 2 )
-                            error_exit ("No data for operation [EQ].\n");
+                            error_exit ("Error: Incorrect Filter. No data for operation [EQ].\n");
                         op1 = pop( stack );
                         op2 = pop( stack );
                        
                         a = op1->value;
                         b = op2->value;
-                        
-                        //printf("[%llu , %llu] = %d", a, b, (a==b));
                        
                         if(a == b)
                              push (stack, 1);
@@ -110,7 +101,7 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                         break;
                     case _AND:
                         if( stack->length < 2 )
-                            error_exit ("No data for operation [AND].\n");
+                            error_exit ("Error: Incorrect Filter. No data for operation [AND].\n");
                             
                         op1 = pop( stack );
                         op2 = pop( stack );
@@ -125,7 +116,7 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                         break;
                     case _OR:
                         if( stack->length < 2 )
-                            error_exit ("No data for operation [OR].\n");
+                            error_exit ("Error: Incorrect Filter. No data for operation [OR].\n");
                         
                         
                         op1 = pop( stack );
@@ -140,7 +131,7 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                         break;
                     case _NOT:
                     	if( stack->length < 1 )
-                            error_exit ("No data for operation [NOT].\n");                            
+                            error_exit ("Error: Incorrect Filter. No data for operation [NOT].\n");                            
                         op1 = pop( stack );                                                        
                         push(stack, !op1->value);                            
                         break;                    
@@ -150,15 +141,13 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                     	else
                     		push (stack, 0);
                     	break;
-                    case _ARP:        
- 
+                    case _ARP:
                     	if ((unsigned int)ntohs(pkg->type) == ARP)
                     		push (stack, 1);
                     	else                  		
                     		push (stack, 0);
                     	break;
                     case _UDP:
-                    
                     	if ((unsigned int)ntohs(pkg->type) == IP && pkg_ip->protocol == UDP)
                     		push (stack, 1);
                     	else
@@ -178,7 +167,6 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                     	break;
                     case _ETHERTO:
                     case _ETHERFROM:
-                    	
                     	_mac = (DWORD *) malloc(sizeof(DWORD));
                     	
                     	(*_mac) &= 0xF;
@@ -201,22 +189,18 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                     	    push (stack, IP );
                     	else
                     	    push (stack, ARP );
-                    	    
-                    	
                     	break;
                     case _IPTO:
                     	if (ntohs(pkg->type) == IP)
                     		push (stack, pkg_ip->destination_address);
                     	else
-                    		push (stack, 0);
-                    	                    	
+                    		push (stack, 0);	
                     	break;
                     case _IPFROM:
                     	if (ntohs(pkg->type) == IP)
                     		push (stack, pkg_ip->source_address);
                     	else
-                    		push (stack, 0);
-                    	                    	
+                    		push (stack, 0);	
                     	break;
                     case _IPPROTO:                    	
                     	
@@ -224,8 +208,6 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                     		push (stack, (unsigned int)pkg_ip->protocol);
                     	else
                     		push (stack, 0);
-                    	
-                    	                  	
                     	break;
                     case _UDPTOPORT:
                     	if ((unsigned int)ntohs(pkg->type) == IP && pkg_ip->protocol == UDP)
@@ -264,7 +246,7 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                 }
                 break;
         	default:
-        		printf("Unknow\n");
+        		error_exit("Error: [%s] unknow\n", token->name);
         }
 	}
 	
@@ -275,8 +257,7 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
 		return 1;
 	}
 	else if (stack->length > 1)
-	    error_exit ("Correct sintaxe is \"xnoop <filename> [<options>] [<filter>]\"\n");
-	
+	    error_exit ("Error: Incorrect Filter\n");
 	
 	flush(stack);
     return 0;

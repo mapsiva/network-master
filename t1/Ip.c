@@ -153,7 +153,7 @@ ip_view_flags (IP_HEADER * pkg)
 void
 ip_view_service (IP_HEADER * pkg)
 { 
-	printf("IP: Type of service = 0x%X \n", pkg->type_service);
+	printf("IP: Type of service = 0x%02X \n", pkg->type_service);
 	printf("IP: \t%u%u%u. .... = %s\n", (pkg->type_service & BIN128) >> 7, (pkg->type_service & BIN64) >> 6, (pkg->type_service & BIN32) >> 5, get_precedence_name(pkg->type_service));
 	printf("IP: \t...%d .... = %s delay\n", (pkg->type_service & BIN16) >> 4, ((pkg->type_service & BIN16) >> 4)?"low":"normal");
 	printf("IP: \t.... %d... = %s throughput\n", (pkg->type_service & BIN8) >> 3, ((pkg->type_service & BIN8) >> 3)?"high":"normal");
