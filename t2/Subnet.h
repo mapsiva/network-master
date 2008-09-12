@@ -114,8 +114,12 @@ char *ip2str(char *, unsigned);
 
 void read_net_cfg(char *, u_short, u_short);
 
-void print_if_info();
+int print_if_info(int);
 
 int sub_xnoop(char *[], char *);
+
+int sub_ifconfig( char* );
+
+int sub_if( char* );
 
 #endif 
