@@ -22,6 +22,7 @@
 
 #include "Subnet.h"
 #include "Xnoop.h"
+#include "Analyzer.h"
 
 /* */
 #define MAX_PKT_SZ	65536
@@ -41,9 +42,9 @@ int passive_UDP_socket(u_short port)
     sin.sin_addr.s_addr = my_ip;
     sin.sin_port = port;    
     if ((sockd = socket(PF_INET, SOCK_DGRAM, 0)) < 0) 
-	error_exit("Can't create socket: %s\n", strerror(errno)); 
+		error_exit("Can't create socket: %s\n", strerror(errno)); 
     if (bind(sockd, (struct sockaddr *)&sin, sizeof(sin)) < 0) 
-	error_exit("Can't bind to port %d: %s\n", ntohs(port), strerror(errno));
+		error_exit("Can't bind to port %d: %s\n", ntohs(port), strerror(errno));
     return sockd;
 }
 /* */
@@ -58,29 +59,24 @@ void *subnet_rcv(void *ptr)
     sockd = passive_UDP_socket(port);
     eth_h = (ETHER_HEADER*)&in_buf[0];
     while(1) {
-	int rv, riface;
-	
-	alen = sizeof (fsin);
-	rv = recvfrom(sockd, in_buf, MAX_PKT_SZ, 0,
-		      (struct sockaddr *)&fsin, &alen);	
-	if (rv < 0) 
-	    error_exit("error - recvfrom: %s\n", strerror(errno));
-	riface = net2iface[eth_h->net];
-	if (riface < 0) 
-	    error_exit("Packet received from unknown interface\n");
-	else {
-	  if (!memcmp(eth_h->da, broad_eth,6) ||
-	      !memcmp(eth_h->da, ifaces[riface].mac, 6))    {
-	      /* The packet must be processed */
-	      ifaces[riface].pkt_rx++;
-	  }
-	  printf("Packet received (%d)\n", rv);
-	}
+		int rv, riface;
+		alen = sizeof (fsin);
+		rv = recvfrom(sockd, in_buf, MAX_PKT_SZ, 0, (struct sockaddr *)&fsin, &alen);	
+		if (rv < 0) 
+			error_exit("error - recvfrom: %s\n", strerror(errno));
+		riface = net2iface[eth_h->net];
+		if (riface < 0) 
+			error_exit("Packet received from unknown interface\n");
+		else 
+		{
+			if (!memcmp(eth_h->da, broad_eth,6) || !memcmp(eth_h->da, ifaces[riface].mac, 6))			  
+			  ifaces[riface].pkt_rx++; /* The packet must be processed */
+			printf("Packet received (%d)\n", rv);
+		}
     }
 }
 /* */
-void send_pkt(u_short len, u_char iface, u_char *da, 
-	      u_short type, u_char *data)
+void send_pkt(u_short len, u_char iface, u_char *da, u_short type, u_char *data)
 {
     ETHER_PKT *pkt;
     PKT_QUEUE *qaux;
@@ -99,7 +95,8 @@ void send_pkt(u_short len, u_char iface, u_char *da,
     sem_wait(&sem_queue);
     if (queue_head) 
 		queue_tail = queue_tail->next = qaux;
-    else {
+    else 
+    {
 		queue_head = queue_tail = qaux;
 		sem_post(&sem_data_ready);
     }    
@@ -114,14 +111,14 @@ void *subnet_send(void *ptr)
     NET_HOSTS *phost;
     
     if ((sockd = socket(PF_INET, SOCK_DGRAM, 0)) < 0) 
-	error_exit("Can't create socket: %s\n", strerror(errno)); 
+		error_exit("Can't create socket: %s\n", strerror(errno)); 
     while (1) {
 		sem_wait(&sem_data_ready);
 		while (1) {
 			sem_wait(&sem_queue);
 			if (queue_head == NULL) {
-			sem_post(&sem_queue);
-			break;
+				sem_post(&sem_queue);
+				break;
 			}
 			pkt = queue_head;
 			queue_head = queue_head->next;
@@ -135,8 +132,8 @@ void *subnet_send(void *ptr)
 				sin.sin_addr.s_addr = phost[i].ip;
 				aux = sendto(sockd, &pkt->pkt->net, pkt->pkt->len, 0,
 						 (struct sockaddr *)&sin, sizeof(sin));
-			if (aux < 0)
-				printf("Error sending pkt: %s\n", strerror(errno));
+				if (aux < 0)
+					printf("Error sending pkt: %s\n", strerror(errno));
 			}
 			ifaces[pkt->pkt->iface].pkt_tx++;
 			free(pkt->pkt);
@@ -152,8 +149,8 @@ void str2eth(char *s, u_char addr[])
     
     p = strtok(s, ":");
     for (i = 0; i < 5; i++) {
-	addr[i] = strtol(p, NULL, 16);
-	p = strtok(NULL, ":");
+		addr[i] = strtol(p, NULL, 16);
+		p = strtok(NULL, ":");
     }
     addr[i] = strtol(p, NULL, 16);
 }
@@ -178,54 +175,200 @@ void read_net_cfg(char *fname, u_short port, u_short iface)
     p = ifaces[iface].hosts;
     first = 1;
     while (fgets(line, 100, cfg_file)) {
-        char *s;
-	
-	if (line[0] != '#') {
-	    if (first) { /* First line != # has the network number */
-		int net = atoi(line);
-		net2iface[net]    = iface;
-		ifaces[iface].net = net;
-		first = 0;
-	    }
-	    else {
-		s = strtok(line, ",");
-		p->port = ntohs(atoi(s));
-		s = strtok(NULL, ",");
-		p->ip   = inet_addr(s);
-		if (p->port == port) {
-		    my_ip  = p->ip;
-		    s = strtok(NULL, ",");
-		    ifaces[iface].mtu = atoi(s);
-		    s = strtok(NULL, ",");
-		    str2eth(s, ifaces[iface].mac);
+        char *s;	
+		if (line[0] != '#') {
+			if (first) { /* First line != # has the network number */
+				int net = atoi(line);
+				net2iface[net]    = iface;
+				ifaces[iface].net = net;
+				first = 0;
+			}
+			else 
+			{
+				s = strtok(line, ",");
+				p->port = ntohs(atoi(s));
+				s = strtok(NULL, ",");
+				p->ip   = inet_addr(s);
+				if (p->port == port) {
+					my_ip  = p->ip;
+					s = strtok(NULL, ",");
+					ifaces[iface].mtu = atoi(s);
+					s = strtok(NULL, ",");
+					str2eth(s, ifaces[iface].mac);
+				}
+				ifaces[iface].nhosts++;
+				p++;
+			}
 		}
-		ifaces[iface].nhosts++;
-		p++;
-	    }
-	}
     }
 }
+
 /* */
-void print_if_info()
+int sub_ifconfig(char *b)
+{
+	unsigned int id_iface = -1;
+	unsigned int tam;
+	
+	DWORD* end_ip = 0;
+	DWORD* end_mask = 0;
+	
+	char *aux1;
+	char *aux2;
+	
+	//Capturando os parâmetros passados juntamente com o ifconfig
+	tam = strlen(b);
+	b[tam-1] = ' ';
+	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o ifconfig*/
+	
+	/*Capturando o id da interface*/
+	if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)	
+	{
+		if (!is_decimal ((CHAR_T *)aux2))
+		{
+			printf("Incorret Interface.");
+			if (nifaces > 0)
+				printf(" Interfaces between 0 and %d", (nifaces-1));
+			return 0;			
+		}
+		
+		id_iface = strtoul((const char *)aux2, NULL, 10);
+		
+		if (id_iface < 0 || id_iface >= nifaces)
+		{
+			printf("Incorrect interface.");
+			if (nifaces > 0)
+				printf(" Interfaces between 0 and %d", (nifaces-1));
+			return 0;
+		}		
+		
+		/*Capturando o end IP da interface*/
+		if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)	
+		{
+			end_ip = to_ip_byte((CHAR_T *)aux2);
+			
+			if (!end_ip)
+			{
+				printf("Incorrect address ip.");
+				return 0;
+			}
+			
+			/*Capturando a MASK da interface*/
+			if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)	
+			{
+				end_mask = to_ip_byte((CHAR_T *)aux2);
+				
+				if (!end_mask)
+				{
+					printf("Incorrect address mask network.");
+					return 0;
+				}				
+				ifaces[id_iface].mask = (unsigned) (*end_mask);				
+			}
+			ifaces[id_iface].ip = (unsigned) (*end_ip);
+		}
+		print_if_info(id_iface);	//Exibir informacoes de apenas uma interface
+	}
+		
+	return 1;
+}
+
+int sub_if( char* b)
+{
+	unsigned int id_iface = -1;
+	unsigned int tam;
+	
+	char *aux1;
+	char *aux2;
+	
+	//Capturando os parâmetros passados juntamente com o if
+	tam = strlen(b);
+	b[tam-1] = ' ';
+	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o if*/
+	
+	/*Capturando o id da interface*/
+	if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)	
+	{
+		if (!is_decimal ((CHAR_T *)aux2))
+		{
+			printf("Incorret Interface.");
+			if (nifaces > 0)
+				printf(" Interfaces between 0 and %d", (nifaces-1));
+			return 0;			
+		}
+		
+		id_iface = strtoul((const char *)aux2, NULL, 10);
+		
+		if (id_iface < 0 || id_iface >= nifaces)
+		{
+			printf("Incorret Interface.");
+			if (nifaces > 0)
+				printf(" Interfaces between 0 and %d", (nifaces-1));
+			return 0;
+		}
+		
+		/*Capturando a opção escolhida para a interface (down ou up)*/
+		if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)	
+		{
+			if (!strncasecmp(aux2, "DOWN", 4) || !strncasecmp(aux2, "UP", 2))
+			{
+				if (!strncmp(aux2, "down", 4))
+					ifaces[id_iface].up = 0;
+				else
+					ifaces[id_iface].up = 1;
+			}
+			else
+			{
+				printf("asdasdInvalid Comand. Sintaxe Correct is: if <interface> down|up");
+				return 0;
+			}
+		}
+	}
+	else
+		printf("Invalid Comand. Sintaxe Correct is: if <interface> down|up");
+	
+	return 0;
+}
+
+/* */
+int print_if_info(int id_iface)
 {
     int i;
     char ip_s[16], bcast_s[16], mask_s[16];
     
-    for (i = 0; i < nifaces; i++) {
-	u_char *pb;
-	printf("\nif%d\tHWaddr %02X:%02X:%02X:%02X:%02X:%02X\n",
-	       i, ifaces[i].mac[0], ifaces[i].mac[1], ifaces[i].mac[2],
-	       ifaces[i].mac[3], ifaces[i].mac[4], ifaces[i].mac[5]);
-	pb = (u_char *)&ifaces[i].ip;
-	printf("\tinet addr: %s Bcast: %s Mask: %s\n",
-	       ip2str(ip_s, ifaces[i].ip),
-	       ip2str(bcast_s, ifaces[i].ip_bcast),
-	       ip2str(mask_s, ifaces[i].mask));
-	printf("\t%s MTU: %d\n", ifaces[i].up ? "UP" : "DOWN",
-	       ifaces[i].mtu);
-	printf("\tRX packets: %d TX packet: %d\n",
-	       ifaces[i].pkt_rx, ifaces[i].pkt_tx);
-    }
+    if (id_iface != -1)
+    {
+    	u_char *pb;
+		printf("\nif%d\tHWaddr %02X:%02X:%02X:%02X:%02X:%02X\n",
+			   id_iface, ifaces[id_iface].mac[0], ifaces[id_iface].mac[1], ifaces[id_iface].mac[2],
+			   ifaces[id_iface].mac[3], ifaces[id_iface].mac[4], ifaces[id_iface].mac[5]);
+		pb = (u_char *)&ifaces[id_iface].ip;
+		printf("\tinet addr: %s Bcast: %s Mask: %s\n",
+			   ip2str(ip_s, ifaces[id_iface].ip),
+			   ip2str(bcast_s, ifaces[id_iface].ip_bcast),
+			   ip2str(mask_s, ifaces[id_iface].mask));
+		printf("\t%s MTU: %d\n", ifaces[id_iface].up ? "UP" : "DOWN",
+			   ifaces[id_iface].mtu);
+		printf("\tRX packets: %d TX packet: %d\n",
+			   ifaces[id_iface].pkt_rx, ifaces[id_iface].pkt_tx);
+		return 0;
+	}
+	
+	for (i = 0; i < nifaces; i++) {
+		u_char *pb;
+		printf("\nif%d\tHWaddr %02X:%02X:%02X:%02X:%02X:%02X\n",
+			   i, ifaces[i].mac[0], ifaces[i].mac[1], ifaces[i].mac[2],
+			   ifaces[i].mac[3], ifaces[i].mac[4], ifaces[i].mac[5]);
+		pb = (u_char *)&ifaces[i].ip;
+		printf("\tinet addr: %s Bcast: %s Mask: %s\n",
+			   ip2str(ip_s, ifaces[i].ip),
+			   ip2str(bcast_s, ifaces[i].ip_bcast),
+			   ip2str(mask_s, ifaces[i].mask));
+		printf("\t%s MTU: %d\n", ifaces[i].up ? "UP" : "DOWN",
+			   ifaces[i].mtu);
+		printf("\tRX packets: %d TX packet: %d\n",
+			   ifaces[i].pkt_rx, ifaces[i].pkt_tx);
+	}
+	return 0;
 }
 
 /* */
@@ -279,22 +422,29 @@ int main(int argc, char *argv[])
 		fgets(buf, MAX_PARAMETERS, stdin);		
 		/*Tive de usar fgets pois com scanf não está funcionando os strncmps abaixo*/
 		//scanf("%s", buf);
-		if (!strncmp(buf, "xnoop", 5)) {
+		if (!strncasecmp(buf, "XNOOP", 5)) {
 			qtd_parameters = sub_xnoop(parameters, (char*)buf);
 		}
-		else if (!strncmp(buf, "arp", 3)) {
+		else if (!strncasecmp(buf, "ARP", 3)) {
 			send_pkt(100, 0, &broad_eth[0], 0x0806, (u_char*)buf);
 		}
-		else if (!strncmp(buf, "ip", 2)) {
+		else if (!strncasecmp(buf, "IP", 2)) {
 			scanf("%s", buf);
 			send_pkt(100, atoi(buf), &broad_eth[0], 0x0800, (u_char*)buf);
 		}
-		else if (!strncmp(buf, "ifconfig", 8))
-			print_if_info();
-		else if (!strncmp(buf, "exit", 4)) {
+		else if (!strncasecmp(buf, "IFCONFIG SHOW", 13)) {
+			print_if_info(-1); /* O -1 é pra indicar que será impresso todas as interfaces */
+		}
+		else if (!strncasecmp(buf, "IFCONFIG", 8)) {
+			sub_ifconfig((char*)buf);
+		}
+		else if (!strncasecmp(buf, "IF", 2)) {
+			sub_if((char*)buf);
+		}
+		else if (!strncasecmp(buf, "EXIT", 4)) {
 			exit(0);
 		}
-		else if (!strncmp(buf,"\n",1))
+		else if (!strncasecmp(buf,"\n",1))
 		{}
 		else
 			printf("Invalid command");
