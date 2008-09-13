@@ -1,5 +1,5 @@
 CC     = gcc
-CFLAGS = -Wall -g 
+CFLAGS = -Wall -g -fpack-struct
 
 SUBNET 		= Subnet
 XNOOP  		= Xnoop
