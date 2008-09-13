@@ -16,6 +16,7 @@
 #include "Analyzer.h"
 
 #include "Ethernet.h"
+#include "Arp.h"
 /* */
 #define MAX_PKT_SZ	65536
 #define MAX_HOSTS	10
@@ -63,19 +64,20 @@ void *subnet_rcv(void *ptr)
 		{
 			if (!memcmp(eth_h->receiver, broad_eth,6) || !memcmp(eth_h->receiver, ifaces[riface].mac, 6))			  
 			  ifaces[riface].pkt_rx++; /* The packet must be processed */
-			printf("Packet received (%d)\n", rv);
+			 
+			printf("Packet received (0x%04X)\n",(unsigned int) ntohs(eth_h->type));
 			
 		}
     }
 }
 /* */
-void send_pkt(u_short len, u_char iface, u_char *da, u_short type, u_char *data)
+void send_pkt(u_short len, BYTE iface, BYTE *da, u_short type, BYTE *data)
 {
     ETHERNET_PKT *pkt;
     PKT_QUEUE *qaux;
     
-    pkt = malloc(len + sizeof(ETHERNET_PKT) - sizeof(u_char));
-    pkt->len   = len + sizeof(ETHERNET_HEADER) - sizeof(u_char);
+    pkt = malloc(len + sizeof(ETHERNET_PKT) - sizeof(BYTE));
+    pkt->len   = len + sizeof(ETHERNET_HEADER) - sizeof(BYTE);
     pkt->iface = iface;
     pkt->net   = ifaces[iface].net;
     memcpy(&pkt->sa[0], ifaces[iface].mac, MAC_ADDR_LEN);
@@ -135,7 +137,7 @@ void *subnet_send(void *ptr)
     }
 }
 /* */
-void str2eth(char *s, u_char addr[])
+void str2eth(char *s, BYTE addr[])
 {
     int i;
     char *p;
@@ -150,7 +152,7 @@ void str2eth(char *s, u_char addr[])
 /* */
 char *ip2str(char *buf, unsigned ip)
 {
-    u_char *pb = (u_char*)&ip;
+    BYTE *pb = (BYTE*)&ip;
     sprintf(buf, "%d.%d.%d.%d", pb[0], pb[1], pb[2], pb[3]);
     return buf;
 }
@@ -330,11 +332,11 @@ int print_if_info(int id_iface)
     
     if (id_iface != -1)
     {
-    	u_char *pb;
+    	BYTE *pb;
 		printf("\nif%d\tHWaddr %02X:%02X:%02X:%02X:%02X:%02X\n",
 			   id_iface, ifaces[id_iface].mac[0], ifaces[id_iface].mac[1], ifaces[id_iface].mac[2],
 			   ifaces[id_iface].mac[3], ifaces[id_iface].mac[4], ifaces[id_iface].mac[5]);
-		pb = (u_char *)&ifaces[id_iface].ip;
+		pb = (BYTE *)&ifaces[id_iface].ip;
 		printf("\tinet addr: %s Bcast: %s Mask: %s\n",
 			   ip2str(ip_s, ifaces[id_iface].ip),
 			   ip2str(bcast_s, ifaces[id_iface].ip_bcast),
@@ -347,11 +349,11 @@ int print_if_info(int id_iface)
 	}
 	
 	for (i = 0; i < nifaces; i++) {
-		u_char *pb;
+		BYTE *pb;
 		printf("\nif%d\tHWaddr %02X:%02X:%02X:%02X:%02X:%02X\n",
 			   i, ifaces[i].mac[0], ifaces[i].mac[1], ifaces[i].mac[2],
 			   ifaces[i].mac[3], ifaces[i].mac[4], ifaces[i].mac[5]);
-		pb = (u_char *)&ifaces[i].ip;
+		pb = (BYTE *)&ifaces[i].ip;
 		printf("\tinet addr: %s Bcast: %s Mask: %s\n",
 			   ip2str(ip_s, ifaces[i].ip),
 			   ip2str(bcast_s, ifaces[i].ip_bcast),
@@ -386,7 +388,21 @@ int sub_xnoop(char *pam[], char *b)
 	
 	return i;
 }
+int sub_arp ( WORD IP)
+{   
+    ARP_HEADER * pkt;
+    pkt = malloc(sizeof(ARP_HEADER));
 
+    memcpy(&pkt->sender_hardware_addr[0], ifaces[0].mac, MAC_ADDR_LEN);
+    
+    /*IP da maquina que se deseja descobrir o MAC*/
+    pkt->target_ip_addr = IP;
+    
+    send_pkt(sizeof(ARP_HEADER), 0, &broad_eth[0], 0x0806, (BYTE*)pkt);
+    free(pkt);
+    
+    return 1;
+}
 /* */
 int main(int argc, char *argv[])
 {
@@ -420,11 +436,11 @@ int main(int argc, char *argv[])
 		}
 		else if (!strncasecmp(buf, "ARP", 3)) 
 		{
-			send_pkt(100, 0, &broad_eth[0], 0x0806, (u_char*)buf);
+			send_pkt(100, 0, &broad_eth[0], 0x0806, (BYTE*)buf);
 		}
 		else if (!strncasecmp(buf, "IP", 2)) {
 			scanf("%s", buf);
-			send_pkt(100, atoi(buf), &broad_eth[0], 0x0800, (u_char*)buf);
+			send_pkt(100, atoi(buf), &broad_eth[0], 0x0800, (BYTE*)buf);
 		}
 		else if (!strncasecmp(buf, "IFCONFIG SHOW", 13)) {
 			print_if_info(-1); /* O -1 é pra indicar que será impresso todas as interfaces */

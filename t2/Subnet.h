@@ -38,12 +38,12 @@ typedef struct {
 } NET_HOSTS;
 
 /* */
-u_char net2iface[MAX_NETWORKS];
+BYTE net2iface[MAX_NETWORKS];
 
 /* */
 typedef struct {
-    u_char	interface;		/* Interface number		*/
-    u_char	mac[6];			/* MAC address			*/
+    BYTE	interface;		/* Interface number		*/
+    BYTE	mac[6];			/* MAC address			*/
     u_short	mtu;			/* MTU value			*/
     unsigned	ip;			/* IP address			*/
     unsigned	mask;			/* IP network mask		*/
@@ -51,16 +51,16 @@ typedef struct {
     unsigned	pkt_tx;			/* Number of packets transmitted*/
     unsigned	pkt_rx;			/* Number of packets received	*/
     NET_HOSTS	hosts[MAX_HOSTS];	/* Hosts in the same network	*/
-    u_char	nhosts;			/* Number of hosts in the net	*/
-    u_char	up;			/* Interface up or down		*/
-    u_char	net;			/* Simul. network number	*/
+    BYTE	nhosts;			/* Number of hosts in the net	*/
+    BYTE	up;			/* Interface up or down		*/
+    BYTE	net;			/* Simul. network number	*/
 } INTERFACE;
 
 /* */
 typedef struct {
-    u_char  net;
-    u_char  da[6];
-    u_char  sa[6];
+    BYTE  net;
+    BYTE  da[6];
+    BYTE  sa[6];
     u_short type;
 } ETHER_HEADER;
 
@@ -92,7 +92,7 @@ unsigned my_ip;
 u_short  my_port;
 
 /* */
-u_char broad_eth[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+BYTE broad_eth[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
 /* */
 char in_buf[MAX_PKT_SZ];
@@ -107,11 +107,11 @@ int passive_UDP_socket(u_short);
 
 void *subnet_rcv(void *);
 
-void send_pkt(u_short, u_char , u_char *, u_short , u_char *);
+void send_pkt(u_short, BYTE , BYTE *, u_short , BYTE *);
 
 void *subnet_send(void *);
 
-void str2eth(char *, u_char[]);
+void str2eth(char *, BYTE[]);
 
 char *ip2str(char *, unsigned);
 
@@ -124,5 +124,8 @@ int sub_xnoop(char *[], char *);
 int sub_ifconfig( char* );
 
 int sub_if( char* );
+
+int sub_arp ( WORD );
+
 
 #endif 
