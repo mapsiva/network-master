@@ -33,7 +33,7 @@ int check_parameters(int argc, char *argv[], int *translation, int *modo, unsign
 	if (argc < 2) 
 		error_exit("Correct sintaxe is \"xnoop <filename> [<options>] [<filter>]\"\n");
 	
-	i = 2;
+	i = 1;
 	while(i<argc)
 	{
 		if (!strcasecmp(argv[i], "-c"))
@@ -98,28 +98,25 @@ int xnoop(int argc, char *argv[], ETHERNET_PKT * frame_header)
 	unsigned long npkgs_max = 100000;		/*indica a quantidade máxima de pacotes a serem analisados*/	
 	unsigned long npkgs = 1;
 	is_broadcast = 0;	
-	
-
-	
-	
+		
 	check_parameters(argc, argv, &translation, &modo, &npkgs_max, &position);
-
 	
-	if (pkg_ethernet) 
+	if (frame_header) 
 	{	
-
 		qtd_pkt ++;
 		
-		pkg_ethernet = (ETHERNET_HEADER *)pkt_buf;
+		pkg_ethernet = (ETHERNET_HEADER *)frame_header;
         
         npkgs++;
 		if(position < argc)
 		{
+			/*
 			if (!filter (pkg_ethernet, argc, argv, position))
 		    	return 0;
+		    */
 		}
 
-		trace_ethernet (pkg_ethernet, qtd_pkt,  frame_header, modo, &count_pkt_broad, &is_broadcast);
+		trace_ethernet (pkg_ethernet, qtd_pkt, frame_header, modo, &count_pkt_broad, &is_broadcast);		
 		
 		switch (ntohs (pkg_ethernet->type))
 		{
@@ -153,8 +150,6 @@ int xnoop(int argc, char *argv[], ETHERNET_PKT * frame_header)
 		        break;
 		}	
 	}
-	
-	
 
 	if (modo == BASIC)
 	{
