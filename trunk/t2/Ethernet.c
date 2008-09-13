@@ -16,17 +16,17 @@
 #include <netinet/in.h>
 
 CHAR_T*
-trace_ethernet(ETHERNET_HEADER* eth, int ID, ETHERNET_PKT *frh, int modo, int *pkg_broadcast, int * broadcast)
+trace_ethernet(ETHERNET_HEADER* eth, int ID, ETHERNET_PKT *frh, int modo, int *pkg_broadcast, int *broadcast)
 {
 	if (modo == VERB_EXT)
 	{
 		printf ("ETHER: ----- Ether Header -----\n");
 		printf ("ETHER:\n");
 		printf ("ETHER: Packet %d\n", ID);
-		printf ("ETHER: Packet size = %u bytes\n", (unsigned int) frh->data[0]);	
+		printf ("ETHER: Packet size = %u bytes\n", (unsigned int) frh->len);	
 		printf ("ETHER: Destination = %02X:%02X:%02X:%02X:%02X:%02X %s\n", eth->receiver[0], eth->receiver[1], eth->receiver[2], eth->receiver[3], eth->receiver[4], eth->receiver[5], (is_broadcast(eth->receiver)?"(brodcast)":""));	
 		printf ("ETHER: Source      = %.02X:%02X:%02X:%02X:%02X:%.02X\n", eth->sender[0], eth->sender[1], eth->sender[2], eth->sender[3], eth->sender[4], eth->sender[5]);	
-		printf ("ETHER: Ethertype 0x%04X %s\n",(unsigned int) ntohs(eth->type), ((unsigned int) ntohs(eth->type) == IP)?"(IP)":"(ARP)");
+		printf ("ETHER: Ethertype 0x%04X %s\n",(unsigned int) ntohs(eth->type), ((unsigned int) ntohs(eth->type) == IP)?"(IP)":(((unsigned int) ntohs(eth->type) == ARP)?"(ARP)":""));
 		printf ("ETHER:\n");
 	}
 	if (is_broadcast(eth->receiver))

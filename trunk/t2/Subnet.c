@@ -65,8 +65,9 @@ void *subnet_rcv(void *ptr)
 			if (!memcmp(eth_h->receiver, broad_eth,6) || !memcmp(eth_h->receiver, ifaces[riface].mac, 6))			  
 			  ifaces[riface].pkt_rx++; /* The packet must be processed */
 			 
-			printf("Packet received (0x%04X)\n",(unsigned int) ntohs(eth_h->type));
-			
+			if (run_xnoop)
+				xnoop(qtd_parameters, parameters, (ETHERNET_PKT*)eth_h);
+			//printf("Packet received (0x%04X) ()\n",(unsigned short) ntohs(eth_h->type));
 		}
     }
 }
@@ -385,6 +386,8 @@ int sub_xnoop(char *pam[], char *b)
 
 	//Habilita a execução do XNOOP 
 	run_xnoop=1;
+	
+	printf("Runing xnoop");
 	
 	return i;
 }
