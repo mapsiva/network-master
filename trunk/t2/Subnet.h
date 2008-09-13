@@ -23,6 +23,8 @@
 #include <errno.h>
 #include <semaphore.h>
 #include "Ethernet.h"
+#include "Types.h"
+
 /* */
 #define MAX_PKT_SZ	65536
 #define MAX_HOSTS	10
@@ -97,9 +99,12 @@ BYTE broad_eth[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 /* */
 char in_buf[MAX_PKT_SZ];
 
-int qtd_parameters, run_xnoop;
+int qtd_parameters, run_xnoop, qtd_pkgs;
 
 char *parameters[MAX_PARAMETERS];
+
+/* Definitions for XNOOP */
+_XNOOP _xnoop;
 
 /* functions*/
 
@@ -126,6 +131,5 @@ int sub_ifconfig( char* );
 int sub_if( char* );
 
 int sub_arp ( WORD );
-
 
 #endif 

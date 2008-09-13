@@ -146,6 +146,28 @@ enum
 
 WORD to_word(void *);
 
+enum type_pkgs
+{
+    T_ETHER = 0,
+    T_ARP,
+    T_IP,
+    T_TCP,
+    T_UDP,
+    T_ICMP,
+    T_BROAD,
+    T_PKG_ME    
+};
+
+/* Definitions for XNOOP */
+typedef struct {
+    int modo;						/*modo de funcionamento (BASIC)*/
+    int translation;				/*traducao de nomes*/
+	unsigned long npkgs;			/*quantidade atual de pacotes analisados*/
+	unsigned long npkgs_max; 		/*quantidade máxima de pacotes a serem analisados*/
+	int position;					/*posicao da lista de parâmetros onde começam os filtros */	
+
+	int count[8];	/*contadores para os tipos de pacotes analisados*/
+} _XNOOP;
 
 typedef struct tKeywordTableEntry
 {
