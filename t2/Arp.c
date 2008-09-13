@@ -123,4 +123,8 @@ trace_arp( ARP_HEADER * pkg, int translation, int modo, int broadcast)
     return 0;
 }
 
+void * FindArpTableEntry(void *ip){return 0;}
+void * AddArpTableEntry(void *ip){return 0;}
+void * RemoveArpTableEntry(void * p){return 0;}
+
 #endif

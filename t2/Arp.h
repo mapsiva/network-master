@@ -26,6 +26,24 @@ typedef struct
     WORD target_ip_addr;
 } ARP_HEADER;
 
+typedef struct tArpTableEntry
+{
+    WORD MAC;
+    WORD IP;
+    int TTL;    
+    struct tArpTableEntry* next;
+}ArpTableEntry;
+
+typedef struct
+{
+    int length;
+    struct list * tArpTableEntry;
+}ArpTable;
+
+void * FindArpTableEntry(void *);
+void * AddArpTableEntry(void *);
+void * RemoveArpTableEntry(void *);
+
 CHAR_T*
 trace_arp( ARP_HEADER *, int, int, int);
 

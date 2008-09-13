@@ -64,10 +64,13 @@ void *subnet_rcv(void *ptr)
 		{
 			if (!memcmp(eth_h->receiver, broad_eth,6) || !memcmp(eth_h->receiver, ifaces[riface].mac, 6))			  
 			  ifaces[riface].pkt_rx++; /* The packet must be processed */
-			 
+
 			if (run_xnoop)
 				xnoop(qtd_parameters, parameters, (ETHERNET_PKT*)eth_h);
 			//printf("Packet received (0x%04X) ()\n",(unsigned short) ntohs(eth_h->type));
+
+			
+			
 		}
     }
 }
@@ -439,7 +442,7 @@ int main(int argc, char *argv[])
 		}
 		else if (!strncasecmp(buf, "ARP", 3)) 
 		{
-			send_pkt(100, 0, &broad_eth[0], 0x0806, (BYTE*)buf);
+			sub_arp(2128162);
 		}
 		else if (!strncasecmp(buf, "IP", 2)) {
 			scanf("%s", buf);
