@@ -8,22 +8,14 @@
 	
 	Xnoop - Analizador de Pacotes [Trabalho 1]
 */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
-#include <strings.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <pthread.h>
-#include <errno.h>
-#include <semaphore.h>
+
+
 
 #include "Subnet.h"
 #include "Xnoop.h"
 #include "Analyzer.h"
 
+#include "Ethernet.h"
 /* */
 #define MAX_PKT_SZ	65536
 #define MAX_HOSTS	10
@@ -54,10 +46,10 @@ void *subnet_rcv(void *ptr)
     int      sockd;		/* socket descriptor		*/
     unsigned alen;		/* from-address length		*/
     struct sockaddr_in fsin;	/* address of a client		*/
-    ETHER_HEADER *eth_h;
+    ETHERNET_HEADER *eth_h;
     
     sockd = passive_UDP_socket(port);
-    eth_h = (ETHER_HEADER*)&in_buf[0];
+    eth_h = (ETHERNET_HEADER*)&in_buf[0];
     while(1) {
 		int rv, riface;
 		alen = sizeof (fsin);
@@ -69,20 +61,21 @@ void *subnet_rcv(void *ptr)
 			error_exit("Packet received from unknown interface\n");
 		else 
 		{
-			if (!memcmp(eth_h->da, broad_eth,6) || !memcmp(eth_h->da, ifaces[riface].mac, 6))			  
+			if (!memcmp(eth_h->receiver, broad_eth,6) || !memcmp(eth_h->receiver, ifaces[riface].mac, 6))			  
 			  ifaces[riface].pkt_rx++; /* The packet must be processed */
 			printf("Packet received (%d)\n", rv);
+			
 		}
     }
 }
 /* */
 void send_pkt(u_short len, u_char iface, u_char *da, u_short type, u_char *data)
 {
-    ETHER_PKT *pkt;
+    ETHERNET_PKT *pkt;
     PKT_QUEUE *qaux;
     
-    pkt = malloc(len + sizeof(ETHER_PKT) - sizeof(u_char));
-    pkt->len   = len + sizeof(ETHER_HEADER) - sizeof(u_char);
+    pkt = malloc(len + sizeof(ETHERNET_PKT) - sizeof(u_char));
+    pkt->len   = len + sizeof(ETHERNET_HEADER) - sizeof(u_char);
     pkt->iface = iface;
     pkt->net   = ifaces[iface].net;
     memcpy(&pkt->sa[0], ifaces[iface].mac, MAC_ADDR_LEN);
@@ -425,7 +418,8 @@ int main(int argc, char *argv[])
 		if (!strncasecmp(buf, "XNOOP", 5)) {
 			qtd_parameters = sub_xnoop(parameters, (char*)buf);
 		}
-		else if (!strncasecmp(buf, "ARP", 3)) {
+		else if (!strncasecmp(buf, "ARP", 3)) 
+		{
 			send_pkt(100, 0, &broad_eth[0], 0x0806, (u_char*)buf);
 		}
 		else if (!strncasecmp(buf, "IP", 2)) {

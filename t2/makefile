@@ -1,5 +1,5 @@
 CC     = gcc
-CFLAGS = -Wall -g
+CFLAGS = -Wall -g 
 
 SUBNET 		= Subnet
 XNOOP  		= Xnoop
@@ -16,14 +16,14 @@ STACK   	= Stack
 AN   		= Analyzer
 FIL   		= Filter
 
-HEADERS =  $(PKG).h $(TYPES).h $(ETH).h $(TCP).h $(IP).h $(UTIL).h $(UDP).h $(ICMP).h $(ARP).h $(STACK).h $(AN).h $(FIL).h $(XNOOP).h $(SUBNET).h
+HEADERS =  $(PKG).h $(TYPES).h $(ETH).h $(TCP).h $(IP).h $(UTIL).h $(UDP).h $(ICMP).h $(ARP).h $(STACK).h $(AN).h $(FIL).h $(XNOOP).h 
 OBJECTS =  $(PKG).o $(TYPES).o $(ETH).o $(TCP).o $(IP).o $(UTIL).o $(UDP).o $(ICMP).o $(ARP).o $(STACK).o $(AN).o $(FIL).o $(XNOOP).o $(SUBNET).o
 
 # ****************************************************
 
 subnet: $(OBJECTS)
-	$(CC) $(CFLAGS) -o $@ $^ -lpthread
-
+	$(CC) $(CFLAGS) -lpthread -o $@ $^ 
+	
 $(PKG).o: $(PKG).c $(PKG).h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
@@ -60,11 +60,11 @@ $(AN).o: $(AN).c $(AN).h
 $(FIL).o: $(FIL).c $(FIL).h
 	$(CC) $(CFLAGS) -o $@ -c $<
 	
-$(XNOOP).o: $(XNOOP).c $(HEADERS)
+$(XNOOP).o: $(XNOOP).c $(XNOOP).h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 $(SUBNET).o: $(SUBNET).c $(HEADERS)
-	$(CC) $(CFLAGS) -o $@ -c $< -lpthread
+	$(CC) $(CFLAGS)  -o $@ -c $< 
 
 clean:
 	-rm *.o;

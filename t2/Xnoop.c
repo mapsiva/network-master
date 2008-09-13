@@ -6,7 +6,6 @@
 	Márcio Aparecido Inacio da Silva
 	Maxwell Sampaio dos Santos
 	
-	Xnoop - Analizador de Pacotes [Trabalho 1]
 */
 
 #include <stdlib.h>
@@ -76,9 +75,8 @@ int check_parameters(int argc, char *argv[], int *translation, int *modo, unsign
 	return 0;
 }
 
-int xnoop(int argc, char *argv[])
+int xnoop(int argc, char *argv[], ETHERNET_PKT * frame_header)
 {
-	FILE *inf;
 	ETHERNET_HEADER * pkg_ethernet;
     IP_HEADER * pkg_ip;      
 	TCP_HEADER * pkg_tcp;	
@@ -101,27 +99,15 @@ int xnoop(int argc, char *argv[])
 	unsigned long npkgs = 1;
 	is_broadcast = 0;	
 	
-	return 0;
-	
-	/*
-	check_parameters(argc, argv, &translation, &modo, &npkgs_max, &position);
-    
-	inf = fopen(argv[1], "rb");	
-	
-	if (!inf) 
-		error_exit("Could not open file: %s\n", argv[1]);	
 
-	fread(&file_header, sizeof(FILE_HEADER), 1, inf);
 	
-	if (file_header.magic_number != 0xa1b2c3d4) 
-		invert_file_header(&file_header);
 	
-	while (fread(&frame_header, sizeof(FRAME_HEADER), 1, inf) && npkgs <= npkgs_max) 
+	check_parameters(argc, argv, &translation, &modo, &npkgs_max, &position);
+
+	
+	if (pkg_ethernet) 
 	{	
-		if (file_header.magic_number != 0xa1b2c3d4) 
-			invert_pkt_header(&frame_header);
-		
-		fread(pkt_buf, frame_header.capt_data, 1, inf);
+
 		qtd_pkt ++;
 		
 		pkg_ethernet = (ETHERNET_HEADER *)pkt_buf;
@@ -130,12 +116,10 @@ int xnoop(int argc, char *argv[])
 		if(position < argc)
 		{
 			if (!filter (pkg_ethernet, argc, argv, position))
-		    	continue;
+		    	return 0;
 		}
-		
-		
 
-		trace_ethernet (pkg_ethernet, qtd_pkt,  &frame_header, modo, &count_pkt_broad, &is_broadcast);
+		trace_ethernet (pkg_ethernet, qtd_pkt,  frame_header, modo, &count_pkt_broad, &is_broadcast);
 		
 		switch (ntohs (pkg_ethernet->type))
 		{
@@ -170,7 +154,7 @@ int xnoop(int argc, char *argv[])
 		}	
 	}
 	
-	*/
+	
 
 	if (modo == BASIC)
 	{
