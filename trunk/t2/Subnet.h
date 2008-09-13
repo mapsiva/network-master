@@ -58,13 +58,7 @@ typedef struct {
     BYTE	net;			/* Simul. network number	*/
 } INTERFACE;
 
-/* */
-typedef struct {
-    BYTE  net;
-    BYTE  da[6];
-    BYTE  sa[6];
-    u_short type;
-} ETHER_HEADER;
+
 
 /* */
 

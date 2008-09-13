@@ -22,6 +22,6 @@ char byte_order; /* 0=little, 1=big endian*/
 char pkt_buf[BUF_SIZE];
 
 int check_parameters(int, char *[], _XNOOP *);
-int xnoop(int, char *[], ETHERNET_PKT *, _XNOOP *);
+int xnoop(int, char *[], ETHERNET_HEADER *, _XNOOP *);
 
 #endif 

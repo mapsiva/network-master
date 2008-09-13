@@ -78,9 +78,8 @@ int check_parameters(int argc, char *argv[], _XNOOP *_x)
 	return 1;
 }
 
-int xnoop(int argc, char *argv[], ETHERNET_PKT * frame_header, _XNOOP *_x)
+int xnoop(int argc, char *argv[], ETHERNET_HEADER * pkg_ethernet, _XNOOP *_x)
 {
-	ETHERNET_HEADER * pkg_ethernet;
     IP_HEADER * pkg_ip;      
 	TCP_HEADER * pkg_tcp;
 	
@@ -88,11 +87,11 @@ int xnoop(int argc, char *argv[], ETHERNET_PKT * frame_header, _XNOOP *_x)
 		
 	/*check_parameters(argc, argv, &translation, &modo, &npkgs_max, &position);*/
 	
-	if (frame_header) 
+	if (pkg_ethernet) 
 	{	
 		(*_x).count[T_ETHER] ++;
 		
-		pkg_ethernet = (ETHERNET_HEADER *)frame_header;
+		
         
 		if((*_x).position < argc)
 		{
@@ -102,7 +101,7 @@ int xnoop(int argc, char *argv[], ETHERNET_PKT * frame_header, _XNOOP *_x)
 		    */
 		}
 
-		trace_ethernet (pkg_ethernet, (*_x).npkgs, frame_header, (*_x).modo, &((*_x).count[T_BROAD]), &pkg_broadcast);		
+		trace_ethernet (pkg_ethernet, (*_x).npkgs, (*_x).modo, &((*_x).count[T_BROAD]), &pkg_broadcast);		
 		
 		switch (ntohs (pkg_ethernet->type))
 		{

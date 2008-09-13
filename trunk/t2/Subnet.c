@@ -36,6 +36,7 @@ int passive_UDP_socket(u_short port)
     return sockd;
 }
 
+
 /* */
 int sub_xnoop(char *param[], char *b)
 {
@@ -71,69 +72,7 @@ int sub_xnoop(char *param[], char *b)
 	return i;
 }
 
-/* */
-void *subnet_rcv(void *ptr)
-{
-    unsigned port = *((unsigned *)ptr);
-    int      sockd;		/* socket descriptor		*/
-    unsigned alen;		/* from-address length		*/
-    struct sockaddr_in fsin;	/* address of a client		*/
-    ETHERNET_HEADER *eth_h;
-    
-    sockd = passive_UDP_socket(port);
-    eth_h = (ETHERNET_HEADER*)&in_buf[0];
-    while(1) {
-		int rv, riface;
-		alen = sizeof (fsin);
-		rv = recvfrom(sockd, in_buf, MAX_PKT_SZ, 0, (struct sockaddr *)&fsin, &alen);	
-		if (rv < 0) 
-			error_exit("error - recvfrom: %s\n", strerror(errno));
-		riface = net2iface[eth_h->net];
-		if (riface < 0) 
-			error_exit("Packet received from unknown interface\n");
-		else 
-		{
-			if (!memcmp(eth_h->receiver, broad_eth,6) || !memcmp(eth_h->receiver, ifaces[riface].mac, 6))
-			{			  
-				ifaces[riface].pkt_rx++; /* The packet must be processed */
-				
-				/*Atualizando a qtde de pacotes recebidos para que o XNOOP possa imprimir corretamente a id do pacote corrente travegando na rede*/
-				_xnoop.npkgs = ifaces[riface].pkt_rx;			
 
-				if (run_xnoop)
-					xnoop(qtd_parameters, parameters, (ETHERNET_PKT*)eth_h, &_xnoop);
-				//printf("Packet received (0x%04X) ()\n",(unsigned short) ntohs(eth_h->type));
-			}
-		}
-    }
-}
-/* */
-void send_pkt(u_short len, BYTE iface, BYTE *da, u_short type, BYTE *data)
-{
-    ETHERNET_PKT *pkt;
-    PKT_QUEUE *qaux;
-    
-    pkt = malloc(len + sizeof(ETHERNET_PKT) - sizeof(BYTE));
-    pkt->len   = len + sizeof(ETHERNET_HEADER) - sizeof(BYTE);
-    pkt->iface = iface;
-    pkt->net   = ifaces[iface].net;
-    memcpy(&pkt->sa[0], ifaces[iface].mac, MAC_ADDR_LEN);
-    memcpy(&pkt->da[0], da, MAC_ADDR_LEN);
-    pkt->type = htons(type);
-    memcpy(&pkt->data[0], data, len);
-    qaux = malloc(sizeof(PKT_QUEUE));
-    qaux->next = NULL;
-    qaux->pkt  = pkt;
-    sem_wait(&sem_queue);
-    if (queue_head) 
-		queue_tail = queue_tail->next = qaux;
-    else 
-    {
-		queue_head = queue_tail = qaux;
-		sem_post(&sem_data_ready);
-    }    
-    sem_post(&sem_queue);
-}
 /* */
 void *subnet_send(void *ptr)
 {
@@ -405,19 +344,112 @@ int print_if_info(int id_iface)
 
 int sub_arp ( WORD IP)
 {   
-    ARP_HEADER * pkt;
-    pkt = malloc(sizeof(ARP_HEADER));
-
-    memcpy(&pkt->sender_hardware_addr[0], ifaces[0].mac, MAC_ADDR_LEN);
+    ARP_HEADER * arp;
+    ETHERNET_HEADER * eth;
+    
+    eth =  malloc(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER));
+    
+    printf("TAMANHO DE ETHERNET_HEADER -> %04X %d\n",(unsigned int) eth ,sizeof(ETHERNET_HEADER));
+    
+    arp = ( ARP_HEADER * )(eth + 1);
+    
+    printf("TAMANHO DE ETHERNET_HEADER -> %04X %d\n", (unsigned int) arp ,sizeof(ETHERNET_HEADER));
+    
+    memcpy(&eth->sender[0], ifaces[0].mac, MAC_ADDR_LEN);
+    memcpy(&eth->receiver[0], &broad_eth[0], MAC_ADDR_LEN);
     
     /*IP da maquina que se deseja descobrir o MAC*/
-    pkt->target_ip_addr = IP;
+    arp->target_ip_addr = IP;
     
-    send_pkt(sizeof(ARP_HEADER), 0, &broad_eth[0], 0x0806, (BYTE*)pkt);
-    free(pkt);
+    memcpy(&arp->sender_hardware_addr[0], ifaces[0].mac, MAC_ADDR_LEN);
+    memcpy(&arp->target_hardware_addr[0], &broad_eth[0], MAC_ADDR_LEN);
+   
+    arp->hardware_type = htons(1);
+    arp->protocol_type = htons(ARP_REQUEST);
+    
+    eth->type = htons(0x0806);
+    
+    send_pkt(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER), 0, &broad_eth[0], 0x0806, (BYTE*)eth);
     
     return 1;
 }
+/* */
+void *subnet_rcv(void *ptr)
+{
+    unsigned port = *((unsigned *)ptr);
+    int      sockd;		/* socket descriptor		*/
+    unsigned alen;		/* from-address length		*/
+    struct sockaddr_in fsin;	/* address of a client		*/
+    ETHERNET_HEADER *eth_h;
+
+    
+    sockd = passive_UDP_socket(port);
+    eth_h = (ETHERNET_HEADER*)&in_buf[0];
+    while(1)
+    {
+		int rv, riface;
+		alen = sizeof (fsin);
+		rv = recvfrom(sockd, in_buf, MAX_PKT_SZ, 0, (struct sockaddr *)&fsin, &alen);	
+		if (rv < 0) 
+			error_exit("error - recvfrom: %s\n", strerror(errno));
+		riface = net2iface[eth_h->net];
+		if (riface < 0) 
+			error_exit("Packet received from unknown interface\n");
+		else 
+		{
+			if (!memcmp(eth_h->receiver, broad_eth,6) || !memcmp(eth_h->receiver, ifaces[riface].mac, 6))			  
+			{
+
+			    ifaces[riface].pkt_rx++; /* The packet must be processed */
+				
+				/*Atualizando a qtde de pacotes recebidos para que o XNOOP possa imprimir corretamente a id do pacote corrente travegando na rede*/
+				_xnoop.npkgs = ifaces[riface].pkt_rx;			
+
+				if (run_xnoop)
+					xnoop(qtd_parameters, parameters, eth_h, &_xnoop);
+				//printf("Packet received (0x%04X) ()\n",(unsigned short) ntohs(eth_h->type));
+			}
+		}
+    }
+}
+/* */
+void send_pkt(u_short len, BYTE iface, BYTE *da, u_short type, BYTE *data)
+{
+    ETHERNET_PKT *pkt;
+    PKT_QUEUE *qaux;
+    ARP_HEADER * test;
+    ETHERNET_HEADER * testeth;
+     
+    pkt = malloc(len + sizeof(ETHERNET_PKT));
+    pkt->len   = len + sizeof(ETHERNET_PKT);
+    pkt->iface = iface;
+    pkt->net   = ifaces[iface].net;
+    memcpy(&pkt->sa[0], ifaces[iface].mac, MAC_ADDR_LEN);
+    memcpy(&pkt->da[0], da, MAC_ADDR_LEN);
+    pkt->type = htons(type);
+   
+   
+    testeth = (ETHERNET_HEADER *) (pkt+1);
+    
+    memcpy(testeth, data, len);
+     
+    test = (ARP_HEADER *) (testeth + 1);
+   printf("[hardware type] => %u", ntohs(test->hardware_type));
+    
+    qaux = malloc(sizeof(PKT_QUEUE));
+    qaux->next = NULL;
+    qaux->pkt  = pkt;
+    sem_wait(&sem_queue);
+    if (queue_head) 
+		queue_tail = queue_tail->next = qaux;
+    else 
+    {
+		queue_head = queue_tail = qaux;
+		sem_post(&sem_data_ready);
+    }    
+    sem_post(&sem_queue);
+}
+
 /* */
 int main(int argc, char *argv[])
 {
