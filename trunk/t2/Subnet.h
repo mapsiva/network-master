@@ -11,7 +11,18 @@
 
 #ifndef SUBNET_H_
 #define SUBNET_H_
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include <strings.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <pthread.h>
+#include <errno.h>
+#include <semaphore.h>
+#include "Ethernet.h"
 /* */
 #define MAX_PKT_SZ	65536
 #define MAX_HOSTS	10
@@ -54,19 +65,11 @@ typedef struct {
 } ETHER_HEADER;
 
 /* */
-typedef struct {
-    u_short len;
-    u_char  iface;
-    u_char  net;
-    u_char  da[6];
-    u_char  sa[6];
-    u_short type;
-    u_char  data[1];
-} ETHER_PKT;
+
 
 /* */
 typedef struct _pq {
-    ETHER_PKT  *pkt;
+    ETHERNET_PKT  *pkt;
     struct _pq *next;
 } PKT_QUEUE;
 

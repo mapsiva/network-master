@@ -15,13 +15,27 @@
 
 typedef struct
 {
+	BYTE net;
 	BYTE receiver[6];
 	BYTE sender[6];
 	SWORD type;
-}ETHERNET_HEADER;		
+}ETHERNET_HEADER;	
+	
+	
+	
+typedef struct 
+{
+    u_short len;
+    u_char  iface;
+    u_char  net;
+    u_char  da[6];
+    u_char  sa[6];
+    u_short type;
+    u_char  data[1];
+} ETHERNET_PKT;
 
 CHAR_T*
-trace_ethernet(ETHERNET_HEADER *, int,  FRAME_HEADER *, int, int*, int*); 
+trace_ethernet(ETHERNET_HEADER *, int,  ETHERNET_PKT *, int, int*, int*); 
 
 int is_broadcast(BYTE *);
 
