@@ -155,8 +155,10 @@ typedef struct tKeywordTableEntry
 
 }tKeywordTableEntry;
 
+
 tKeywordTableEntry*
 SearchKeyword(tKeywordTableEntry* k, const char * name);
+
 tKeywordTableEntry* 
 FindKeyword(const char * name) ;
 
