@@ -18,11 +18,6 @@
 #include "Ethernet.h"
 #include "Arp.h"
 /* */
-#define MAX_PKT_SZ	65536
-#define MAX_HOSTS	10
-#define MAC_ADDR_LEN	6
-#define MAX_IFACES	5
-#define MAX_NETWORKS	20
 
 /* Open a passive UDP socket. port must be in net-byte order. */
 int passive_UDP_socket(u_short port)
@@ -40,6 +35,42 @@ int passive_UDP_socket(u_short port)
 		error_exit("Can't bind to port %d: %s\n", ntohs(port), strerror(errno));
     return sockd;
 }
+
+/* */
+int sub_xnoop(char *param[], char *b)
+{
+	unsigned int i = 0;
+	unsigned int tam;
+	
+	char *aux1;
+	char *aux2;
+	
+	//Capturando os [options] e [filters] do analisador de pacotes (XNOOP)
+	tam = strlen(b);
+	b[tam-1] = ' ';
+	aux2 = strtok_r(b," ", &aux1);
+	param[i++] = aux2;
+	while ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+		param[i++] = aux2;
+
+	//Ajustando as opções padrões do XNOOP    
+    _xnoop.modo = BASIC;
+	_xnoop.translation = 1;
+	_xnoop.npkgs_max = 400000000;
+	_xnoop.position = 1;
+	
+	//Verifica se os [options] e [filters] estão corretos
+	if (check_parameters(i, param, &_xnoop))
+	{
+		//Habilita a execução do XNOOP 
+		run_xnoop = 1;
+		
+		printf("Runing xnoop");	
+	}		
+	
+	return i;
+}
+
 /* */
 void *subnet_rcv(void *ptr)
 {
@@ -62,15 +93,17 @@ void *subnet_rcv(void *ptr)
 			error_exit("Packet received from unknown interface\n");
 		else 
 		{
-			if (!memcmp(eth_h->receiver, broad_eth,6) || !memcmp(eth_h->receiver, ifaces[riface].mac, 6))			  
-			  ifaces[riface].pkt_rx++; /* The packet must be processed */
+			if (!memcmp(eth_h->receiver, broad_eth,6) || !memcmp(eth_h->receiver, ifaces[riface].mac, 6))
+			{			  
+				ifaces[riface].pkt_rx++; /* The packet must be processed */
+				
+				/*Atualizando a qtde de pacotes recebidos para que o XNOOP possa imprimir corretamente a id do pacote corrente travegando na rede*/
+				_xnoop.npkgs = ifaces[riface].pkt_rx;			
 
-			if (run_xnoop)
-				xnoop(qtd_parameters, parameters, (ETHERNET_PKT*)eth_h);
-			//printf("Packet received (0x%04X) ()\n",(unsigned short) ntohs(eth_h->type));
-
-			
-			
+				if (run_xnoop)
+					xnoop(qtd_parameters, parameters, (ETHERNET_PKT*)eth_h, &_xnoop);
+				//printf("Packet received (0x%04X) ()\n",(unsigned short) ntohs(eth_h->type));
+			}
 		}
     }
 }
@@ -370,30 +403,6 @@ int print_if_info(int id_iface)
 	return 0;
 }
 
-/* */
-int sub_xnoop(char *pam[], char *b)
-{
-	unsigned int i = 0;
-	unsigned int tam;
-	
-	char *aux1;
-	char *aux2;
-	
-	//Capturando os [options] e [filters] do analisador de pacotes (XNOOP)
-	tam = strlen(b);
-	b[tam-1] = ' ';
-	aux2 = strtok_r(b," ", &aux1);
-	pam[i++] = aux2;
-	while ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
-		pam[i++] = aux2;
-
-	//Habilita a execução do XNOOP 
-	run_xnoop=1;
-	
-	printf("Runing xnoop");
-	
-	return i;
-}
 int sub_arp ( WORD IP)
 {   
     ARP_HEADER * pkt;
@@ -415,6 +424,15 @@ int main(int argc, char *argv[])
     pthread_t tid;
     char buf[100];
     int i;
+    
+    //Ajustando as opções padrões do XNOOP    
+    _xnoop.modo = VERB_EXT;
+	_xnoop.translation = 0;
+	_xnoop.npkgs = 0;
+	_xnoop.npkgs_max = 400000000;
+	_xnoop.position = 1;
+
+	qtd_pkgs = 0;
 
     if (argc < 3)
 	error_exit("\nUsage: subnet port cfg_file [cfg_files ...]\n");

@@ -26,12 +26,9 @@
 
 #include "Xnoop.h"
 
-int check_parameters(int argc, char *argv[], int *translation, int *modo, unsigned long *npkgs, int *position)
+int check_parameters(int argc, char *argv[], _XNOOP *_x)
 {
 	int i, aux;
-	
-	if (argc < 2) 
-		error_exit("Correct sintaxe is \"xnoop <filename> [<options>] [<filter>]\"\n");
 	
 	i = 1;
 	while(i<argc)
@@ -42,73 +39,62 @@ int check_parameters(int argc, char *argv[], int *translation, int *modo, unsign
 			{
 				aux = atoi(argv[i+1]);
 				if (aux)
-					(*npkgs) = aux;
+					(*_x).npkgs_max = aux;
 				else
-					error_exit("Correct sintaxe for option -c is \"-c <number_packages>\"\n");
-				if (i >= *position)
-					(*position) = i+2;
+				{
+					printf("\nCorrect sintaxe for option -c is \"-c <number_packages>\"\n");
+					return 0;
+				}
+				if (i >= (*_x).position)
+					(*_x).position = i+2;
 			}
 			else
-				error_exit("Correct sintaxe for option -c is \"-c <number_packages>\"\n");
+			{
+				printf("\nCorrect sintaxe for option -c is \"-c <number_packages>\"\n");
+				return 0;
+			}
 		}
 		else if (!strcasecmp(argv[i], "-n"))
 		{
-			if (i >= *position)
-				(*position) = i+1;
-			(*translation) = 0;
+			if (i >= (*_x).position)
+				(*_x).position = i+1;
+			(*_x).translation = 0;
 		}
 		else if (!strcmp(argv[i], "-v"))
 		{
-			if (i >= *position)
-				(*position) = i+1;
-			(*modo) = VERB;
+			if (i >= (*_x).position)
+				(*_x).position = i+1;
+			(*_x).modo = VERB;
 		}
 		else if (!strcmp(argv[i], "-V"))
 		{
-			if (i >= *position)			
-				(*position) = i+1;
-			(*modo) = VERB_EXT;			
+			if (i >= (*_x).position)		
+				(*_x).position = i+1;
+			(*_x).modo = VERB_EXT;			
 		}
 		i++;
 	}	
 	
-	return 0;
+	return 1;
 }
 
-int xnoop(int argc, char *argv[], ETHERNET_PKT * frame_header)
+int xnoop(int argc, char *argv[], ETHERNET_PKT * frame_header, _XNOOP *_x)
 {
 	ETHERNET_HEADER * pkg_ethernet;
     IP_HEADER * pkg_ip;      
-	TCP_HEADER * pkg_tcp;	
+	TCP_HEADER * pkg_tcp;
 	
-	int qtd_pkt 		= 0;	
-	int count_pkt_arp 	= 0;
-	int count_pkt_ip 	= 0;
-	int count_pkt_icmp 	= 0;
-	int count_pkt_udp 	= 0;
-	int count_pkt_tcp 	= 0;
-	int count_pkt_broad = 0;
-	int count_pkt_me	= 0;
-	
-	int is_broadcast;
-	int modo = 1;							/*indica o modo de funcionamento (BASIC)*/
-	int translation = 1;					/*indica que será utilizado a traducao de nomes*/
-	int position = 2;						/*indica a posicao da lista de parâmetros que começam os filtros */
-	
-	unsigned long npkgs_max = 100000;		/*indica a quantidade máxima de pacotes a serem analisados*/	
-	unsigned long npkgs = 1;
-	is_broadcast = 0;	
+	int pkg_broadcast = 0;
 		
-	check_parameters(argc, argv, &translation, &modo, &npkgs_max, &position);
+	/*check_parameters(argc, argv, &translation, &modo, &npkgs_max, &position);*/
 	
 	if (frame_header) 
 	{	
-		qtd_pkt ++;
+		(*_x).count[T_ETHER] ++;
 		
 		pkg_ethernet = (ETHERNET_HEADER *)frame_header;
         
-        npkgs++;
-		if(position < argc)
+		if((*_x).position < argc)
 		{
 			/*
 			if (!filter (pkg_ethernet, argc, argv, position))
@@ -116,51 +102,51 @@ int xnoop(int argc, char *argv[], ETHERNET_PKT * frame_header)
 		    */
 		}
 
-		trace_ethernet (pkg_ethernet, qtd_pkt, frame_header, modo, &count_pkt_broad, &is_broadcast);		
+		trace_ethernet (pkg_ethernet, (*_x).npkgs, frame_header, (*_x).modo, &((*_x).count[T_BROAD]), &pkg_broadcast);		
 		
 		switch (ntohs (pkg_ethernet->type))
 		{
 		    case IP:
-				count_pkt_ip++;
+				(*_x).count[T_IP]++;
 		        
 		        pkg_ip = (IP_HEADER *)( pkg_ethernet + 1 ); 
 		        
-		        trace_ip (pkg_ip, translation, modo, &count_pkt_me, is_broadcast);
+		        trace_ip (pkg_ip, (*_x).translation, (*_x).modo, &((*_x).count[T_PKG_ME]), pkg_broadcast);
 		        
 		        switch (pkg_ip->protocol)
 		        {
 		            case TCP:
 		                pkg_tcp = (TCP_HEADER *)(pkg_ip + 1);
-		                trace_tcp (pkg_tcp,modo);
-						count_pkt_tcp++;
+		                trace_tcp (pkg_tcp, (*_x).modo);
+						(*_x).count[T_TCP]++;
 		                break;
 		            case UDP:
-		                trace_udp ((UDP_HEADER *)(pkg_ip + 1), modo);
-						count_pkt_udp++;
+		                trace_udp ((UDP_HEADER *)(pkg_ip + 1), (*_x).modo);
+						(*_x).count[T_UDP]++;
 		                break;
 		            case ICMP:
-		                trace_icmp ((ICMP_HEADER *)(pkg_ip + 1), translation , modo);
-						count_pkt_icmp++;
+		                trace_icmp ((ICMP_HEADER *)(pkg_ip + 1), (*_x).translation , (*_x).modo);
+						(*_x).count[T_ICMP]++;
 		                break;
 		        }
 		        break;
 		    case ARP:
-		        trace_arp ((ARP_HEADER *)(pkg_ethernet + 1), translation, modo, is_broadcast);
-		       	count_pkt_arp++;
+		        trace_arp ((ARP_HEADER *)(pkg_ethernet + 1), (*_x).translation, (*_x).modo, pkg_broadcast);
+		       	(*_x).count[T_ARP]++;
 		        break;
 		}	
 	}
 
-	if (modo == BASIC)
+	if ((*_x).modo == BASIC)
 	{
-		printf("ethernet frames: %d\n", qtd_pkt);
-		printf("ethernet broadcast: %d\n", count_pkt_broad);
-		printf("ARP: %d\n",count_pkt_arp);
-		printf("IP: %d\n",count_pkt_ip);
-		printf("ICMP: %d\n",count_pkt_icmp);
-		printf("UDP: %d\n",count_pkt_udp);
-		printf("TCP: %d\n",count_pkt_tcp);
-		printf("To this host: %d\n",count_pkt_me);
+		printf("ethernet frames: %d\n", (*_x).count[T_ETHER]);
+		printf("ethernet broadcast: %d\n", (*_x).count[T_BROAD]);
+		printf("ARP: %d\n",(*_x).count[T_ARP]);
+		printf("IP: %d\n",(*_x).count[T_IP]);
+		printf("ICMP: %d\n",(*_x).count[T_ICMP]);
+		printf("UDP: %d\n",(*_x).count[T_UDP]);
+		printf("TCP: %d\n",(*_x).count[T_TCP]);
+		printf("To this host: %d\n",(*_x).count[T_PKG_ME]);
 	}
    	
    	return 0;

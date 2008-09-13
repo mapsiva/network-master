@@ -14,12 +14,14 @@
 #include <netinet/in.h>
 #include "PackageHeader.h"
 #include "Ethernet.h"
+#include "Types.h"
+
 #define BUF_SIZE	2000
 char byte_order; /* 0=little, 1=big endian*/
 
 char pkt_buf[BUF_SIZE];
 
-int check_parameters(int, char *[], int *, int *, unsigned long *, int *);
-int xnoop(int, char *[], ETHERNET_PKT *);
+int check_parameters(int, char *[], _XNOOP *);
+int xnoop(int, char *[], ETHERNET_PKT *, _XNOOP *);
 
 #endif 
