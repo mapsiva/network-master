@@ -11,17 +11,6 @@
 
 #ifndef SUBNET_H_
 #define SUBNET_H_
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
-#include <strings.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <pthread.h>
-#include <errno.h>
-#include <semaphore.h>
 #include "Ethernet.h"
 #include "Types.h"
 
@@ -105,6 +94,8 @@ void *subnet_rcv(void *);
 
 void send_pkt(u_short, BYTE , BYTE *, u_short , BYTE *);
 
+void send_pkt_2(u_short, u_short, BYTE *);
+
 void *subnet_send(void *);
 
 void str2eth(char *, BYTE[]);
@@ -122,5 +113,7 @@ int sub_ifconfig( char* );
 int sub_if( char* );
 
 int sub_arp ( WORD );
+
+int sub_send_trace(char* b);
 
 #endif 

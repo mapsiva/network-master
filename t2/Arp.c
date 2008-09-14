@@ -29,7 +29,7 @@ trace_arp( ARP_HEADER * pkg, int translation, int modo, int broadcast)
 		printf("ARP: Protocol Type = 0x%04X %s\n", ntohs(pkg->protocol_type), (ntohs(pkg->protocol_type) == IP)?"(IP)":"");
 		printf("ARP: Length of hardware address = %u bytes\n", pkg->hardware_len);
 		printf("ARP: Length of protocol address = %u bytes\n", pkg->protocol_len);
-		printf("ARP: Opcode %u (%s)\n", ntohs(pkg->operation), (ntohs(pkg->operation) == ARP_REQUEST)?"Echo Request":"Echo Reply");
+		printf("ARP: Opcode %u (%s)\n", ntohs(pkg->operation), (ntohs(pkg->operation) == ARP_REQUEST)?"Echo Request":((ntohs(pkg->operation) == ARP_REPLY)?"Echo Reply":""));
 
 		printf ("ARP: Sender’s hardware address \t= %.02X:%02X:%02X:%02X:%02X:%.02X\n", pkg->sender_hardware_addr[0], pkg->sender_hardware_addr[1], pkg->sender_hardware_addr[2], pkg->sender_hardware_addr[3], pkg->sender_hardware_addr[4], pkg->sender_hardware_addr[5]);	
 

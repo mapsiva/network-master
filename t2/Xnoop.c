@@ -90,8 +90,6 @@ int xnoop(int argc, char *argv[], ETHERNET_HEADER * pkg_ethernet, _XNOOP *_x)
 	if (pkg_ethernet) 
 	{	
 		(*_x).count[T_ETHER] ++;
-		
-		
         
 		if((*_x).position < argc)
 		{
@@ -148,5 +146,5 @@ int xnoop(int argc, char *argv[], ETHERNET_HEADER * pkg_ethernet, _XNOOP *_x)
 		printf("To this host: %d\n",(*_x).count[T_PKG_ME]);
 	}
    	
-   	return 0;
+   	return 1;
 }

@@ -8,15 +8,29 @@
 	
 	Xnoop - Analizador de Pacotes [Trabalho 1]
 */
-
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include <strings.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <pthread.h>
+#include <errno.h>
+#include <semaphore.h>
 
 #include "Subnet.h"
 #include "Xnoop.h"
 #include "Analyzer.h"
-
+#include "PackageHeader.h"
 #include "Ethernet.h"
 #include "Arp.h"
+#include "Ip.h"
+#include "Tcp.h"
+#include "Udp.h"
+#include "Icmp.h"
+
 /* */
 
 /* Open a passive UDP socket. port must be in net-byte order. */
@@ -291,13 +305,13 @@ int sub_if( char* b)
 			}
 			else
 			{
-				printf("asdasdInvalid Comand. Sintaxe Correct is: if <interface> down|up");
+				printf("Sintaxe Correct is: if <interface> [down|up]");
 				return 0;
 			}
 		}
 	}
 	else
-		printf("Invalid Comand. Sintaxe Correct is: if <interface> down|up");
+		printf("Sintaxe Correct is: if <interface> [down|up]");
 	
 	return 0;
 }
@@ -403,22 +417,20 @@ void *subnet_rcv(void *ptr)
 			error_exit("Packet received from unknown interface\n");
 		else 
 		{
+			qtd_pkgs++;
 			if (!memcmp(eth_h->receiver, broad_eth,6) || !memcmp(eth_h->receiver, ifaces[riface].mac, 6))			  
-			{
-			    ifaces[riface].pkt_rx++; /* The packet must be processed */
-				
-				/*Atualizando a qtde de pacotes recebidos para que o XNOOP possa imprimir corretamente a id do pacote corrente travegando na rede*/
-				_xnoop.npkgs = ifaces[riface].pkt_rx;			
-
+			    ifaces[riface].pkt_rx++; /* The packet must be processed */				
+			
+			_xnoop.npkgs = qtd_pkgs;
     			   
-				if (run_xnoop)
-				{
-					sem_wait(&sem_xnoop);
-					xnoop(qtd_parameters, parameters, eth_h, &_xnoop);
-					sem_post(&sem_xnoop);
-				}
-				//printf("Packet received (0x%04X) ()\n",(unsigned short) ntohs(eth_h->type));
+			if (run_xnoop)
+			{
+				sem_wait(&sem_xnoop);
+				xnoop(qtd_parameters, parameters, eth_h, &_xnoop);
+				sem_post(&sem_xnoop);
 			}
+			
+			//printf("Packet received (0x%04X) ()\n",(unsigned short) ntohs(eth_h->type));
 		}
     }
 }
@@ -441,7 +453,6 @@ void send_pkt(u_short len, BYTE iface, BYTE *da, u_short type, BYTE *data)
     ether = (ETHERNET_HEADER *) (pkt+1);
     
     memcpy(ether, data, len);
-
    
     qaux = malloc(sizeof(PKT_QUEUE));
     qaux->next = NULL;
@@ -455,6 +466,169 @@ void send_pkt(u_short len, BYTE iface, BYTE *da, u_short type, BYTE *data)
 		sem_post(&sem_data_ready);
     }    
     sem_post(&sem_queue);
+}
+
+/* */
+void send_pkt_2(u_short len, u_short type_ether, BYTE *data)
+{
+    ETHERNET_PKT *pkt;
+    PKT_QUEUE *qaux;
+    ETHERNET_HEADER * ether;
+    ETHER_HEADER * ether_2;
+    void * p;
+     
+    pkt = malloc(len + sizeof(ETHERNET_HEADER) + sizeof(ETHERNET_PKT));
+    pkt->len   = len + sizeof(ETHERNET_HEADER) + sizeof(ETHERNET_PKT);
+    
+	ether_2 = (ETHER_HEADER *) (data);
+    
+    /* Esses dois campos não existem em ETHER_HEADER, por isso eles vão com 0 (zero) no ETHERNET_PKT*/
+    pkt->iface = 0;
+    pkt->net   = 0;
+        
+    memcpy(&pkt->sa[0], ether_2->sender, MAC_ADDR_LEN);
+    memcpy(&pkt->da[0], ether_2->receiver, MAC_ADDR_LEN);
+    pkt->type = htons(type_ether);
+    
+    //Remontando o ETHERNET_HEADER baseado no ETHER_HEADER
+    ether = (ETHERNET_HEADER *) (pkt+1);
+    
+    ether->net = 0;
+    memcpy(&ether->receiver[0], ether_2->sender, MAC_ADDR_LEN);
+    memcpy(&ether->sender[0], ether_2->receiver, MAC_ADDR_LEN);
+    ether->type = htons(type_ether);
+            
+    p = (void *) (ether+1);
+    
+    memcpy(p, data, len);
+   
+    qaux = malloc(sizeof(PKT_QUEUE));
+    qaux->next = NULL;
+    qaux->pkt  = pkt;
+    sem_wait(&sem_queue);
+    if (queue_head) 
+		queue_tail = queue_tail->next = qaux;
+    else 
+    {
+		queue_head = queue_tail = qaux;
+		sem_post(&sem_data_ready);
+    }    
+    sem_post(&sem_queue);
+}
+
+/* */
+int sub_send_trace(char* b)
+{
+	unsigned int tam;
+	unsigned int interval = 0;
+	
+	FILE *inf;
+	
+	FILE_HEADER file_header;
+	FRAME_HEADER frame_header;
+	
+	char *aux1;
+	char *aux2;
+	
+	char *trace_name;
+	
+	char pkt_buf[BUF_SIZE];	
+	
+	ETHER_HEADER * pkg_ethernet;
+    IP_HEADER * pkg_ip;
+    ARP_HEADER * pkg_arp;
+	
+	//Capturando os parâmetros passados juntamente com o send
+	tam = strlen(b);
+	b[tam-1] = ' ';
+	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o send*/
+	
+	/*Capturando o nome do arquivo trace*/
+	if ((trace_name = strtok_r(NULL, " ", &aux1)) != NULL)	
+	{
+		/*Capturando o valor do intervalo de renvio de pacotes*/
+		if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)	
+		{
+			if (!is_decimal ((CHAR_T *)aux2))
+			{
+				printf("Incorret interval. Interval between 1 and ...");
+				return 0;			
+			}
+			
+			interval = strtoul((const char *)aux2, NULL, 10);
+		}
+			
+		inf = fopen(trace_name, "rb");
+	
+		if (!inf)
+		{
+			printf("Could not open file: %s", trace_name);	
+			return 0;
+		}
+
+		/* read file header */
+		fread(&file_header, sizeof(FILE_HEADER), 1, inf);
+
+		if (file_header.magic_number != 0xa1b2c3d4) 
+			invert_file_header(&file_header);
+			
+		printf("\nSending Packets...\n");
+			
+		while (fread(&frame_header, sizeof(FRAME_HEADER), 1, inf)) 
+		{				
+			if (file_header.magic_number != 0xa1b2c3d4) 
+				invert_pkt_header(&frame_header);
+
+			/*Le o conteudo do pacote*/
+			fread(pkt_buf, frame_header.capt_data, 1, inf);
+
+			/*Capturando um pacote ethernet*/
+			pkg_ethernet = (ETHER_HEADER *)pkt_buf;
+			
+			switch (ntohs(pkg_ethernet->type))
+			{
+				case ARP:
+					pkg_arp = (ARP_HEADER *)( pkg_ethernet + 1 );
+					printf("\nEnviando Pacote ARP\n");
+		    		send_pkt_2(sizeof(ARP_HEADER), ARP, (BYTE*)pkg_arp);			    		
+		    	break;
+		    	
+		    	case IP:
+		    		
+		    		pkg_ip = (IP_HEADER *)( pkg_ethernet + 1 );
+		    		
+		    		switch(pkg_ip->protocol)
+		    		{
+		    			case TCP:
+		    				printf("\nEnviando Pacote TCP\n");
+		    				send_pkt_2(sizeof(IP_HEADER) + sizeof(TCP_HEADER), IP, (BYTE*)pkg_ip);
+		    			break;
+		    			
+		    			case UDP:
+		    				printf("\nEnviando Pacote UDP\n");
+		    				send_pkt_2(sizeof(IP_HEADER) + sizeof(UDP_HEADER), IP, (BYTE*)pkg_ip);	
+		    			break;
+		    			
+		    			case ICMP:
+		    				printf("\nEnviando Pacote ICMP\n");
+		    				send_pkt_2(sizeof(IP_HEADER) + sizeof(ICMP_HEADER), IP, (BYTE*)pkg_ip);	
+		    			break;
+		    		}
+		    	break;
+		    	
+		    	default:
+		    		printf("\nUnkonw Protocol Type ARP 0x%04X\n", ntohs(pkg_ethernet->type));
+		    }
+		    
+		    sleep(interval);
+		}		
+		
+		printf("\nPackets Sended.\n");
+	}
+	else
+		printf("Sintaxe Correct is: send <trace> <interval>");
+	
+	return 0;
 }
 
 /* */
@@ -544,6 +718,9 @@ int main(int argc, char *argv[])
 		}
 		else if (!strncasecmp(buf, "EXIT", 4)) {
 			exit(0);
+		}
+		else if (!strncasecmp(buf, "SEND", 4)) {
+			sub_send_trace((char*)buf);
 		}
 		else if (!strncasecmp(buf,"\n",1))
 		{}

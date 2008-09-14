@@ -21,6 +21,15 @@ typedef struct
 	SWORD type;
 } ETHERNET_HEADER;
 
+/* Estrutura usada para manipulação dos dados do arquivo TRACE*/
+typedef struct
+{
+    //BYTE net;
+	BYTE receiver[6];
+	BYTE sender[6];
+	SWORD type;
+} ETHER_HEADER;
+
 typedef struct 
 {
     u_short len;
