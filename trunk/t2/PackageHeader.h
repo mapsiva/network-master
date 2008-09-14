@@ -43,6 +43,4 @@ void invert_file_header( FILE_HEADER * );
 void invert_pkt_header( FRAME_HEADER * );
 void print_pkt_header ( FRAME_HEADER * );
 
-
-
 #endif 
