@@ -19,15 +19,7 @@ typedef struct
 	BYTE receiver[6];
 	BYTE sender[6];
 	SWORD type;
-}ETHERNET_HEADER;	
-	
-/* */
-typedef struct {
-    BYTE  net;
-    BYTE  da[6];
-    BYTE  sa[6];
-    u_short type;
-} ETHER_HEADER;
+} ETHERNET_HEADER;
 
 typedef struct 
 {

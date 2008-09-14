@@ -26,10 +26,11 @@
 #include "Types.h"
 
 /* */
-#define MAX_PKT_SZ	65536
-#define MAX_HOSTS	10
+#define MAX_PKT_SZ		65536
+#define MAX_HOSTS		10
 #define MAC_ADDR_LEN	6
-#define MAX_IFACES	5
+#define IP_ADDR_LEN		4
+#define MAX_IFACES		5
 #define MAX_NETWORKS	20
 #define MAX_PARAMETERS	256
 
@@ -58,11 +59,6 @@ typedef struct {
     BYTE	net;			/* Simul. network number	*/
 } INTERFACE;
 
-
-
-/* */
-
-
 /* */
 typedef struct _pq {
     ETHERNET_PKT  *pkt;
@@ -76,6 +72,7 @@ PKT_QUEUE *queue_tail;
 /* */
 sem_t sem_data_ready;
 sem_t sem_queue;
+sem_t sem_xnoop;
 
 /* */
 INTERFACE ifaces[MAX_IFACES];	/* Interfaces of the host/router */
@@ -93,11 +90,11 @@ BYTE broad_eth[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 /* */
 char in_buf[MAX_PKT_SZ];
 
+/* Definitions for XNOOP */
 int qtd_parameters, run_xnoop, qtd_pkgs;
 
 char *parameters[MAX_PARAMETERS];
 
-/* Definitions for XNOOP */
 _XNOOP _xnoop;
 
 /* functions*/
