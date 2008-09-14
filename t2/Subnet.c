@@ -460,40 +460,64 @@ void send_pkt(u_short len, BYTE iface, BYTE *da, u_short type, BYTE *data)
 /* */
 int main(int argc, char *argv[])
 {
-    pthread_t tid;
-    char buf[100];
-    int i;
-    
-    //Ajustando as opções padrões do XNOOP    
-    _xnoop.modo = VERB_EXT;
+	pthread_t tid;
+	char buf[100];
+	int i;
+	//#####################
+	ArpTable *arpTable;
+	ArpTableEntry *entry;
+	
+	arpTable = BuildArpTable();
+	
+	entry = BuildArpTableEntry(1,1,2);
+	
+	AddArpTableEntry (arpTable, entry);
+	entry = BuildArpTableEntry(2,1,2);
+	 AddArpTableEntry (arpTable, entry);
+	 entry = BuildArpTableEntry(3,1,5);
+	 AddArpTableEntry (arpTable, entry);
+	 entry = BuildArpTableEntry(3,1,5);
+	 AddArpTableEntry (arpTable, entry);
+	 entry = BuildArpTableEntry(1,1,9);
+	 AddArpTableEntry (arpTable, entry);
+	 
+	 DisplayArpTable(arpTable);
+	 //#####################   
+	//Ajustando as opções padrões do XNOOP    
+	_xnoop.modo = VERB_EXT;
 	_xnoop.translation = 0;
 	_xnoop.npkgs = 0;
 	_xnoop.npkgs_max = 400000000;
 	_xnoop.position = 1;
 	run_xnoop = 1;
-
+	
 	qtd_pkgs = 0;
-
-    if (argc < 3)
+	
+	if (argc < 3)
 	error_exit("\nUsage: subnet port cfg_file [cfg_files ...]\n");
-    my_port = htons(atoi(argv[1]));
-    nifaces = 0;
-    for (i = 2; i < argc; i++) {
+	my_port = htons(atoi(argv[1]));
+	nifaces = 0;
+	for (i = 2; i < argc; i++) {
 		read_net_cfg(argv[i], my_port, nifaces);
 		nifaces++;
-    }
-    queue_head = NULL;
-    /* Initialize semaphore */
-    sem_init(&sem_data_ready, 0, 0);
-    sem_init(&sem_queue, 0, 1);
-    sem_init(&sem_xnoop, 0, 1);
-    
-    
-    /* Create sender and receiver threads */
-    printf("Listening on port: %d\n", ntohs(my_port));
-    pthread_create(&tid, NULL, subnet_rcv, (void *)&my_port);
-    pthread_create(&tid, NULL, subnet_send, (void *)NULL);
-    while (1) {
+	}
+	queue_head = NULL;
+	/* Initialize semaphore */
+	sem_init(&sem_data_ready, 0, 0);
+	sem_init(&sem_queue, 0, 1);
+	sem_init(&sem_xnoop, 0, 1);
+	
+	
+	/* Create sender and receiver threads */
+	printf("Listening on port: %d\n", ntohs(my_port));
+	pthread_create(&tid, NULL, subnet_rcv, (void *)&my_port);
+	pthread_create(&tid, NULL, subnet_send, (void *)NULL);
+	//#######
+	FlushArpTable(arpTable);
+	free(arpTable);
+	//#######
+	
+	while (1) {
 		printf("\ncmd> ");
 		fgets(buf, MAX_PARAMETERS, stdin);		
 		/*Tive de usar fgets pois com scanf não está funcionando os strncmps abaixo*/
@@ -525,7 +549,7 @@ int main(int argc, char *argv[])
 		{}
 		else
 			printf("Invalid command");
-    }
-    return 0;
+	}
+	return 0;
 }
 /* */

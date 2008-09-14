@@ -41,10 +41,15 @@ typedef struct
 }ArpTable;
 
 ArpTableEntry * FindArpTableEntry( ArpTable * table, ArpTableEntry * entry, int current);
+ArpTableEntry * BuildArpTableEntry( WORD, WORD, int);
+
 void * AddArpTableEntry( ArpTable * table, ArpTableEntry * entry);
 void * RemoveArpTableEntry( ArpTable * table, ArpTableEntry * entry );
 ArpTable * BuildArpTable();
-void flushArpTable (ArpTable * table);
+void DisplayArpTable (ArpTable * table);
+
+void FlushArpTable (ArpTable * table);
+
 
 CHAR_T*
 trace_arp( ARP_HEADER *, int, int, int);
