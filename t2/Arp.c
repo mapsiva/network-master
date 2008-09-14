@@ -219,7 +219,11 @@ void * AddArpTableEntry( ArpTable * table, ArpTableEntry * entry)
 		table->length ++;
 	}
 	else
-		_entry = entry;
+	{	
+		_entry->IP = entry->IP;
+		_entry->MAC = entry->MAC;
+		_entry->TTL = entry->TTL;
+	}
 	
 	return _entry;
 }
