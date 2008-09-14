@@ -101,12 +101,10 @@ void *subnet_send(void *ptr)
 				sin.sin_family = AF_INET;
 				sin.sin_port = phost[i].port;
 				sin.sin_addr.s_addr = phost[i].ip;
-				//aux = sendto(sockd, &pkt->pkt->net, pkt->pkt->len, 0,//mudanca drastica aqui ##########################
-					//	 (struct sockaddr *)&sin, sizeof(sin));
-						 
-						 aux = sendto(sockd, &pkt->pkt->len, pkt->pkt->len, 0,//mudanca drastica aqui ##########################
-						 (struct sockaddr *)&sin, sizeof(sin));
-						 printf("\n<<%d>>\n", pkt->pkt->len);
+				
+			 aux = sendto(sockd, &pkt->pkt->len, pkt->pkt->len, 0,
+			 (struct sockaddr *)&sin, sizeof(sin));
+						
 				if (aux < 0)
 					printf("Error sending pkt: %s\n", strerror(errno));
 			}
@@ -371,9 +369,9 @@ int sub_arp ( WORD IP)
     eth->type = htons(0x0806);
     
     
-    arp->hardware_type = htons(7);
-    arp->protocol_type = htons(ARP_REQUEST);
-    
+    arp->hardware_type = htons(0);
+    arp->protocol_type = htons(0x0800);
+    arp->operation = htons(ARP_REQUEST);
     
     
     send_pkt(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER), 0, &broad_eth[0], 0x0806, (BYTE*)eth);

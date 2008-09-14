@@ -21,7 +21,7 @@ trace_ethernet(ETHERNET_HEADER* eth, int ID,  int modo, int *pkg_broadcast, int 
 {
 	if (modo == VERB_EXT)
 	{
-		printf ("ETHER: ----- Ether Header -----\n");
+		printf ("\nETHER: ----- Ether Header -----\n");
 		printf ("ETHER:\n");
 		printf ("ETHER: Packet %d\n", ID);
 		
