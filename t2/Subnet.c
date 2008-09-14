@@ -101,8 +101,12 @@ void *subnet_send(void *ptr)
 				sin.sin_family = AF_INET;
 				sin.sin_port = phost[i].port;
 				sin.sin_addr.s_addr = phost[i].ip;
-				aux = sendto(sockd, &pkt->pkt->net, pkt->pkt->len, 0,
+				//aux = sendto(sockd, &pkt->pkt->net, pkt->pkt->len, 0,//mudanca drastica aqui ##########################
+					//	 (struct sockaddr *)&sin, sizeof(sin));
+						 
+						 aux = sendto(sockd, &pkt->pkt->len, pkt->pkt->len, 0,//mudanca drastica aqui ##########################
 						 (struct sockaddr *)&sin, sizeof(sin));
+						 printf("\n<<%d>>\n", pkt->pkt->len);
 				if (aux < 0)
 					printf("Error sending pkt: %s\n", strerror(errno));
 			}
@@ -349,11 +353,11 @@ int sub_arp ( WORD IP)
     
     eth =  malloc(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER));
     
-    printf("TAMANHO DE ETHERNET_HEADER -> %04X %d\n",(unsigned int) eth ,sizeof(ETHERNET_HEADER));
+   // printf("TAMANHO DE ETHERNET_HEADER -> %04X %d\n",(unsigned int) eth ,sizeof(ETHERNET_HEADER));
     
     arp = ( ARP_HEADER * )(eth + 1);
     
-    printf("TAMANHO DE ETHERNET_HEADER -> %04X %d\n", (unsigned int) arp ,sizeof(ETHERNET_HEADER));
+   // printf("TAMANHO DE ETHERNET_HEADER -> %04X %d\n", (unsigned int) arp ,sizeof(ETHERNET_HEADER));
     
     memcpy(&eth->sender[0], ifaces[0].mac, MAC_ADDR_LEN);
     memcpy(&eth->receiver[0], &broad_eth[0], MAC_ADDR_LEN);
@@ -363,11 +367,14 @@ int sub_arp ( WORD IP)
     
     memcpy(&arp->sender_hardware_addr[0], ifaces[0].mac, MAC_ADDR_LEN);
     memcpy(&arp->target_hardware_addr[0], &broad_eth[0], MAC_ADDR_LEN);
-   
-    arp->hardware_type = htons(1);
+    eth->net = ifaces[0].net;
+    eth->type = htons(0x0806);
+    
+    
+    arp->hardware_type = htons(7);
     arp->protocol_type = htons(ARP_REQUEST);
     
-    eth->type = htons(0x0806);
+    
     
     send_pkt(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER), 0, &broad_eth[0], 0x0806, (BYTE*)eth);
     
@@ -381,10 +388,13 @@ void *subnet_rcv(void *ptr)
     unsigned alen;		/* from-address length		*/
     struct sockaddr_in fsin;	/* address of a client		*/
     ETHERNET_HEADER *eth_h;
-
+    ETHERNET_PKT *ppkt;
+    ARP_HEADER * test;
     
     sockd = passive_UDP_socket(port);
-    eth_h = (ETHERNET_HEADER*)&in_buf[0];
+    ppkt = (ETHERNET_PKT*)&in_buf[0];
+    
+    eth_h = (ETHERNET_HEADER *) (ppkt + 1);
     while(1)
     {
 		int rv, riface;
@@ -405,9 +415,16 @@ void *subnet_rcv(void *ptr)
 				/*Atualizando a qtde de pacotes recebidos para que o XNOOP possa imprimir corretamente a id do pacote corrente travegando na rede*/
 				_xnoop.npkgs = ifaces[riface].pkt_rx;			
 
+    			    test = (ARP_HEADER *) (eth_h + 1);
+    
+  // printf("[hardware type] => %u", ntohs(test->hardware_type));
+  
+   printf("PKT-> (%d) ETH_HEADER-> (%d) ARP_HEADER-> (%d) RECEIVE-> (%d)",sizeof(ETHERNET_PKT), sizeof(ETHERNET_HEADER),sizeof(ARP_HEADER) ,rv);
 				if (run_xnoop)
 					xnoop(qtd_parameters, parameters, eth_h, &_xnoop);
-				//printf("Packet received (0x%04X) ()\n",(unsigned short) ntohs(eth_h->type));
+					
+                
+				printf("Packet received (0x%04X) ()\n",(unsigned short) ntohs(eth_h->type));
 			}
 		}
     }
@@ -432,10 +449,8 @@ void send_pkt(u_short len, BYTE iface, BYTE *da, u_short type, BYTE *data)
     testeth = (ETHERNET_HEADER *) (pkt+1);
     
     memcpy(testeth, data, len);
-     
-    test = (ARP_HEADER *) (testeth + 1);
-   printf("[hardware type] => %u", ntohs(test->hardware_type));
-    
+    printf("PKT-> (%d) ETH_HEADER-> (%d) ARP_HEADER-> (%d) LEN-> (%d)",sizeof(ETHERNET_PKT), sizeof(ETHERNET_HEADER),sizeof(ARP_HEADER) ,pkt->len);
+   
     qaux = malloc(sizeof(PKT_QUEUE));
     qaux->next = NULL;
     qaux->pkt  = pkt;
