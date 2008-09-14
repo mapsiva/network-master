@@ -146,7 +146,8 @@ void read_net_cfg(char *fname, u_short port, u_short iface)
 	error_exit("Could not open configuration file: %s\n", fname);
     p = ifaces[iface].hosts;
     first = 1;
-    while (fgets(line, 100, cfg_file)) {
+    while (fgets(line, 100, cfg_file)) 
+    {
         char *s;	
 		if (line[0] != '#') {
 			if (first) { /* First line != # has the network number */

@@ -122,9 +122,106 @@ trace_arp( ARP_HEADER * pkg, int translation, int modo, int broadcast)
 	}
     return 0;
 }
+/*
+* \param void
+* \since           2.0
+*/
 
-void * FindArpTableEntry(void *ip){return 0;}
-void * AddArpTableEntry(void *ip){return 0;}
-void * RemoveArpTableEntry(void * p){return 0;}
+ArpTable *
+BuildArpTable()
+{
+	 ArpTable * _table =  (ArpTable *) malloc(sizeof(ArpTable));
+     
+     _table->list = NULL;
+     
+     _table->length = 0;
+     
+     return _table;
+}
+/*
+* \param table ponteiro para a tabela arp
+* \param entry uma entrada da table  arp que se deseja encontrar
+* \param current flag que indica para funcao retornar o elemento corrente na busca ou seu anterior
+*
+* \return NULL ou uma entrada valida na tabela ARP
+*
+* \since           2.0
+*/
+ArpTableEntry *
+FindArpTableEntry( ArpTable * table, ArpTableEntry * entry, int current )
+{
+	ArpTableEntry *_entry = table->list;
+	
+	while ( _entry )
+	{
+		
+		if(current && _entry->IP == entry->IP)
+			return _entry;
+		else if(!current && _entry->next && _entry->next->IP == entry->IP)
+			return _entry->next;
+			
+		_entry = _entry->next;
+	}
+	
+	return NULL;
+}
+void * AddArpTableEntry( ArpTable * table, ArpTableEntry * entry)
+{
+	ArpTableEntry *_entry;
+	
+	if( !(_entry = FindArpTableEntry (table, entry ,1)))
+	{
+		entry->next = table->list;
+		
+		table->list = entry;
+		
+		table->length ++;
+	}
+	else
+		_entry = entry;
+	
+	return _entry;
+}
+void * RemoveArpTableEntry( ArpTable * table, ArpTableEntry * entry )
+{
+	ArpTableEntry *_entry, *_remove;
+	
+	if(!table->length)
+		return NULL;
+	
+	if(table->length == 1)	
+	{
+		_remove = table->list;
+		
+		table->list = NULL;
+	}	
+	else if( (_entry = FindArpTableEntry (table, entry, 0 )))
+	{
+		_remove = _entry->next;
+		
+		_entry->next = _remove->next;
+	}
+	
+	table->length --;
+	
+	return _remove;
+}
+
+void 
+flushArpTable (ArpTable * table)
+{
+    ArpTableEntry *_remove,  *_entry = table->list;
+    
+    while (_entry)
+    {
+        _remove = _entry;
+        
+        _entry = _remove->next;
+        
+        free (_remove);
+    }
+    
+    table->length = 0;
+}
 
 #endif
