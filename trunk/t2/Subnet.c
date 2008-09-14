@@ -389,7 +389,6 @@ void *subnet_rcv(void *ptr)
     struct sockaddr_in fsin;	/* address of a client		*/
     ETHERNET_HEADER *eth_h;
     ETHERNET_PKT *ppkt;
-    ARP_HEADER * test;
     
     sockd = passive_UDP_socket(port);
     ppkt = (ETHERNET_PKT*)&in_buf[0];
@@ -409,22 +408,14 @@ void *subnet_rcv(void *ptr)
 		{
 			if (!memcmp(eth_h->receiver, broad_eth,6) || !memcmp(eth_h->receiver, ifaces[riface].mac, 6))			  
 			{
-
 			    ifaces[riface].pkt_rx++; /* The packet must be processed */
 				
 				/*Atualizando a qtde de pacotes recebidos para que o XNOOP possa imprimir corretamente a id do pacote corrente travegando na rede*/
 				_xnoop.npkgs = ifaces[riface].pkt_rx;			
 
-    			    test = (ARP_HEADER *) (eth_h + 1);
-    
-  // printf("[hardware type] => %u", ntohs(test->hardware_type));
-  
-   printf("PKT-> (%d) ETH_HEADER-> (%d) ARP_HEADER-> (%d) RECEIVE-> (%d)",sizeof(ETHERNET_PKT), sizeof(ETHERNET_HEADER),sizeof(ARP_HEADER) ,rv);
+    			   
 				if (run_xnoop)
 					xnoop(qtd_parameters, parameters, eth_h, &_xnoop);
-					
-                
-				printf("Packet received (0x%04X) ()\n",(unsigned short) ntohs(eth_h->type));
 			}
 		}
     }
@@ -434,8 +425,7 @@ void send_pkt(u_short len, BYTE iface, BYTE *da, u_short type, BYTE *data)
 {
     ETHERNET_PKT *pkt;
     PKT_QUEUE *qaux;
-    ARP_HEADER * test;
-    ETHERNET_HEADER * testeth;
+    ETHERNET_HEADER * ether;
      
     pkt = malloc(len + sizeof(ETHERNET_PKT));
     pkt->len   = len + sizeof(ETHERNET_PKT);
@@ -446,10 +436,10 @@ void send_pkt(u_short len, BYTE iface, BYTE *da, u_short type, BYTE *data)
     pkt->type = htons(type);
    
    
-    testeth = (ETHERNET_HEADER *) (pkt+1);
+    ether = (ETHERNET_HEADER *) (pkt+1);
     
-    memcpy(testeth, data, len);
-    printf("PKT-> (%d) ETH_HEADER-> (%d) ARP_HEADER-> (%d) LEN-> (%d)",sizeof(ETHERNET_PKT), sizeof(ETHERNET_HEADER),sizeof(ARP_HEADER) ,pkt->len);
+    memcpy(ether, data, len);
+
    
     qaux = malloc(sizeof(PKT_QUEUE));
     qaux->next = NULL;
