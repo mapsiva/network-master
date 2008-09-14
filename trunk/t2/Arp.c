@@ -26,7 +26,7 @@ trace_arp( ARP_HEADER * pkg, int translation, int modo, int broadcast)
 		printf("ARP: ----- ARP Header -----\n");
 		printf("ARP:\n");
 		printf("ARP: Hardware Type = %u\n", ntohs(pkg->hardware_type));
-		printf("ARP: Protocol Type = 0x%04X %s\n", ntohs(pkg->protocol_type), (ntohs(pkg->protocol_type) == IP)?"(IP)":" ");
+		printf("ARP: Protocol Type = 0x%04X %s\n", ntohs(pkg->protocol_type), (ntohs(pkg->protocol_type) == IP)?"(IP)":"");
 		printf("ARP: Length of hardware address = %u bytes\n", pkg->hardware_len);
 		printf("ARP: Length of protocol address = %u bytes\n", pkg->protocol_len);
 		printf("ARP: Opcode %u (%s)\n", ntohs(pkg->operation), (ntohs(pkg->operation) == ARP_REQUEST)?"Echo Request":"Echo Reply");

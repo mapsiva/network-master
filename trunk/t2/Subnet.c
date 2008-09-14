@@ -72,7 +72,6 @@ int sub_xnoop(char *param[], char *b)
 	return i;
 }
 
-
 /* */
 void *subnet_send(void *ptr)
 {
@@ -344,37 +343,36 @@ int print_if_info(int id_iface)
 	return 0;
 }
 
-int sub_arp ( WORD IP)
+int sub_arp ( WORD ip_addres)
 {   
     ARP_HEADER * arp;
     ETHERNET_HEADER * eth;
     
     eth =  malloc(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER));
     
-   // printf("TAMANHO DE ETHERNET_HEADER -> %04X %d\n",(unsigned int) eth ,sizeof(ETHERNET_HEADER));
-    
     arp = ( ARP_HEADER * )(eth + 1);
-    
-   // printf("TAMANHO DE ETHERNET_HEADER -> %04X %d\n", (unsigned int) arp ,sizeof(ETHERNET_HEADER));
-    
-    memcpy(&eth->sender[0], ifaces[0].mac, MAC_ADDR_LEN);
-    memcpy(&eth->receiver[0], &broad_eth[0], MAC_ADDR_LEN);
-    
-    /*IP da maquina que se deseja descobrir o MAC*/
-    arp->target_ip_addr = IP;
-    
-    memcpy(&arp->sender_hardware_addr[0], ifaces[0].mac, MAC_ADDR_LEN);
-    memcpy(&arp->target_hardware_addr[0], &broad_eth[0], MAC_ADDR_LEN);
+
+	/* Ajustando dados do ETHERNET_HEADER */
     eth->net = ifaces[0].net;
-    eth->type = htons(0x0806);
-    
-    
-    arp->hardware_type = htons(0);
-    arp->protocol_type = htons(0x0800);
+    memcpy(&eth->sender[0], ifaces[0].mac, MAC_ADDR_LEN);
+    memcpy(&eth->receiver[0], &broad_eth[0], MAC_ADDR_LEN);    
+    eth->type = htons(ARP);
+   	
+   	/* Ajustando dados do ARP_HEADER */
+    arp->hardware_type = htons(15);
+    arp->protocol_type = 0;				/*colocamos 0 (zero) pois este não é um pacote IP dentro do ARP*/
+    arp->hardware_len = MAC_ADDR_LEN;
+    arp->protocol_len = IP_ADDR_LEN;
     arp->operation = htons(ARP_REQUEST);
+    memcpy(&arp->sender_hardware_addr[0], ifaces[0].mac, MAC_ADDR_LEN);
+    arp->sender_ip_addr = ifaces[0].ip;    
+    memcpy(&arp->target_hardware_addr[0], &broad_eth[0], MAC_ADDR_LEN);
+
+    /*IP da maquina que se deseja descobrir o MAC*/
+    arp->target_ip_addr = ip_addres;
     
-    
-    send_pkt(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER), 0, &broad_eth[0], 0x0806, (BYTE*)eth);
+    /*Enviando pacote*/
+    send_pkt(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER), 0, &broad_eth[0], ARP, (BYTE*)eth);
     
     return 1;
 }
@@ -413,11 +411,17 @@ void *subnet_rcv(void *ptr)
 
     			   
 				if (run_xnoop)
+				{
+					sem_wait(&sem_xnoop);
 					xnoop(qtd_parameters, parameters, eth_h, &_xnoop);
+					sem_post(&sem_xnoop);
+				}
+				//printf("Packet received (0x%04X) ()\n",(unsigned short) ntohs(eth_h->type));
 			}
 		}
     }
 }
+			
 /* */
 void send_pkt(u_short len, BYTE iface, BYTE *da, u_short type, BYTE *data)
 {
@@ -431,8 +435,7 @@ void send_pkt(u_short len, BYTE iface, BYTE *da, u_short type, BYTE *data)
     pkt->net   = ifaces[iface].net;
     memcpy(&pkt->sa[0], ifaces[iface].mac, MAC_ADDR_LEN);
     memcpy(&pkt->da[0], da, MAC_ADDR_LEN);
-    pkt->type = htons(type);
-   
+    pkt->type = htons(type);   
    
     ether = (ETHERNET_HEADER *) (pkt+1);
     
@@ -466,6 +469,7 @@ int main(int argc, char *argv[])
 	_xnoop.npkgs = 0;
 	_xnoop.npkgs_max = 400000000;
 	_xnoop.position = 1;
+	run_xnoop = 1;
 
 	qtd_pkgs = 0;
 
@@ -481,6 +485,9 @@ int main(int argc, char *argv[])
     /* Initialize semaphore */
     sem_init(&sem_data_ready, 0, 0);
     sem_init(&sem_queue, 0, 1);
+    sem_init(&sem_xnoop, 0, 1);
+    
+    
     /* Create sender and receiver threads */
     printf("Listening on port: %d\n", ntohs(my_port));
     pthread_create(&tid, NULL, subnet_rcv, (void *)&my_port);
