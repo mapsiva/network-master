@@ -123,8 +123,30 @@ trace_arp( ARP_HEADER * pkg, int translation, int modo, int broadcast)
     return 0;
 }
 /*
-* \param void
-* \since           2.0
+* @param IP Ip da maquina
+* @param MAC mac da maquina
+* @param TTL tempo de vida da entrada
+* 
+* @return ArpTableEntry* retorna um ponteiro para a entrada criada
+* 
+* @since           2.0
+*/
+
+
+ArpTableEntry * BuildArpTableEntry( WORD IP, WORD MAC, int TTL)
+{
+	 ArpTableEntry * _entry =  (ArpTableEntry *) malloc(sizeof(ArpTableEntry));
+	 
+	 _entry->IP = IP;
+	 _entry->MAC = MAC;
+	 _entry->TTL = TTL;
+	 
+	 return _entry;
+}
+
+/*
+* @param void
+* @since           2.0
 */
 
 ArpTable *
@@ -138,14 +160,33 @@ BuildArpTable()
      
      return _table;
 }
+/* Funcao que imprime a tabela ARP na tela
+ * 
+ * @param void
+ * @return void
+ */
+void DisplayArpTable (ArpTable * table)
+{
+	ArpTableEntry *_entry = table->list;
+	int seq = 0;
+	printf ("\nEntrada\t\t\t Endereco IP\t\t Endereco Ethernet\tTTL\n");
+	while (_entry)
+	{
+		printf ("%d\t\t\t %d\t\t\t %d\t\t\t %d\n", seq++ ,(int)_entry->IP, (int)_entry->MAC, _entry->TTL);
+		
+		_entry = _entry->next;
+	}
+}
+
+
 /*
-* \param table ponteiro para a tabela arp
-* \param entry uma entrada da table  arp que se deseja encontrar
-* \param current flag que indica para funcao retornar o elemento corrente na busca ou seu anterior
+* @param table ponteiro para a tabela arp
+* @param entry uma entrada da table  arp que se deseja encontrar
+* @param current flag que indica para funcao retornar o elemento corrente na busca ou seu anterior
 *
-* \return NULL ou uma entrada valida na tabela ARP
+* @return NULL ou uma entrada valida na tabela ARP
 *
-* \since           2.0
+* @since           2.0
 */
 ArpTableEntry *
 FindArpTableEntry( ArpTable * table, ArpTableEntry * entry, int current )
@@ -208,7 +249,7 @@ void * RemoveArpTableEntry( ArpTable * table, ArpTableEntry * entry )
 }
 
 void 
-flushArpTable (ArpTable * table)
+FlushArpTable (ArpTable * table)
 {
     ArpTableEntry *_remove,  *_entry = table->list;
     
