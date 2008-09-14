@@ -1,9 +1,9 @@
 /**
 	Universidade Federal de Mato Grosso do Sul
-	Mestrado em Ciência da Computação DCT - UFMS
+	Mestrado em Ciï¿½ncia da Computaï¿½ï¿½o DCT - UFMS
 	Redes de Computadores 2008
 	
-	Márcio Aparecido Inacio da Silva
+	Mï¿½rcio Aparecido Inacio da Silva
 	Maxwell Sampaio dos Santos
 	
 	Xnoop - Analizador de Pacotes [Trabalho 1]
@@ -37,12 +37,14 @@ typedef struct tArpTableEntry
 typedef struct
 {
     int length;
-    struct list * tArpTableEntry;
+    struct tArpTableEntry *list ;
 }ArpTable;
 
-void * FindArpTableEntry(void *);
-void * AddArpTableEntry(void *);
-void * RemoveArpTableEntry(void *);
+ArpTableEntry * FindArpTableEntry( ArpTable * table, ArpTableEntry * entry, int current);
+void * AddArpTableEntry( ArpTable * table, ArpTableEntry * entry);
+void * RemoveArpTableEntry( ArpTable * table, ArpTableEntry * entry );
+ArpTable * BuildArpTable();
+void flushArpTable (ArpTable * table);
 
 CHAR_T*
 trace_arp( ARP_HEADER *, int, int, int);
