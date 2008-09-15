@@ -48,7 +48,9 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
     
     for (i = position; i < argc; i++)
 	{   
-        token = Advance ((CHAR_T *)argv[i]);       
+        token = Advance ((CHAR_T *)argv[i]);  
+        
+        //printf("\n%s\n", argv[i]);
             
         switch (token->code)
         {
@@ -62,8 +64,11 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                 break;
              case _OPERATOR:
                 if( stack->length < 2 )
-                    error_exit ("Error: Incorrect Filter. No data for operation [%s].\n", token->name);
-                
+                {
+                    printf ("Error: Incorrect Filter. No data for operation [%s].\n", token->name);
+                 	return 0;  
+                }
+                                
                 op1 = pop( stack );
                 op2 = pop( stack );
                 
@@ -83,7 +88,10 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                     	break;
                     case _DIV:
                     	if (op2->value == 0)
-                    		error_exit("Error: Division by zero!\n");
+                    	{
+                    		printf("Error: Division by zero!\n");
+                    		return 0;
+                    	}
                         data = ((WORD)(op1->value)/(WORD)(op2->value));                        
                     case _EQ:
                         data = ((DWORD)(op1->value)==(DWORD)(op2->value));
@@ -97,7 +105,10 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                 {
                     case _EQ:
                         if( stack->length < 2 )
-                            error_exit ("Error: Incorrect Filter. No data for operation [EQ].\n");
+                        {
+                            printf ("Error: Incorrect Filter. No data for operation [EQ].\n");
+                            return 0;
+                        }
                         op1 = pop( stack );
                         op2 = pop( stack );
                        
@@ -112,7 +123,10 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                         break;
                     case _AND:
                         if( stack->length < 2 )
-                            error_exit ("Error: Incorrect Filter. No data for operation [AND].\n");
+                        {
+                            printf ("Error: Incorrect Filter. No data for operation [AND].\n");
+                            return 0;
+                        }
                             
                         op1 = pop( stack );
                         op2 = pop( stack );
@@ -127,8 +141,10 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                         break;
                     case _OR:
                         if( stack->length < 2 )
-                            error_exit ("Error: Incorrect Filter. No data for operation [OR].\n");
-                        
+                        {
+                            printf ("Error: Incorrect Filter. No data for operation [OR].\n");
+                            return 0;
+                        }                        
                         
                         op1 = pop( stack );
                         op2 = pop( stack );
@@ -142,7 +158,10 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                         break;
                     case _NOT:
                     	if( stack->length < 1 )
-                            error_exit ("Error: Incorrect Filter. No data for operation [NOT].\n");                            
+                    	{
+                            printf ("Error: Incorrect Filter. No data for operation [NOT].\n");                            
+                            return 0;
+                        }
                         op1 = pop( stack );                                                        
                         push(stack, !op1->value);                            
                         break;                    
@@ -257,7 +276,8 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
                 }
                 break;
         	default:
-        		error_exit("Error: [%s] unknow\n", token->name);
+        		printf("Error: [%s] unknow\n", token->name);
+        		return 0;
         }
 	}
 	
@@ -268,7 +288,7 @@ filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
 		return 1;
 	}
 	else if (stack->length > 1)
-	    error_exit ("Error: Incorrect Filter\n");
+	    printf ("Error: Incorrect Filter\n");
 	
 	flush(stack);
     return 0;

@@ -90,13 +90,11 @@ int xnoop(int argc, char *argv[], ETHERNET_HEADER * pkg_ethernet, _XNOOP *_x)
 	if (pkg_ethernet) 
 	{	
 		(*_x).count[T_ETHER] ++;
-        
+
 		if((*_x).position < argc)
-		{
-			
+		{			
 			if (!filter (pkg_ethernet, argc, argv, (*_x).position))
 		    	return 0;
-		    
 		}
 
 		trace_ethernet (pkg_ethernet, (*_x).npkgs, (*_x).modo, &((*_x).count[T_BROAD]), &pkg_broadcast);		
