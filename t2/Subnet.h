@@ -95,7 +95,7 @@ void *subnet_rcv(void *);
 
 void send_pkt(u_short, BYTE , BYTE *, u_short , BYTE *);
 
-void send_pkt_2(u_short, u_short, BYTE *);
+void xnoop_send_pkt(u_short, u_short, BYTE *);
 
 void *subnet_send(void *);
 

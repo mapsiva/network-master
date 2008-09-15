@@ -52,7 +52,7 @@ int passive_UDP_socket(u_short port)
 
 
 /* */
-int sub_xnoop(char *b)
+int sub_xnoop(char *buf)
 {
 	unsigned int i = 0;
 	unsigned int tam;
@@ -61,14 +61,14 @@ int sub_xnoop(char *b)
 	char *aux2;
 	
 	//Capturando os [options] e [filters] do analisador de pacotes (XNOOP)
-	tam = strlen(b);
-	b[tam-1] = ' ';
-	aux2 = strtok_r(b," ", &aux1);
+	tam = strlen(buf);
+	buf[tam-1] = ' ';
+	aux2 = strtok_r(buf," ", &aux1);
 	
 	parameters[i++] = aux2;
 		
 	while ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
-		parameters[i++] = aux2;	
+		parameters[i++] = aux2;
 
 	//Ajustando as opções padrões do XNOOP    
     _xnoop.modo = BASIC;
@@ -471,7 +471,7 @@ void send_pkt(u_short len, BYTE iface, BYTE *da, u_short type, BYTE *data)
 }
 
 /* */
-void send_pkt_2(u_short len, u_short type_ether, BYTE *data)
+void xnoop_send_pkt(u_short len, u_short type_ether, BYTE *data)
 {
     ETHERNET_PKT *pkt;
     PKT_QUEUE *qaux;
@@ -592,7 +592,7 @@ int sub_send_trace(char* b)
 				case ARP:
 					pkg_arp = (ARP_HEADER *)( pkg_ethernet + 1 );
 					printf("\nEnviando Pacote ARP\n");
-		    		send_pkt_2(sizeof(ARP_HEADER), ARP, (BYTE*)pkg_arp);			    		
+		    		xnoop_send_pkt(sizeof(ARP_HEADER), ARP, (BYTE*)pkg_arp);			    		
 		    	break;
 		    	
 		    	case IP:
@@ -603,17 +603,17 @@ int sub_send_trace(char* b)
 		    		{
 		    			case TCP:
 		    				printf("\nEnviando Pacote TCP\n");
-		    				send_pkt_2(sizeof(IP_HEADER) + sizeof(TCP_HEADER), IP, (BYTE*)pkg_ip);
+		    				xnoop_send_pkt(sizeof(IP_HEADER) + sizeof(TCP_HEADER), IP, (BYTE*)pkg_ip);
 		    			break;
 		    			
 		    			case UDP:
 		    				printf("\nEnviando Pacote UDP\n");
-		    				send_pkt_2(sizeof(IP_HEADER) + sizeof(UDP_HEADER), IP, (BYTE*)pkg_ip);	
+		    				xnoop_send_pkt(sizeof(IP_HEADER) + sizeof(UDP_HEADER), IP, (BYTE*)pkg_ip);	
 		    			break;
 		    			
 		    			case ICMP:
 		    				printf("\nEnviando Pacote ICMP\n");
-		    				send_pkt_2(sizeof(IP_HEADER) + sizeof(ICMP_HEADER), IP, (BYTE*)pkg_ip);	
+		    				xnoop_send_pkt(sizeof(IP_HEADER) + sizeof(ICMP_HEADER), IP, (BYTE*)pkg_ip);	
 		    			break;
 		    		}
 		    	break;
@@ -668,6 +668,9 @@ int main(int argc, char *argv[])
 	run_xnoop = 1;
 	
 	qtd_pkgs = 0;
+	
+	for (i=0; i<MAX_PARAMETERS; i++)
+		parameters[i] = malloc (MAX_SIZE_PARAMETER);
 	
 	if (argc < 3)
 	error_exit("\nUsage: subnet port cfg_file [cfg_files ...]\n");
