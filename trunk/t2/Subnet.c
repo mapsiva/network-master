@@ -54,7 +54,7 @@ int passive_UDP_socket(u_short port)
 /* */
 int sub_xnoop(char *buf)
 {
-	unsigned int i = 0;
+	unsigned int i = 0, j = 0;
 	unsigned int tam;
 	
 	char *aux1;
@@ -62,14 +62,34 @@ int sub_xnoop(char *buf)
 	
 	//Capturando os [options] e [filters] do analisador de pacotes (XNOOP)
 	tam = strlen(buf);
+	//printf("\ntam buf %d\n", sizeof(buf));
 	buf[tam-1] = ' ';
 	aux2 = strtok_r(buf," ", &aux1);
+	//printf("\ntam aux2 %d\n", strlen(aux2));
+	//printf("\naux2 %s\n", aux2);
+	for (j=0; j<strlen(aux2); j++)
+		*(parameters[i] + j) = aux2[j];
+	*(parameters[i] + j) = '\0';
+	//printf("\nparam[%d] %s\n", i, parameters[i]);
+	i++;
+	while ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+	{
+		//printf("\ntam aux2 %d\n", strlen(aux2));
+		//printf("\naux2 %s\n", aux2);
+		for (j=0; j<strlen(aux2); j++)
+			*(parameters[i] + j) = aux2[j];
+		*(parameters[i] + j) = '\0';
+		//printf("\nparam[%d] %s\n", i, parameters[i]);
+		i++;
+	}
 	
+	/*
 	parameters[i++] = aux2;
 		
 	while ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
 		parameters[i++] = aux2;
-
+	*/
+	
 	//Ajustando as opções padrões do XNOOP    
     _xnoop.modo = BASIC;
 	_xnoop.translation = 1;
@@ -521,7 +541,7 @@ void xnoop_send_pkt(u_short len, u_short type_ether, BYTE *data)
 /* */
 int sub_send_trace(char* b)
 {
-	unsigned int tam;
+	unsigned int tam,i;
 	unsigned int interval = 0;
 	
 	FILE *inf;
@@ -702,7 +722,7 @@ int main(int argc, char *argv[])
 		/*Tive de usar fgets pois com scanf não está funcionando os strncmps abaixo*/
 		//scanf("%s", buf);
 		if (!strncasecmp(buf, "XNOOP", 5)) {
-			qtd_parameters = sub_xnoop((char*)buf);
+			qtd_parameters = sub_xnoop(buf);
 		}
 		else if (!strncasecmp(buf, "ARP", 3)) 
 		{
@@ -716,16 +736,16 @@ int main(int argc, char *argv[])
 			print_if_info(-1); /* O -1 é pra indicar que será impresso todas as interfaces */
 		}
 		else if (!strncasecmp(buf, "IFCONFIG", 8)) {
-			sub_ifconfig((char*)buf);
+			sub_ifconfig(buf);
 		}
 		else if (!strncasecmp(buf, "IF", 2)) {
-			sub_if((char*)buf);
+			sub_if(buf);
 		}
 		else if (!strncasecmp(buf, "EXIT", 4)) {
 			exit(0);
 		}
 		else if (!strncasecmp(buf, "SEND", 4)) {
-			sub_send_trace((char*)buf);
+			sub_send_trace(buf);
 		}
 		else if (!strncasecmp(buf,"\n",1))
 		{}
