@@ -52,7 +52,7 @@ int passive_UDP_socket(u_short port)
 
 
 /* */
-int sub_xnoop(char *param[], char *b)
+int sub_xnoop(char *b)
 {
 	unsigned int i = 0;
 	unsigned int tam;
@@ -64,9 +64,11 @@ int sub_xnoop(char *param[], char *b)
 	tam = strlen(b);
 	b[tam-1] = ' ';
 	aux2 = strtok_r(b," ", &aux1);
-	param[i++] = aux2;
+	
+	parameters[i++] = aux2;
+		
 	while ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
-		param[i++] = aux2;
+		parameters[i++] = aux2;	
 
 	//Ajustando as opções padrões do XNOOP    
     _xnoop.modo = BASIC;
@@ -75,13 +77,13 @@ int sub_xnoop(char *param[], char *b)
 	_xnoop.position = 1;
 	
 	//Verifica se os [options] e [filters] estão corretos
-	if (check_parameters(i, param, &_xnoop))
+	if (check_parameters(i, parameters, &_xnoop))
 	{
 		//Habilita a execução do XNOOP 
 		run_xnoop = 1;
 		
-		printf("Runing xnoop");	
-	}		
+		printf("Runing xnoop.");
+	}
 	
 	return i;
 }
@@ -541,8 +543,8 @@ int sub_send_trace(char* b)
 	//Capturando os parâmetros passados juntamente com o send
 	tam = strlen(b);
 	b[tam-1] = ' ';
-	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o send*/
-	
+	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o send*/	
+
 	/*Capturando o nome do arquivo trace*/
 	if ((trace_name = strtok_r(NULL, " ", &aux1)) != NULL)	
 	{
@@ -635,7 +637,7 @@ int sub_send_trace(char* b)
 int main(int argc, char *argv[])
 {
 	pthread_t tid;
-	char buf[100];
+	char buf[MAX_PARAMETERS];
 	int i;
 	//#####################
 	ArpTable *arpTable;
@@ -693,11 +695,11 @@ int main(int argc, char *argv[])
 	
 	while (1) {
 		printf("\ncmd> ");
-		fgets(buf, MAX_PARAMETERS, stdin);		
+		fgets(buf, MAX_PARAMETERS, stdin);
 		/*Tive de usar fgets pois com scanf não está funcionando os strncmps abaixo*/
 		//scanf("%s", buf);
 		if (!strncasecmp(buf, "XNOOP", 5)) {
-			qtd_parameters = sub_xnoop(parameters, (char*)buf);
+			qtd_parameters = sub_xnoop((char*)buf);
 		}
 		else if (!strncasecmp(buf, "ARP", 3)) 
 		{

@@ -22,6 +22,7 @@
 #define MAX_IFACES		5
 #define MAX_NETWORKS	20
 #define MAX_PARAMETERS	256
+#define MAX_SIZE_PARAMETER	20
 
 /* */
 typedef struct {
@@ -106,7 +107,7 @@ void read_net_cfg(char *, u_short, u_short);
 
 int print_if_info(int);
 
-int sub_xnoop(char *[], char *);
+int sub_xnoop(char *);
 
 int sub_ifconfig( char* );
 
