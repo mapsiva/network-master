@@ -134,7 +134,6 @@ int main(int argc, char *argv[])
 		/*Capturando um pacote ethernet*/
 		pkg_ethernet = (ETHERNET_HEADER *)pkt_buf;
 
-
 		/*Verifica se o pacote satifaz os filtros*/
         
         npkgs++;
