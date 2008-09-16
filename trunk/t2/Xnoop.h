@@ -11,7 +11,6 @@
 #ifndef XNOOP_H_
 #define XNOOP_H_
 
-#include <netinet/in.h>
 #include "PackageHeader.h"
 #include "Ethernet.h"
 #include "Types.h"

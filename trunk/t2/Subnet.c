@@ -10,12 +10,8 @@
 */
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <stdarg.h>
-#include <strings.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
+#include <string.h>
 #include <pthread.h>
 #include <errno.h>
 #include <semaphore.h>
@@ -62,33 +58,19 @@ int sub_xnoop(char *buf)
 	
 	//Capturando os [options] e [filters] do analisador de pacotes (XNOOP)
 	tam = strlen(buf);
-	//printf("\ntam buf %d\n", sizeof(buf));
 	buf[tam-1] = ' ';
 	aux2 = strtok_r(buf," ", &aux1);
-	//printf("\ntam aux2 %d\n", strlen(aux2));
-	//printf("\naux2 %s\n", aux2);
 	for (j=0; j<strlen(aux2); j++)
 		*(parameters[i] + j) = aux2[j];
 	*(parameters[i] + j) = '\0';
-	//printf("\nparam[%d] %s\n", i, parameters[i]);
 	i++;
 	while ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
 	{
-		//printf("\ntam aux2 %d\n", strlen(aux2));
-		//printf("\naux2 %s\n", aux2);
 		for (j=0; j<strlen(aux2); j++)
 			*(parameters[i] + j) = aux2[j];
 		*(parameters[i] + j) = '\0';
-		//printf("\nparam[%d] %s\n", i, parameters[i]);
 		i++;
 	}
-	
-	/*
-	parameters[i++] = aux2;
-		
-	while ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
-		parameters[i++] = aux2;
-	*/
 	
 	//Ajustando as opções padrões do XNOOP    
     _xnoop.modo = BASIC;
@@ -541,7 +523,7 @@ void xnoop_send_pkt(u_short len, u_short type_ether, BYTE *data)
 /* */
 int sub_send_trace(char* b)
 {
-	unsigned int tam,i;
+	unsigned int tam;
 	unsigned int interval = 0;
 	
 	FILE *inf;
