@@ -113,6 +113,14 @@ int sub_ifconfig( char* );
 
 int sub_if( char* );
 
+int sub_arp_del( char* );
+
+int sub_arp_res( char* );
+
+int sub_arp_add( char* );
+
+int sub_get_parameters( char**, char*);
+
 int sub_arp ( WORD );
 
 int sub_send_trace(char* b);
