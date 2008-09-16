@@ -641,26 +641,11 @@ int main(int argc, char *argv[])
 	pthread_t tid;
 	char buf[MAX_PARAMETERS];
 	int i;
-	//#####################
+	
+	/* Construcao da tebala ARP */
 	ArpTable *arpTable;
-	ArpTableEntry *entry;
-	
 	arpTable = BuildArpTable();
-	
-	entry = BuildArpTableEntry(1,1,2);
-	
-	AddArpTableEntry (arpTable, entry);
-	entry = BuildArpTableEntry(2,1,2);
-	 AddArpTableEntry (arpTable, entry);
-	 entry = BuildArpTableEntry(3,1,5);
-	 AddArpTableEntry (arpTable, entry);
-	 entry = BuildArpTableEntry(3,1,5);
-	 AddArpTableEntry (arpTable, entry);
-	 entry = BuildArpTableEntry(1,1,9);
-	 AddArpTableEntry (arpTable, entry);
-	 
-	 DisplayArpTable(arpTable);
-	 //#####################   
+
 	//Ajustando as opções padrões do XNOOP    
 	_xnoop.modo = VERB_EXT;
 	_xnoop.translation = 0;
@@ -693,24 +678,27 @@ int main(int argc, char *argv[])
 	printf("Listening on port: %d\n", ntohs(my_port));
 	pthread_create(&tid, NULL, subnet_rcv, (void *)&my_port);
 	pthread_create(&tid, NULL, subnet_send, (void *)NULL);
-	//#######
-	FlushArpTable(arpTable);
-	free(arpTable);
-	//#######
 	
-	while (1) {
+	
+	while (1) 
+	{
 		printf("\ncmd> ");
 		fgets(buf, MAX_PARAMETERS, stdin);
-		/*Tive de usar fgets pois com scanf não está funcionando os strncmps abaixo*/
-		//scanf("%s", buf);
-		if (!strncasecmp(buf, "XNOOP", 5)) {
+	
+		if (!strncasecmp(buf, "XNOOP", 5)) 
 			qtd_parameters = sub_xnoop(buf);
-		}
+			
+		else if (!strncasecmp(buf, "ARP SHOW", 8)) 
+			DisplayArpTable(arpTable);
+		else if (!strncasecmp(buf, "ARP ADD", 8)) 
+			DisplayArpTable(arpTable);
 		else if (!strncasecmp(buf, "ARP", 3)) 
 		{
 			sub_arp(2128162);
 		}
-		else if (!strncasecmp(buf, "IP", 2)) {
+		
+		else if (!strncasecmp(buf, "IP", 2)) 
+		{
 			scanf("%s", buf);
 			send_pkt(100, atoi(buf), &broad_eth[0], 0x0800, (BYTE*)buf);
 		}
@@ -734,6 +722,11 @@ int main(int argc, char *argv[])
 		else
 			printf("Invalid command");
 	}
+	//#######
+	FlushArpTable(arpTable);
+	free(arpTable);
+	//#######
+	
 	return 0;
 }
 /* */
