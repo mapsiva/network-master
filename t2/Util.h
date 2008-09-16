@@ -50,6 +50,6 @@ DWORD *
 to_ip_byte( CHAR_T * );
 
 CHAR_T*
-format_mac_address(DWORD );
+format_mac_address( DWORD );
 
 #endif 

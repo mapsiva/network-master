@@ -146,6 +146,7 @@ to_mac_byte ( const CHAR_T * mac )
     return _mac;
 }
 
+
 int
 is_operator ( CHAR_T * op )
 {
