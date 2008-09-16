@@ -9,7 +9,7 @@
 	Xnoop - Analizador de Pacotes [Trabalho 1]
 */
 #include <stdio.h>
-#include <stdlib.h>
+
 #include <stdarg.h>
 #include <string.h>
 #include <pthread.h>
@@ -26,6 +26,8 @@
 #include "Tcp.h"
 #include "Udp.h"
 #include "Icmp.h"
+#include <stdlib.h>
+#include <unistd.h>
 
 /* */
 
@@ -683,7 +685,7 @@ int sub_arp_del( char *b )
 	tam = strlen(b);
 	b[tam-1] = ' ';
 	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o arp*/
-	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o del*/
+	aux2 = strtok_r(NULL," ", &aux1);	/*Desconsidera o del*/
 	
 	/*Capturando o end. IP*/
 	if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
@@ -702,45 +704,39 @@ int sub_arp_del( char *b )
 }
 
 /* */
-int sub_arp_add( char *b )
+int sub_arp_add( ArpTable *arpTable, char *b )
 {
 	int tam;
-	
-	char *aux1;
-	char *aux2;
-	
-	DWORD * end_ip;
-	DWORD * end_mac;
-	
+	ArpTableEntry *entry;
+	char *aux1, *aux2;
+	char * _mac, *_ip;	
 	int ttl;
 	
 	//Capturando os parâmetros passados juntamente com o arp add
 	tam = strlen(b);
 	b[tam-1] = ' ';
 	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o arp*/
-	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o add*/
+	aux2 = strtok_r(NULL," ", &aux1);	/*Desconsidera o add*/
 	
 	/*Capturando o end. IP*/
-	if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+	if ((_ip = strtok_r(NULL, " ", &aux1)) != NULL)
 	{
-		if (!is_ip ((CHAR_T *)aux2))
+		if (!is_ip ((CHAR_T *)_ip))
 		{
 			printf("Incorret IP Address.");
 			return 0;
 		}
 		
-		end_ip = to_ip_byte((CHAR_T *)aux2);
-		
 		/*Capturando o end. MAC*/
-		if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+		if ((_mac = strtok_r(NULL, " ", &aux1)) != NULL)
 		{
-			if (!is_mac_address ((CHAR_T *)aux2))
+			if (!is_mac_address ((CHAR_T *)_mac))
 			{
 				printf("Incorret MAC Address.");
 				return 0;
 			}
 	
-			end_mac = to_mac_byte((CHAR_T *)aux2);
+
 			
 			/*Capturando o ttl*/
 			if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
@@ -754,10 +750,14 @@ int sub_arp_add( char *b )
 				ttl = strtoul((const char *)aux2, NULL, 10);
 	
 				/* Código para inserção na tabela */
+				
+				entry = BuildArpTableEntry((CHAR_T*)_ip, (CHAR_T*)_mac, ttl);
+				AddArpTableEntry (arpTable, entry);
+				return 1;
 			}
 		}
 	}
-	return 1;
+	return 0;
 }
 
 /* */
@@ -774,7 +774,7 @@ int sub_arp_res( char *b )
 	tam = strlen(b);
 	b[tam-1] = ' ';
 	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o arp*/
-	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o res*/
+	aux2 = strtok_r(NULL," ", &aux1);	/*Desconsidera o res*/
 	
 	/*Capturando o end. IP*/
 	if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
@@ -846,23 +846,27 @@ int main(int argc, char *argv[])
 			qtd_parameters = sub_xnoop(buf);
 			
 		else if (!strncasecmp(buf, "ARP SHOW", 8)) 
+		{
+			
 			DisplayArpTable(arpTable);
+		}
 		else if (!strncasecmp(buf, "ARP ADD", 7)) 
 		{
-			sub_arp_add(buf);
+			printf("ADD\n");
+			sub_arp_add(arpTable, buf);
 		}
 		else if (!strncasecmp(buf, "ARP RES", 7)) 
 		{
+			printf("RES\n");
 			sub_arp_res(buf);
 		}
-		else if (!strncasecmp(buf, "ARP DEL", 7)) 
-		{
+		else if (!strncasecmp(buf, "ARP DEL", 7))
+		{ 
+			printf("DEL\n");
 			sub_arp_del(buf);
 		}
 		else if (!strncasecmp(buf, "ARP", 3)) 
-		{
 			sub_arp(2128162);
-		}		
 		else if (!strncasecmp(buf, "IP", 2)) 
 		{
 			scanf("%s", buf);

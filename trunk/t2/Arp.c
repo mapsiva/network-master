@@ -138,7 +138,7 @@ ArpTableEntry * BuildArpTableEntry( CHAR_T* IP, CHAR_T* MAC , int TTL)
 {
 	 ArpTableEntry * _entry =  (ArpTableEntry *) malloc(sizeof(ArpTableEntry));
 	 
-	 _entry->IP =  to_ip_byte ( MAC );
+	 _entry->IP =  (WORD *)to_ip_byte ( IP);
 	 _entry->MAC = to_mac_byte ( MAC );
 	 _entry->TTL = TTL;
 	 _entry->next = NULL;
@@ -173,7 +173,7 @@ void DisplayArpTable (ArpTable * table)
 	printf ("\nEntrada\t\t\t Endereco IP\t\t Endereco Ethernet\tTTL\n");
 	while (_entry)
 	{
-		printf ("%d\t\t\t %d\t\t\t %d\t\t\t %d\n", seq++ ,(int)_entry->IP, (int)_entry->MAC, _entry->TTL);
+		printf ("%d\t\t\t %s\t\t\t %s\t\t\t %d\n", seq++ ,format_address((DWORD)*(_entry->IP)), format_mac_address((DWORD)*(_entry->MAC)), _entry->TTL);
 		
 		_entry = _entry->next;
 	}
@@ -231,7 +231,6 @@ void * AddArpTableEntry( ArpTable * table, ArpTableEntry * entry)
 void * RemoveArpTableEntry( ArpTable * table, ArpTableEntry * entry )
 {
 	ArpTableEntry *_entry, *_remove;
-	printf("aqui!!!!!!!");
 	
 	if(!table->length)
 		return NULL;

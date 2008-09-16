@@ -1,9 +1,9 @@
 /**
 	Universidade Federal de Mato Grosso do Sul
-	Mestrado em Ciência da Computação DCT - UFMS
+	Mestrado em Ciï¿½ncia da Computaï¿½ï¿½o DCT - UFMS
 	Redes de Computadores 2008
 	
-	Márcio Aparecido Inacio da Silva
+	Mï¿½rcio Aparecido Inacio da Silva
 	Maxwell Sampaio dos Santos
 	
 	Xnoop - Analizador de Pacotes [Trabalho 1]
@@ -13,7 +13,9 @@
 #define SUBNET_H_
 #include "Ethernet.h"
 #include "Types.h"
-
+#include "Arp.h"
+#include <stdlib.h>
+#include <stdio.h>
 /* */
 #define MAX_PKT_SZ		65536
 #define MAX_HOSTS		10
@@ -117,7 +119,7 @@ int sub_arp_del( char* );
 
 int sub_arp_res( char* );
 
-int sub_arp_add( char* );
+int sub_arp_add( ArpTable *, char * );
 
 int sub_get_parameters( char**, char*);
 
