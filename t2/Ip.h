@@ -1,9 +1,9 @@
 /**
 	Universidade Federal de Mato Grosso do Sul
-	Mestrado em Ciência da Computação DCT - UFMS
+	Mestrado em Ciï¿½ncia da Computaï¿½ï¿½o DCT - UFMS
 	Redes de Computadores 2008
 	
-	Márcio Aparecido Inacio da Silva
+	Mï¿½rcio Aparecido Inacio da Silva
 	Maxwell Sampaio dos Santos
 	
 	Xnoop - Analizador de Pacotes [Trabalho 1]
@@ -11,7 +11,7 @@
 #ifndef IP_H_
 #define IP_H_
 #include "Types.h"
-
+#include <arpa/inet.h> 
 typedef struct
 {
     BYTE version;

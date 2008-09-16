@@ -11,6 +11,7 @@
 #ifndef ARP_H_
 #define ARP_H_
 #include "Types.h"
+#include "Util.h"
 #include <netdb.h>
 
 typedef struct  
@@ -28,8 +29,8 @@ typedef struct
 
 typedef struct tArpTableEntry
 {
-    WORD MAC;
-    WORD IP;
+    DWORD *MAC;
+    WORD *IP;
     int TTL;    
     struct tArpTableEntry* next;
 }ArpTableEntry;
@@ -40,16 +41,25 @@ typedef struct
     struct tArpTableEntry *list ;
 }ArpTable;
 
-ArpTableEntry * FindArpTableEntry( ArpTable * table, ArpTableEntry * entry, int current);
-ArpTableEntry * BuildArpTableEntry( WORD, WORD, int);
+ArpTableEntry * 
+FindArpTableEntry( ArpTable * table, ArpTableEntry * entry, int current);
 
-void * AddArpTableEntry( ArpTable * table, ArpTableEntry * entry);
-void * RemoveArpTableEntry( ArpTable * table, ArpTableEntry * entry );
+ArpTableEntry * 
+BuildArpTableEntry( CHAR_T*,CHAR_T* , int);
+
+void * 
+AddArpTableEntry( ArpTable * table, ArpTableEntry * entry);
+
+void * 
+RemoveArpTableEntry( ArpTable * table, ArpTableEntry * entry );
+
 ArpTable * BuildArpTable();
-void DisplayArpTable (ArpTable * table);
 
-void FlushArpTable (ArpTable * table);
+void 
+DisplayArpTable (ArpTable * table);
 
+void 
+FlushArpTable (ArpTable * table);
 
 CHAR_T*
 trace_arp( ARP_HEADER *, int, int, int);

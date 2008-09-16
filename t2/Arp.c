@@ -13,6 +13,7 @@
 #include "Arp.h"
 #include "Ip.h"
 #include "Types.h"
+#include "Util.h"
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -133,14 +134,14 @@ trace_arp( ARP_HEADER * pkg, int translation, int modo, int broadcast)
 */
 
 
-ArpTableEntry * BuildArpTableEntry( WORD IP, WORD MAC, int TTL)
+ArpTableEntry * BuildArpTableEntry( CHAR_T* IP, CHAR_T* MAC , int TTL)
 {
 	 ArpTableEntry * _entry =  (ArpTableEntry *) malloc(sizeof(ArpTableEntry));
 	 
-	 _entry->IP = IP;
-	 _entry->MAC = MAC;
+	 _entry->IP =  to_ip_byte ( MAC );
+	 _entry->MAC = to_mac_byte ( MAC );
 	 _entry->TTL = TTL;
-	 
+	 _entry->next = NULL;
 	 return _entry;
 }
 
@@ -196,10 +197,10 @@ FindArpTableEntry( ArpTable * table, ArpTableEntry * entry, int current )
 	while ( _entry )
 	{
 		
-		if(current && _entry->IP == entry->IP)
+		if(current && *(_entry->IP) == *(entry->IP))
 			return _entry;
-		else if(!current && _entry->next && _entry->next->IP == entry->IP)
-			return _entry->next;
+		else if(!current && _entry->next && *(_entry->next->IP) == *(entry->IP))
+			return _entry;
 			
 		_entry = _entry->next;
 	}
@@ -230,6 +231,7 @@ void * AddArpTableEntry( ArpTable * table, ArpTableEntry * entry)
 void * RemoveArpTableEntry( ArpTable * table, ArpTableEntry * entry )
 {
 	ArpTableEntry *_entry, *_remove;
+	printf("aqui!!!!!!!");
 	
 	if(!table->length)
 		return NULL;
@@ -239,12 +241,14 @@ void * RemoveArpTableEntry( ArpTable * table, ArpTableEntry * entry )
 		_remove = table->list;
 		
 		table->list = NULL;
+		
 	}	
+	
 	else if( (_entry = FindArpTableEntry (table, entry, 0 )))
 	{
 		_remove = _entry->next;
-		
 		_entry->next = _remove->next;
+		
 	}
 	
 	table->length --;
