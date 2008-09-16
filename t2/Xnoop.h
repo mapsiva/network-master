@@ -1,9 +1,9 @@
 /**
 	Universidade Federal de Mato Grosso do Sul
-	Mestrado em Ciência da Computação DCT - UFMS
+	Mestrado em Ciï¿½ncia da Computaï¿½ï¿½o DCT - UFMS
 	Redes de Computadores 2008
 	
-	Márcio Aparecido Inacio da Silva
+	Mï¿½rcio Aparecido Inacio da Silva
 	Maxwell Sampaio dos Santos
 	
 	Xnoop - Analizador de Pacotes [Trabalho 1]
@@ -14,7 +14,8 @@
 #include "PackageHeader.h"
 #include "Ethernet.h"
 #include "Types.h"
-
+#include "stdio.h"
+#include "string.h"
 #define BUF_SIZE	2000
 char byte_order; /* 0=little, 1=big endian*/
 
