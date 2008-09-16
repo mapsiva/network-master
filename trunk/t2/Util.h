@@ -49,4 +49,7 @@ is_binary_operator( CHAR_T *);
 DWORD *
 to_ip_byte( CHAR_T * );
 
+CHAR_T*
+format_mac_address(DWORD );
+
 #endif 
