@@ -1,9 +1,9 @@
 /**
 	Universidade Federal de Mato Grosso do Sul
-	Mestrado em Ciência da Computação DCT - UFMS
+	Mestrado em Ciï¿½ncia da Computaï¿½ï¿½o DCT - UFMS
 	Redes de Computadores 2008
 	
-	Márcio Aparecido Inacio da Silva
+	Mï¿½rcio Aparecido Inacio da Silva
 	Maxwell Sampaio dos Santos
 	
 	Xnoop - Analizador de Pacotes [Trabalho 1]
@@ -23,6 +23,8 @@
 #include "Analyzer.h"
 #include "Stack.h"
 #include "Filter.h"
+#include <stdio.h>
+#include <stdlib.h>
 //#include <typeinfo.h>
 
 int
