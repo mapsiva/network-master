@@ -11,10 +11,6 @@
 #ifndef PACKAGEHEADER_H_
 #define PACKAGEHEADER_H_
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
 #include "Types.h"
 
 typedef struct 
