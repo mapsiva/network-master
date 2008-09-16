@@ -636,6 +636,163 @@ int sub_send_trace(char* b)
 }
 
 /* */
+int sub_get_parameters(char** res, char*b)
+{
+	/*
+	unsigned int i = 0, j = 0;
+	unsigned int tam;
+	
+	char *aux1;
+	char *aux2;
+	
+	char *res[MAX_PARAMETERS];
+	
+	//Capturando os [options] e [filters] do analisador de pacotes (XNOOP)
+	for (i =0; i < MAX_PARAMETERS; i++)
+		res[i] = maloc(MAX_SIZE_PARAMETER);
+	i = 0;
+	tam = strlen(buf);
+	buf[tam-1] = ' ';
+	aux2 = strtok_r(buf," ", &aux1);
+	for (j=0; j<strlen(aux2); j++)
+		*(res[i] + j) = aux2[j];
+	*(res[i] + j) = '\0';
+	i++;
+	while ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+	{
+		for (j=0; j<strlen(aux2); j++)
+			*(res[i] + j) = aux2[j];
+		*(res[i] + j) = '\0';
+		i++;
+	}
+	*/
+	return 0;
+}
+
+/* */
+int sub_arp_del( char *b )
+{
+	int tam;
+	
+	char *aux1;
+	char *aux2;
+	
+	DWORD * end_ip;
+	
+	//Capturando os parâmetros passados juntamente com o arp del
+	tam = strlen(b);
+	b[tam-1] = ' ';
+	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o arp*/
+	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o del*/
+	
+	/*Capturando o end. IP*/
+	if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+	{
+		if (!is_ip ((CHAR_T *)aux2))
+		{
+			printf("Incorret IP Address.");
+			return 0;
+		}
+		
+		end_ip = to_ip_byte((CHAR_T *)aux2);
+		
+		/* Código para remoção na tabela */
+	}
+	return 1;
+}
+
+/* */
+int sub_arp_add( char *b )
+{
+	int tam;
+	
+	char *aux1;
+	char *aux2;
+	
+	DWORD * end_ip;
+	DWORD * end_mac;
+	
+	int ttl;
+	
+	//Capturando os parâmetros passados juntamente com o arp add
+	tam = strlen(b);
+	b[tam-1] = ' ';
+	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o arp*/
+	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o add*/
+	
+	/*Capturando o end. IP*/
+	if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+	{
+		if (!is_ip ((CHAR_T *)aux2))
+		{
+			printf("Incorret IP Address.");
+			return 0;
+		}
+		
+		end_ip = to_ip_byte((CHAR_T *)aux2);
+		
+		/*Capturando o end. MAC*/
+		if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+		{
+			if (!is_mac_address ((CHAR_T *)aux2))
+			{
+				printf("Incorret MAC Address.");
+				return 0;
+			}
+	
+			end_mac = to_mac_byte((CHAR_T *)aux2);
+			
+			/*Capturando o ttl*/
+			if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+			{
+				if (!is_decimal ((CHAR_T *)aux2))
+				{
+					printf("Incorret ttl.");
+					return 0;
+				}
+	
+				ttl = strtoul((const char *)aux2, NULL, 10);
+	
+				/* Código para inserção na tabela */
+			}
+		}
+	}
+	return 1;
+}
+
+/* */
+int sub_arp_res( char *b )
+{
+	int tam;
+	
+	char *aux1;
+	char *aux2;
+	
+	DWORD * end_ip;
+	
+	//Capturando os parâmetros passados juntamente com o arp res
+	tam = strlen(b);
+	b[tam-1] = ' ';
+	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o arp*/
+	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o res*/
+	
+	/*Capturando o end. IP*/
+	if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+	{
+		if (!is_ip ((CHAR_T *)aux2))
+		{
+			printf("Incorret IP Address.");
+			return 0;
+		}
+		
+		end_ip = to_ip_byte((CHAR_T *)aux2);
+		
+		/* Código para resolução de endereços */
+	}
+	return 1;
+}
+
+/* */
 int main(int argc, char *argv[])
 {
 	pthread_t tid;
@@ -690,13 +847,22 @@ int main(int argc, char *argv[])
 			
 		else if (!strncasecmp(buf, "ARP SHOW", 8)) 
 			DisplayArpTable(arpTable);
-		else if (!strncasecmp(buf, "ARP ADD", 8)) 
-			DisplayArpTable(arpTable);
+		else if (!strncasecmp(buf, "ARP ADD", 7)) 
+		{
+			sub_arp_add(buf);
+		}
+		else if (!strncasecmp(buf, "ARP RES", 7)) 
+		{
+			sub_arp_res(buf);
+		}
+		else if (!strncasecmp(buf, "ARP DEL", 7)) 
+		{
+			sub_arp_del(buf);
+		}
 		else if (!strncasecmp(buf, "ARP", 3)) 
 		{
 			sub_arp(2128162);
-		}
-		
+		}		
 		else if (!strncasecmp(buf, "IP", 2)) 
 		{
 			scanf("%s", buf);
