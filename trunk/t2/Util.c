@@ -190,5 +190,16 @@ is_binary_operator( CHAR_T * operator){
 		return 0;
 }
 
+CHAR_T*
+format_mac_address(DWORD  address) 
+{
+    CHAR_T * end_mac = (CHAR_T *) &address,  *e_mac;
+    
+    e_mac = (CHAR_T*) malloc (17);
+    
+    sprintf((char *)e_mac, "%02X:%02X:%02X:%02X:%02X:%02X", *end_mac, *(end_mac+1), *(end_mac+2), *(end_mac+3), *(end_mac+4), *(end_mac+5));
+    
+    return e_mac;
+}
 
 #endif 
