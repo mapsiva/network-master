@@ -203,14 +203,15 @@ FindArpTableEntry( ArpTable * table, ArpTableEntry * entry, int current )
 	{
 		
 		if(current && *(_entry->IP) == *(entry->IP))
-			return _entry;
+			break;
 		else if(!current && _entry->next && *(_entry->next->IP) == *(entry->IP))
-			return _entry;
-			
+			break;
+		else if(!current && *(table->list->IP) == *(entry->IP))	
+			break;
 		_entry = _entry->next;
 	}
+	return _entry;
 	
-	return NULL;
 }
 void * AddArpTableEntry( ArpTable * table, ArpTableEntry * entry)
 {
@@ -250,8 +251,13 @@ void * RemoveArpTableEntry( ArpTable * table, ArpTableEntry * entry )
 	
 	else if( (_entry = FindArpTableEntry (table, entry, 0 )))
 	{
-		_remove = _entry->next;
-		_entry->next = _remove->next;
+		if(_entry == table->list)
+			table->list = table->list->next;
+		else
+		{	
+			_remove = _entry->next;
+			_entry->next = _remove->next;
+		}
 		
 	}
 	
