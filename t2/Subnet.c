@@ -380,6 +380,7 @@ void *subnet_rcv(void *ptr)
     unsigned alen;		/* from-address length		*/
     struct sockaddr_in fsin;	/* address of a client		*/
     ETHERNET_HEADER *eth_h;
+    ARP_HEADER *arp_h;
     ETHERNET_PKT *ppkt;
     
     sockd = passive_UDP_socket(port);
@@ -399,8 +400,38 @@ void *subnet_rcv(void *ptr)
 		else 
 		{
 			qtd_pkgs++;
-			if (!memcmp(eth_h->receiver, broad_eth,6) || !memcmp(eth_h->receiver, ifaces[riface].mac, 6))			  
-			    ifaces[riface].pkt_rx++; /* The packet must be processed */				
+			//printf("\nEthertype 0x%04X\n",eth_h->type);
+			//printf("\nEther %d\n",eth_h->net);
+			if (!memcmp(eth_h->receiver, broad_eth,6) || !memcmp(eth_h->receiver, ifaces[0].mac, 6))
+			{
+				ifaces[riface].pkt_rx++; /* The packet must be processed */
+				if (ntohs(eth_h->type) == ARP)
+				{
+					arp_h = (ARP_HEADER *) (eth_h + 1);
+					if ((ntohs(arp_h->operation) == ARP_REPLY))
+					{				
+						BYTE *arp_ip = (BYTE *)&arp_h->sender_ip_addr;
+						char *cmd_arp_add = malloc(45);
+						sprintf(
+							cmd_arp_add, 
+							"arp add %d.%d.%d.%d %02X:%02X:%02X:%02X:%02X:%02X %d",
+							arp_ip[0],
+							arp_ip[1],
+							arp_ip[2],
+							arp_ip[3],
+							arp_h->sender_hardware_addr[0], 
+							arp_h->sender_hardware_addr[1], 
+							arp_h->sender_hardware_addr[2], 
+							arp_h->sender_hardware_addr[3], 
+							arp_h->sender_hardware_addr[4], 
+							arp_h->sender_hardware_addr[5],
+							10
+						);
+						//printf("\n\ninseriu novo elemento\n\n");
+						sub_arp_add((void *)cmd_arp_add);						
+					}
+				}
+			}				
 			
 			_xnoop.npkgs = qtd_pkgs;
     			   
