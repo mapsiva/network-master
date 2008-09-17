@@ -865,12 +865,12 @@ int main(int argc, char *argv[])
 		else if (!strncasecmp(buf, "ARP RES", 7)) 
 		{
 			printf("RES\n");
-			sub_arp_res(buf);
+			sub_arp_res((void *)buf);
 		}
 		else if (!strncasecmp(buf, "ARP DEL", 7))
 		{ 
 			printf("DEL\n");
-			sub_arp_del(buf);
+			sub_arp_del((void *)buf);
 		}
 		else if (!strncasecmp(buf, "ARP", 3)) {
 			printf("Sintaxe Correct is: arp [show|ttl|res|add|del] [EndIP] [EndEth] [ttl]");
