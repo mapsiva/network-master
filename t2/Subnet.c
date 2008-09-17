@@ -712,7 +712,7 @@ int sub_arp_del( void *arg )
 
 /* */
 int sub_arp_add( void * arg )
-{
+{		
 	if(!arg)
 		return 0;
 	int tam;
@@ -826,6 +826,54 @@ void control_xnoop()
 	sem_post(&sem_main);
 }
 
+void * update_table(void *p)
+{
+	ArpTableEntry *_previous, *_entry, *_remove ;
+	
+	while(1)
+	{
+		sem_wait(&allow_entry);
+		
+		_entry = arpTable->list;
+		
+		if(arpTable->length == 0)
+		{
+			sem_post(&allow_entry);
+			continue;
+		}	
+		
+		
+		
+		if(arpTable->length == 1 && _entry->TTL == 1)
+		{
+			printf("RemovendoR [%s]\n", format_address((DWORD)*(_entry->IP)));
+			DisplayArpTable(arpTable);
+			free(_entry);
+			
+			arpTable->list = NULL;
+			
+		}
+		else
+		{			
+			while (_entry)
+			{
+				_entry->TTL--;
+
+				if(_entry->TTL <= 0)
+				{
+					printf("Removendo Tamnho=[%d] [%s]\n", arpTable->length, format_address((DWORD)*(_entry->IP)));
+					
+					DisplayArpTable(arpTable);
+				}
+
+				_entry = _entry->next;
+			}
+		}
+		sem_post(&allow_entry);
+		sleep(1);
+	}
+	return NULL;
+}
 /* */
 int main(int argc, char *argv[])
 {
@@ -875,6 +923,7 @@ int main(int argc, char *argv[])
 	//pthread_create(&tid, NULL,(void *) RemoveArpTableEntry, (void *)NULL);
 	//pthread_create(&tid, NULL, (void *)AddArpTableEntry, (void *)NULL);
 	pthread_create(&tid, NULL, (void *)sub_arp_add, NULL);
+	pthread_create(&tid, NULL, (void *)update_table, NULL);
 	
 	while (1) 
 	{
@@ -890,7 +939,7 @@ int main(int argc, char *argv[])
 		}
 		else if (!strncasecmp(buf, "ARP ADD", 7)) 
 		{
-			printf("ADD\n");
+			
 			sub_arp_add((void *)buf);
 		}
 		else if (!strncasecmp(buf, "ARP RES", 7)) 
