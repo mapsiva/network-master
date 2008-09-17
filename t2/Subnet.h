@@ -120,7 +120,7 @@ int sub_arp_del( char* );
 
 int sub_arp_res( char* );
 
-int sub_arp_add( ArpTable *, char * );
+int sub_arp_add( void* );
 
 int sub_get_parameters( char**, char*);
 
