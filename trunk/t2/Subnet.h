@@ -65,6 +65,7 @@ PKT_QUEUE *queue_tail;
 sem_t sem_data_ready;
 sem_t sem_queue;
 sem_t sem_xnoop;
+sem_t sem_main;
 
 /* */
 INTERFACE ifaces[MAX_IFACES];	/* Interfaces of the host/router */
@@ -83,7 +84,7 @@ BYTE broad_eth[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 char in_buf[MAX_PKT_SZ];
 
 /* Definitions for XNOOP */
-int qtd_parameters, run_xnoop, qtd_pkgs;
+int qtd_parameters, run_xnoop, qtd_pkgs, sending_packets;
 
 char *parameters[MAX_PARAMETERS];
 
@@ -109,7 +110,7 @@ void read_net_cfg(char *, u_short, u_short);
 
 int print_if_info(int);
 
-int sub_xnoop(char *);
+void sub_xnoop(char *);
 
 int sub_ifconfig( char* );
 
@@ -123,8 +124,8 @@ int sub_arp_add( ArpTable *, char * );
 
 int sub_get_parameters( char**, char*);
 
-int sub_arp ( WORD );
-
 int sub_send_trace(char* b);
+
+void control_xnoop();
 
 #endif 
