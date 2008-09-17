@@ -116,9 +116,9 @@ int sub_ifconfig( char* );
 
 int sub_if( char* );
 
-int sub_arp_del( char* );
+int sub_arp_del( void* );
 
-int sub_arp_res( char* );
+int sub_arp_res( void* );
 
 int sub_arp_add( void* );
 
