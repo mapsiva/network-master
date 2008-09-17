@@ -28,7 +28,7 @@
 #include "Udp.h"
 #include "Icmp.h"
 
-/* */
+ArpTable *arpTable;
 
 /* Open a passive UDP socket. port must be in net-byte order. */
 int passive_UDP_socket(u_short port)
@@ -676,13 +676,16 @@ int sub_arp_del( char *b )
 }
 
 /* */
-int sub_arp_add( ArpTable *arpTable, char *b )
+int sub_arp_add( void * arg )
 {
+	if(!arg)
+		return 0;
 	int tam;
 	ArpTableEntry *entry;
 	char *aux1 = NULL, *aux2 = NULL;
 	char * _mac, *_ip;	
 	int ttl;
+	char * b = (char *)arg;
 	
 	//Capturando os parâmetros passados juntamente com o arp add
 	tam = strlen(b);
@@ -722,9 +725,10 @@ int sub_arp_add( ArpTable *arpTable, char *b )
 				ttl = strtoul((const char *)aux2, NULL, 10);
 	
 				/* Código para inserção na tabela */
-				
+				sem_wait(&allow_entry);
 				entry = BuildArpTableEntry((CHAR_T*)_ip, (CHAR_T*)_mac, ttl);
 				AddArpTableEntry (arpTable, entry);
+				sem_post(&allow_entry);
 				return 1;
 			}
 		}
@@ -791,7 +795,7 @@ int main(int argc, char *argv[])
 	int i;
 	
 	/* Construcao da tebala ARP */
-	ArpTable *arpTable;
+	
 	arpTable = BuildArpTable();
 
 	//Ajustando as opções padrões do XNOOP	
@@ -818,14 +822,20 @@ int main(int argc, char *argv[])
 	sem_init(&sem_data_ready, 0, 0);
 	sem_init(&sem_queue, 0, 1);
 	sem_init(&sem_xnoop, 0, 1);
+
+	sem_init (&allow_entry, 0, 1);
+
 	sem_init(&sem_main, 0, 0);
-	
+
 	
 	/* Create sender and receiver threads */
 	printf("Listening on port: %d\n", ntohs(my_port));
 	pthread_create(&tid, NULL, subnet_rcv, (void *)&my_port);
 	pthread_create(&tid, NULL, subnet_send, (void *)NULL);
 	
+	//pthread_create(&tid, NULL,(void *) RemoveArpTableEntry, (void *)NULL);
+	//pthread_create(&tid, NULL, (void *)AddArpTableEntry, (void *)NULL);
+	pthread_create(&tid, NULL, (void *)sub_arp_add, NULL);
 	
 	while (1) 
 	{
@@ -842,7 +852,7 @@ int main(int argc, char *argv[])
 		else if (!strncasecmp(buf, "ARP ADD", 7)) 
 		{
 			printf("ADD\n");
-			sub_arp_add(arpTable, buf);
+			sub_arp_add((void *)buf);
 		}
 		else if (!strncasecmp(buf, "ARP RES", 7)) 
 		{

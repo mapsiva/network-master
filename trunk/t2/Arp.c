@@ -168,15 +168,18 @@ BuildArpTable()
  */
 void DisplayArpTable (ArpTable * table)
 {
+	
+	
 	ArpTableEntry *_entry = table->list;
 	int seq = 0;
 	printf ("\nEntrada\t\t\t Endereco IP\t\t Endereco Ethernet\tTTL\n");
 	while (_entry)
 	{
-		printf ("%d\t\t\t %s\t\t\t %s\t\t\t %d\n", seq++ ,format_address((DWORD)*(_entry->IP)), format_mac_address((DWORD)*(_entry->MAC)), _entry->TTL);
+		printf ("%d\t\t\t %s\t\t %s\t %d\n", seq++ ,format_address((DWORD)*(_entry->IP)), format_mac_address((DWORD)*(_entry->MAC)), _entry->TTL);
 		
 		_entry = _entry->next;
 	}
+	
 }
 
 
@@ -192,6 +195,8 @@ void DisplayArpTable (ArpTable * table)
 ArpTableEntry *
 FindArpTableEntry( ArpTable * table, ArpTableEntry * entry, int current )
 {
+	
+	
 	ArpTableEntry *_entry = table->list;
 	
 	while ( _entry )

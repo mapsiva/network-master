@@ -13,6 +13,13 @@
 #include "Types.h"
 #include "Util.h"
 #include <netdb.h>
+#include <pthread.h>
+#include <semaphore.h>
+
+/*
+ * acesso ao semaforo
+ * */
+sem_t allow_entry;
 
 typedef struct  
 {
