@@ -644,14 +644,18 @@ int sub_get_parameters(char** res, char*b)
 }
 
 /* */
-int sub_arp_del( char *b )
+int sub_arp_del( void *arg )
 {
+	if (!arg)
+		return 0;
 	int tam;
 	
 	char *aux1 = NULL;
 	char *aux2 = NULL;
 	
 	DWORD * end_ip;
+	
+	char *b = (char *)arg;
 	
 	//Capturando os parâmetros passados juntamente com o arp del
 	tam = strlen(b);
@@ -737,14 +741,18 @@ int sub_arp_add( void * arg )
 }
 
 /* */
-int sub_arp_res( char *b )
+int sub_arp_res( void *arg )
 {
+	if (!arg)
+		return 0;
 	int tam;
 	
 	char *aux1 = NULL;
 	char *aux2 = NULL;
 	
 	DWORD * end_ip;
+	
+	char *b = (char *)arg;
 	
 	//Capturando os parâmetros passados juntamente com o arp res
 	tam = strlen(b);
