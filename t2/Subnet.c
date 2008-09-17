@@ -54,7 +54,7 @@ void sub_xnoop(char *buf)
 	unsigned int i = 0, j = 0;
 	unsigned int tam;
 	
-	char *aux1;
+	char *aux1 = NULL;
 	char *aux2;
 	
 	//Capturando os [options] e [filters] do analisador de pacotes (XNOOP)
@@ -203,8 +203,8 @@ int sub_ifconfig(char *b)
 	DWORD* end_ip = 0;
 	DWORD* end_mask = 0;
 	
-	char *aux1;
-	char *aux2;
+	char *aux1 = NULL;
+	char *aux2 = NULL;
 	
 	//Capturando os parâmetros passados juntamente com o ifconfig
 	tam = strlen(b);
@@ -272,7 +272,7 @@ int sub_if( char* b)
 	unsigned int id_iface = -1, i, find = 0;
 	unsigned int tam;
 	
-	char *aux1;
+	char *aux1 = NULL;
 	char *aux2;
 	
 	//Capturando os parâmetros passados juntamente com o if
@@ -508,8 +508,8 @@ int sub_send_trace(char* b)
 	FILE_HEADER file_header;
 	FRAME_HEADER frame_header;
 	
-	char *aux1;
-	char *aux2;
+	char *aux1 = NULL;
+	char *aux2 = NULL;
 	
 	char *trace_name;
 	
@@ -648,8 +648,8 @@ int sub_arp_del( char *b )
 {
 	int tam;
 	
-	char *aux1;
-	char *aux2;
+	char *aux1 = NULL;
+	char *aux2 = NULL;
 	
 	DWORD * end_ip;
 	
@@ -680,7 +680,7 @@ int sub_arp_add( ArpTable *arpTable, char *b )
 {
 	int tam;
 	ArpTableEntry *entry;
-	char *aux1, *aux2;
+	char *aux1 = NULL, *aux2 = NULL;
 	char * _mac, *_ip;	
 	int ttl;
 	
@@ -737,8 +737,8 @@ int sub_arp_res( char *b )
 {
 	int tam;
 	
-	char *aux1;
-	char *aux2;
+	char *aux1 = NULL;
+	char *aux2 = NULL;
 	
 	DWORD * end_ip;
 	
