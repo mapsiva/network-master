@@ -9,13 +9,14 @@
 	Xnoop - Analizador de Pacotes [Trabalho 1]
 */
 #include <stdio.h>
-
 #include <stdarg.h>
 #include <string.h>
 #include <pthread.h>
 #include <errno.h>
 #include <semaphore.h>
-
+#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
 #include "Subnet.h"
 #include "Xnoop.h"
 #include "Analyzer.h"
@@ -26,8 +27,6 @@
 #include "Tcp.h"
 #include "Udp.h"
 #include "Icmp.h"
-#include <stdlib.h>
-#include <unistd.h>
 
 /* */
 
@@ -50,7 +49,7 @@ int passive_UDP_socket(u_short port)
 
 
 /* */
-int sub_xnoop(char *buf)
+void sub_xnoop(char *buf)
 {
 	unsigned int i = 0, j = 0;
 	unsigned int tam;
@@ -74,8 +73,9 @@ int sub_xnoop(char *buf)
 		i++;
 	}
 	
-	//Ajustando as opções padrões do XNOOP    
-    _xnoop.modo = BASIC;
+	qtd_parameters = i;
+	
+	//Ajustando as opções padrões do XNOOP
 	_xnoop.translation = 1;
 	_xnoop.npkgs_max = 400000000;
 	_xnoop.position = 1;
@@ -86,10 +86,8 @@ int sub_xnoop(char *buf)
 		//Habilita a execução do XNOOP 
 		run_xnoop = 1;
 		
-		printf("Runing xnoop.");
+		sem_wait(&sem_main);
 	}
-	
-	return i;
 }
 
 /* */
@@ -199,7 +197,7 @@ void read_net_cfg(char *fname, u_short port, u_short iface)
 /* */
 int sub_ifconfig(char *b)
 {
-	unsigned int id_iface = -1;
+	unsigned int id_iface = -1, i, find=0;
 	unsigned int tam;
 	
 	DWORD* end_ip = 0;
@@ -219,18 +217,22 @@ int sub_ifconfig(char *b)
 		if (!is_decimal ((CHAR_T *)aux2))
 		{
 			printf("Incorret Interface.");
-			if (nifaces > 0)
-				printf(" Interfaces between 0 and %d", (nifaces-1));
 			return 0;			
 		}
 		
 		id_iface = strtoul((const char *)aux2, NULL, 10);
 		
-		if (id_iface < 0 || id_iface >= nifaces)
+		for (i=0; i<nifaces && !find; i++)
 		{
-			printf("Incorrect interface.");
-			if (nifaces > 0)
-				printf(" Interfaces between 0 and %d", (nifaces-1));
+			if (ifaces[i].interface == id_iface)
+				find = 1;
+		}
+		
+		i--;	//Indica o indice onde foi encontrado a interface correspondente a id_iface
+		
+		if (!find)
+		{
+			printf("Interface not found.");
 			return 0;
 		}		
 		
@@ -255,11 +257,11 @@ int sub_ifconfig(char *b)
 					printf("Incorrect address mask network.");
 					return 0;
 				}				
-				ifaces[id_iface].mask = (unsigned) (*end_mask);				
+				ifaces[i].mask = (unsigned) (*end_mask);				
 			}
-			ifaces[id_iface].ip = (unsigned) (*end_ip);
+			ifaces[i].ip = (unsigned) (*end_ip);
 		}
-		print_if_info(id_iface);	//Exibir informacoes de apenas uma interface
+		print_if_info(i);	//Exibir informacoes de apenas uma interface
 	}
 		
 	return 1;
@@ -267,7 +269,7 @@ int sub_ifconfig(char *b)
 
 int sub_if( char* b)
 {
-	unsigned int id_iface = -1;
+	unsigned int id_iface = -1, i, find = 0;
 	unsigned int tam;
 	
 	char *aux1;
@@ -284,18 +286,22 @@ int sub_if( char* b)
 		if (!is_decimal ((CHAR_T *)aux2))
 		{
 			printf("Incorret Interface.");
-			if (nifaces > 0)
-				printf(" Interfaces between 0 and %d", (nifaces-1));
 			return 0;			
 		}
 		
 		id_iface = strtoul((const char *)aux2, NULL, 10);
 		
-		if (id_iface < 0 || id_iface >= nifaces)
+		for (i=0; i<nifaces && !find; i++)
 		{
-			printf("Incorret Interface.");
-			if (nifaces > 0)
-				printf(" Interfaces between 0 and %d", (nifaces-1));
+			if (ifaces[i].interface == id_iface)
+				find = 1;			
+		}
+		
+		i--;
+		
+		if (!find)
+		{
+			printf("Interface not found.");
 			return 0;
 		}
 		
@@ -304,16 +310,18 @@ int sub_if( char* b)
 		{
 			if (!strncasecmp(aux2, "DOWN", 4) || !strncasecmp(aux2, "UP", 2))
 			{
-				if (!strncmp(aux2, "down", 4))
-					ifaces[id_iface].up = 0;
+				if (!strncasecmp(aux2, "DOWN", 4))
+					ifaces[i].up = 0;
 				else
-					ifaces[id_iface].up = 1;
+					ifaces[i].up = 1;
 			}
 			else
 			{
 				printf("Sintaxe Correct is: if <interface> [down|up]");
 				return 0;
 			}
+			
+			print_if_info(i);
 		}
 	}
 	else
@@ -364,39 +372,6 @@ int print_if_info(int id_iface)
 	return 0;
 }
 
-int sub_arp ( WORD ip_addres)
-{   
-    ARP_HEADER * arp;
-    ETHERNET_HEADER * eth;
-    
-    eth =  malloc(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER));
-    
-    arp = ( ARP_HEADER * )(eth + 1);
-
-	/* Ajustando dados do ETHERNET_HEADER */
-    eth->net = ifaces[0].net;
-    memcpy(&eth->sender[0], ifaces[0].mac, MAC_ADDR_LEN);
-    memcpy(&eth->receiver[0], &broad_eth[0], MAC_ADDR_LEN);    
-    eth->type = htons(ARP);
-   	
-   	/* Ajustando dados do ARP_HEADER */
-    arp->hardware_type = htons(15);
-    arp->protocol_type = 0;				/*colocamos 0 (zero) pois este não é um pacote IP dentro do ARP*/
-    arp->hardware_len = MAC_ADDR_LEN;
-    arp->protocol_len = IP_ADDR_LEN;
-    arp->operation = htons(ARP_REQUEST);
-    memcpy(&arp->sender_hardware_addr[0], ifaces[0].mac, MAC_ADDR_LEN);
-    arp->sender_ip_addr = ifaces[0].ip;    
-    memcpy(&arp->target_hardware_addr[0], &broad_eth[0], MAC_ADDR_LEN);
-
-    /*IP da maquina que se deseja descobrir o MAC*/
-    arp->target_ip_addr = ip_addres;
-    
-    /*Enviando pacote*/
-    send_pkt(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER), 0, &broad_eth[0], ARP, (BYTE*)eth);
-    
-    return 1;
-}
 /* */
 void *subnet_rcv(void *ptr)
 {
@@ -578,10 +553,12 @@ int sub_send_trace(char* b)
 		if (file_header.magic_number != 0xa1b2c3d4) 
 			invert_file_header(&file_header);
 			
-		printf("\nSending Packets...\n");
+		printf("\nSending Packets.\n");
+		
+		sending_packets = 1;
 			
 		while (fread(&frame_header, sizeof(FRAME_HEADER), 1, inf)) 
-		{				
+		{
 			if (file_header.magic_number != 0xa1b2c3d4) 
 				invert_pkt_header(&frame_header);
 
@@ -595,8 +572,7 @@ int sub_send_trace(char* b)
 			{
 				case ARP:
 					pkg_arp = (ARP_HEADER *)( pkg_ethernet + 1 );
-					printf("\nEnviando Pacote ARP\n");
-		    		xnoop_send_pkt(sizeof(ARP_HEADER), ARP, (BYTE*)pkg_arp);			    		
+		    		xnoop_send_pkt(sizeof(ARP_HEADER), ARP, (BYTE*)pkg_arp);		    		
 		    	break;
 		    	
 		    	case IP:
@@ -606,28 +582,24 @@ int sub_send_trace(char* b)
 		    		switch(pkg_ip->protocol)
 		    		{
 		    			case TCP:
-		    				printf("\nEnviando Pacote TCP\n");
 		    				xnoop_send_pkt(sizeof(IP_HEADER) + sizeof(TCP_HEADER), IP, (BYTE*)pkg_ip);
 		    			break;
 		    			
 		    			case UDP:
-		    				printf("\nEnviando Pacote UDP\n");
-		    				xnoop_send_pkt(sizeof(IP_HEADER) + sizeof(UDP_HEADER), IP, (BYTE*)pkg_ip);	
+		    				xnoop_send_pkt(sizeof(IP_HEADER) + sizeof(UDP_HEADER), IP, (BYTE*)pkg_ip);
 		    			break;
 		    			
 		    			case ICMP:
-		    				printf("\nEnviando Pacote ICMP\n");
 		    				xnoop_send_pkt(sizeof(IP_HEADER) + sizeof(ICMP_HEADER), IP, (BYTE*)pkg_ip);	
 		    			break;
 		    		}
 		    	break;
-		    	
-		    	default:
-		    		printf("\nUnkonw Protocol Type ARP 0x%04X\n", ntohs(pkg_ethernet->type));
 		    }
 		    
 		    sleep(interval);
-		}		
+		    //printf("\r.");
+		}
+		sending_packets = 0;
 		
 		printf("\nPackets Sended.\n");
 	}
@@ -793,6 +765,25 @@ int sub_arp_res( char *b )
 }
 
 /* */
+void control_xnoop()
+{
+	if (run_xnoop || sending_packets)
+	{
+		if (run_xnoop)
+			run_xnoop = 0;
+		else
+			sending_packets = 0;	
+	}
+	else
+	{
+		printf("\n");
+		exit(0);
+	}
+	
+	sem_post(&sem_main);
+}
+
+/* */
 int main(int argc, char *argv[])
 {
 	pthread_t tid;
@@ -803,15 +794,13 @@ int main(int argc, char *argv[])
 	ArpTable *arpTable;
 	arpTable = BuildArpTable();
 
-	//Ajustando as opções padrões do XNOOP    
-	_xnoop.modo = VERB_EXT;
-	_xnoop.translation = 0;
+	//Ajustando as opções padrões do XNOOP	
 	_xnoop.npkgs = 0;
-	_xnoop.npkgs_max = 400000000;
-	_xnoop.position = 1;
-	run_xnoop = 1;
-	
+	run_xnoop = 0;
+	sending_packets = 0;	
 	qtd_pkgs = 0;
+	
+	signal (SIGINT, control_xnoop);
 	
 	for (i=0; i<MAX_PARAMETERS; i++)
 		parameters[i] = malloc (MAX_SIZE_PARAMETER);
@@ -829,6 +818,7 @@ int main(int argc, char *argv[])
 	sem_init(&sem_data_ready, 0, 0);
 	sem_init(&sem_queue, 0, 1);
 	sem_init(&sem_xnoop, 0, 1);
+	sem_init(&sem_main, 0, 0);
 	
 	
 	/* Create sender and receiver threads */
@@ -843,8 +833,7 @@ int main(int argc, char *argv[])
 		fgets(buf, MAX_PARAMETERS, stdin);
 	
 		if (!strncasecmp(buf, "XNOOP", 5)) 
-			qtd_parameters = sub_xnoop(buf);
-			
+			sub_xnoop(buf);			
 		else if (!strncasecmp(buf, "ARP SHOW", 8)) 
 		{
 			
@@ -865,15 +854,12 @@ int main(int argc, char *argv[])
 			printf("DEL\n");
 			sub_arp_del(buf);
 		}
-		else if (!strncasecmp(buf, "ARP", 3)) 
-			sub_arp(2128162);
-		else if (!strncasecmp(buf, "IP", 2)) 
-		{
-			scanf("%s", buf);
-			send_pkt(100, atoi(buf), &broad_eth[0], 0x0800, (BYTE*)buf);
+		else if (!strncasecmp(buf, "ARP", 3)) {
+			printf("Sintaxe Correct is: arp [show|ttl|res|add|del] [EndIP] [EndEth] [ttl]");
 		}
 		else if (!strncasecmp(buf, "IFCONFIG SHOW", 13)) {
-			print_if_info(-1); /* O -1 é pra indicar que será impresso todas as interfaces */
+			for (i=0; i<nifaces;i++)
+				print_if_info(i);
 		}
 		else if (!strncasecmp(buf, "IFCONFIG", 8)) {
 			sub_ifconfig(buf);
@@ -899,4 +885,3 @@ int main(int argc, char *argv[])
 	
 	return 0;
 }
-/* */
