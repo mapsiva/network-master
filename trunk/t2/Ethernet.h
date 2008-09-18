@@ -6,13 +6,16 @@
 	M�rcio Aparecido Inacio da Silva
 	Maxwell Sampaio dos Santos
 	
-	Xnoop - Analizador de Pacotes [Trabalho 1]
+	Subnet
 */
 #ifndef ETHERNET_H_
 #define ETHERNET_H_
 #include "Types.h"
 #include "PackageHeader.h"
 
+/*
+* Estrutura para o cabeçalho ethernet, utilizando no trabalho do subnet
+*/
 typedef struct
 {
     BYTE net;
@@ -30,6 +33,9 @@ typedef struct
 	SWORD type;
 } ETHER_HEADER;
 
+/*
+* Estrutura para o cabeçalho ethernet, utilizando no trabalho do subnet
+*/
 typedef struct 
 {
     WORD len;
@@ -40,9 +46,15 @@ typedef struct
     WORD type;
 } ETHERNET_PKT;
 
+/*
+* Impressão do cabeçalho ethernet
+*/
 CHAR_T*
 trace_ethernet(ETHERNET_HEADER *, int,   int, int*, int*); 
 
+/*
+* Retorna se o mac passado como parámetro é de broadcast
+*/
 int is_broadcast(BYTE *);
 
 #endif 

@@ -6,7 +6,7 @@
 	Márcio Aparecido Inacio da Silva
 	Maxwell Sampaio dos Santos
 	
-	Xnoop - Analizador de Pacotes [Trabalho 1]
+	Subnet
 */
 #ifndef ICMP_C_
 #define ICMP_C_
@@ -16,6 +16,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+/*
+* Imprime o conteúdo de um cabeçalho ICMP
+* @param pkg é o cabeçalho ICMP
+* @param translation indica que haverá tradução de nomes ou não
+* @param modo indica qual modo de execução do XNOOP (Modo verboso, verboso extendido, modo simples)
+* @return CHAR_T* para uso futuro
+*/
 
 CHAR_T*
 trace_icmp( ICMP_HEADER * pkg, int translation, int modo)
@@ -34,6 +42,12 @@ trace_icmp( ICMP_HEADER * pkg, int translation, int modo)
 	return 0;
 }
 
+/*
+* Imprime o conteúdo de um cabeçalho ICMP
+* @param pkg é o cabeçalho ICMP
+* @param translation indica que haverá tradução de nomes ou não
+* @return void
+*/
 void
 view_type_icmp ( ICMP_HEADER * pkg, int modo)
 {

@@ -6,7 +6,7 @@
 	M�rcio Aparecido Inacio da Silva
 	Maxwell Sampaio dos Santos
 	
-	Xnoop - Analizador de Pacotes [Trabalho 1]
+	Subnet
 */
 
 #ifndef FILTER_H_
@@ -25,8 +25,18 @@
 #include "Filter.h"
 #include <stdio.h>
 #include <stdlib.h>
-//#include <typeinfo.h>
 
+/*
+ * Filtro de pacotes , onde é filtrado todos os pacotes baseado nos parâmetros passados pela linha de comando
+ * é utilizada uma pilha de inteiros de 64 bits para armazenar os operandos
+ *
+ * @param pkg é o cabeçalho ethernet
+ * @param argc quantidade de parâmetros passados pela linha de comando
+ * @param argv string com os argumentos passados pela linha de comando
+ * @param position indica posição na strinf arg dos filtros passados pela linha de comando
+ * @return int indicando se houve sucesso no filtro ou falha ( 0 Indica falha, e qualquer outro valor sucesso)
+* @since 1.0
+ */
 int
 filter (ETHERNET_HEADER * pkg, int argc, char *argv[], int position)
 {
