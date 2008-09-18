@@ -828,28 +828,25 @@ void control_xnoop()
 
 void * update_table(void *p)
 {
-	ArpTableEntry *_previous, *_entry, *_remove ;
 	
+	ArpTableEntry *_previous, *_entry;
 	while(1)
 	{
 		sem_wait(&allow_entry);
 		
 		_entry = arpTable->list;
-		
+		_previous  = NULL;
 		if(arpTable->length == 0)
 		{
 			sem_post(&allow_entry);
 			continue;
 		}	
-		
-		
-		
+
 		if(arpTable->length == 1 && _entry->TTL == 1)
 		{
-			printf("RemovendoR [%s]\n", format_address((DWORD)*(_entry->IP)));
 			DisplayArpTable(arpTable);
 			free(_entry);
-			
+			arpTable->length--;
 			arpTable->list = NULL;
 			
 		}
@@ -858,17 +855,37 @@ void * update_table(void *p)
 			while (_entry)
 			{
 				_entry->TTL--;
-
+						
 				if(_entry->TTL <= 0)
 				{
-					printf("Removendo Tamnho=[%d] [%s]\n", arpTable->length, format_address((DWORD)*(_entry->IP)));
+					if(arpTable->list == _entry)
+					{
+						arpTable->list = _entry->next;
+						
+						free(_entry);
+						
+						_entry = arpTable->list;
+					}
+					else
+					{
+						_previous->next = _entry->next;
+						
+						free(_entry);
+						
+						_entry = _previous;		
+					}
 					
+					arpTable->length--;
 					DisplayArpTable(arpTable);
 				}
-
-				_entry = _entry->next;
+				else
+				{
+					_previous = _entry;
+					_entry = _entry->next;	
+				}
 			}
 		}
+		
 		sem_post(&allow_entry);
 		sleep(1);
 	}
