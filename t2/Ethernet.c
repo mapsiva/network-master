@@ -6,7 +6,7 @@
 	Márcio Aparecido Inacio da Silva
 	Maxwell Sampaio dos Santos
 	
-	Xnoop - Analizador de Pacotes [Trabalho 1]
+	Subnet
 */
 #ifndef ETHERNET_C_
 #define ETHERNET_C_
@@ -16,6 +16,15 @@
 #include <stdio.h>
 #include <netinet/in.h>
 
+
+/*
+* Imprimei o cabeçalho ethernet
+* @param eth ponteiro para o cabeçalho ethernet
+* @param ID identificação de ordem do pacote usado no xnoop
+* @param modo indica qual modo de execução do XNOOP (Modo verboso, verboso extendido, modo simples)
+* @param pkg_broadcast variável auxiliar para indicar brodcast
+* @param broadcast variável auxiliar para indicar brodcast
+*/
 CHAR_T*
 trace_ethernet(ETHERNET_HEADER* eth, int ID,  int modo, int *pkg_broadcast, int *broadcast)
 {
@@ -42,6 +51,12 @@ trace_ethernet(ETHERNET_HEADER* eth, int ID,  int modo, int *pkg_broadcast, int 
 	return 0;
 }
 
+/*
+* Retorna se o mac passado como parámetro é de broadcast
+* @param byte ponteiro para o primeiro byte do endereço MAC
+* @return int 0 indica que não eh broadcast, e 1 caso contrário
+* @since 1.0
+*/
 int 
 is_broadcast(BYTE * byte)
 {

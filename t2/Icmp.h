@@ -6,13 +6,15 @@
 	Márcio Aparecido Inacio da Silva
 	Maxwell Sampaio dos Santos
 	
-	Xnoop - Analizador de Pacotes [Trabalho 1]
+	Subnet
 */
 #ifndef ICMP_H_
 #define ICMP_H_
 #include "Types.h"
 #include <netdb.h>
-
+/*
+* Estrutura que representa o cabeçalho ICMP
+*/
 typedef struct
 {
 	BYTE type;
@@ -20,9 +22,15 @@ typedef struct
 	SWORD checksum;
 }ICMP_HEADER;		
 
+/*
+* Imprime o conteúdo de um cabeçalho ICMP
+*/
 CHAR_T*
 trace_icmp( ICMP_HEADER *, int, int);
 
+/*
+* Mostra o tipo
+*/
 void 
 view_type_icmp ( ICMP_HEADER *, int);
 

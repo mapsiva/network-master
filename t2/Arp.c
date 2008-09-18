@@ -18,6 +18,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/*
+* Impressão do cabeçalho ARP
+*/
 CHAR_T*
 trace_arp( ARP_HEADER * pkg, int translation, int modo, int broadcast)
 {

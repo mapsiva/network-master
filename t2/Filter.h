@@ -13,7 +13,9 @@
 
 #include "Types.h"
 
-
+/*
+ * Filtro de pacotes 
+*/
 int
 filter (ETHERNET_HEADER *, int argc, char *argv[], int);
 

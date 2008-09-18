@@ -17,10 +17,13 @@
 #include <semaphore.h>
 
 /*
- * acesso ao semaforo
+ * acesso ao semaforo,
  * */
 sem_t allow_entry;
 
+/*
+* Cabeçalho ARP
+*/
 typedef struct  
 {
     SWORD hardware_type;
@@ -34,6 +37,9 @@ typedef struct
     WORD target_ip_addr;
 } ARP_HEADER;
 
+/*
+* Entrada da tabela ARP com seus respectivos campos
+*/
 typedef struct tArpTableEntry
 {
     DWORD *MAC;
@@ -42,35 +48,66 @@ typedef struct tArpTableEntry
     struct tArpTableEntry* next;
 }ArpTableEntry;
 
+/*
+*  tabela ARP, estrututa de controle para a tabela
+*/
 typedef struct
 {
     int length;
     struct tArpTableEntry *list ;
 }ArpTable;
 
+/*
+* Busca uma entrada na tabela ARP, caso sucesso retorna a entrada, caso contrário retorna NULL
+*/
 ArpTableEntry * 
 FindArpTableEntry( ArpTable * table, ArpTableEntry * entry, int current);
 
+/*
+*constrói uma entrada para a tabela ARP
+*/
 ArpTableEntry * 
 BuildArpTableEntry( CHAR_T*,CHAR_T* , int);
 
+/*
+*Adiciona uma entrada na tabela ARP
+*/
 void * 
 AddArpTableEntry( ArpTable * table, ArpTableEntry * entry);
 
+/*
+*Remove uma entrada da tabela ARP
+*/
 void * 
 RemoveArpTableEntry( ArpTable * table, ArpTableEntry * entry );
 
-ArpTable * BuildArpTable();
+/*
+*Instancia uma tabela ARP
+*/
+ArpTable * 
+BuildArpTable();
 
+/*
+*Imprime toda a tabela ARP na tela
+*/
 void 
 DisplayArpTable (ArpTable * table);
 
+/*
+* Destrói uma tabela ARP
+*/
 void 
 FlushArpTable (ArpTable * table);
 
+/*
+* Imprime um cabeçalho ARP
+*/
 CHAR_T*
 trace_arp( ARP_HEADER *, int, int, int);
 
+/*
+* Visualiza o campo Type do pacote ARP
+*/
 void 
 view_type_arp ( ARP_HEADER *);
 
