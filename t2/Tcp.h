@@ -6,13 +6,16 @@
 	Márcio Aparecido Inacio da Silva
 	Maxwell Sampaio dos Santos
 	
-	Xnoop - Analizador de Pacotes [Trabalho 1]
+	Subnet
 */
 #ifndef TCP_H_
 #define TCP_H_
 #include "Types.h"
 #include <netdb.h>
 
+/*
+* Estrutura do cabeçalho TCP
+*/
 typedef struct
 {
 	SWORD src_port;
@@ -26,16 +29,27 @@ typedef struct
 	BYTE fisrt_data;
 }TCP_HEADER;		
 
+/*
+* Mostra campo service do cabeçalho TCP
+*/
 void
 view_service( SWORD , int);
 
-	
+/*
+*Imprime o cabeçalho TCP
+*/	
 CHAR_T*
 trace_tcp( TCP_HEADER *, int);
 
+/*
+* Mostra campo flags do cabeçalho TCP
+*/
 void
 view_flags ( TCP_HEADER * );
 
+/*
+* Mostra campo dados do cabeçalho TCP
+*/
 void
 view_data ( TCP_HEADER * );
 
