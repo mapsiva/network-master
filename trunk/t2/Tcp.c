@@ -6,7 +6,7 @@
 	Márcio Aparecido Inacio da Silva
 	Maxwell Sampaio dos Santos
 	
-	Xnoop - Analizador de Pacotes [Trabalho 1]
+	Subnet
 */
 #ifndef TCP_C_
 #define TCP_C_
@@ -16,7 +16,12 @@
 #include <stdio.h>
 #include <string.h>
 
-
+/*
+* Imprime cabeçalho TCP
+* @param pkg ponteiro para o cabeçalho TCP
+* @return CHAR_T*
+* @since 1.0
+*/
 CHAR_T*
 trace_tcp( TCP_HEADER * pkg, int modo)
 {
@@ -60,7 +65,13 @@ trace_tcp( TCP_HEADER * pkg, int modo)
 	}
     return 0;
 }
-
+/*
+* Mostra campo service do cabeçalho TCP
+* @param port valor da porta no cabeçalho
+* @param modo modo de impressão
+* @return void
+* @since 1.0
+*/
 void
 view_service( SWORD port, int modo)
 {
@@ -78,7 +89,12 @@ view_service( SWORD port, int modo)
 			printf("%s ", serv->s_name);
     }
 }
-
+/*
+* Mostra campo flags do cabeçalho TCP
+* @param pkg cabeçalho TCP
+* @return void
+* @since 1.0
+*/
 void
 view_flags ( TCP_HEADER * pkg)
 {  
@@ -90,7 +106,12 @@ view_flags ( TCP_HEADER * pkg)
     printf ("TCP: \t .... ..%d. = %s\n", (pkg->offset & BIN2) >> 1, ((pkg->offset & BIN2) >> 1)?"Syn":"No Syn");
     printf ("TCP: \t .... ...%d = %s\n", (pkg->offset & BIN1), ((pkg->offset & BIN1))?"Fin":"No Fin");
 }
-
+/*
+* Mostra campo dados do cabeçalho TCP
+* @param pkg cabeçalho TCP
+* @return void
+* @since 1.0
+*/
 void
 view_data ( TCP_HEADER * pkg)
 {

@@ -6,7 +6,7 @@
 	Márcio Aparecido Inacio da Silva
 	Maxwell Sampaio dos Santos
 	
-	Xnoop - Analizador de Pacotes [Trabalho 1]
+	Subnet
 */
 #ifndef ARP_C_
 #define ARP_C_
@@ -187,9 +187,10 @@ void DisplayArpTable (ArpTable * table)
 
 
 /*
+* Busca um elemento na tabela ARP baseado no valor do IP
 * @param table ponteiro para a tabela arp
 * @param entry uma entrada da table  arp que se deseja encontrar
-* @param current flag que indica para funcao retornar o elemento corrente na busca ou seu anterior
+* @param current flag que indica para funcao retornar o elemento corrente (1) na busca ou seu anterior(0)
 *
 * @return NULL ou uma entrada valida na tabela ARP
 *
@@ -216,7 +217,17 @@ FindArpTableEntry( ArpTable * table, ArpTableEntry * entry, int current )
 	return _entry;
 	
 }
-void * AddArpTableEntry( ArpTable * table, ArpTableEntry * entry)
+
+/*
+* @param table ponteiro para a tabela arp
+* @param entry uma entrada da table  arp que se deseja adicionar
+*
+* @return void
+*
+* @since           2.0
+*/
+
+void AddArpTableEntry( ArpTable * table, ArpTableEntry * entry)
 {
 	ArpTableEntry *_entry;
 	
@@ -237,7 +248,20 @@ void * AddArpTableEntry( ArpTable * table, ArpTableEntry * entry)
 	
 	return _entry;
 }
-void * RemoveArpTableEntry( ArpTable * table, ArpTableEntry * entry )
+
+/*
+* Remove um elemento da tabela arp
+*
+* @param table ponteiro para a tabela arp
+* @param entry uma entrada da table  arp que se deseja remover
+*
+* @return NULL ou uma entrada valida na tabela ARP
+*
+* @since           2.0
+*/
+
+ArpTableEntry * 
+RemoveArpTableEntry( ArpTable * table, ArpTableEntry * entry )
 {
 	ArpTableEntry *_entry, *_remove;
 	
@@ -269,6 +293,14 @@ void * RemoveArpTableEntry( ArpTable * table, ArpTableEntry * entry )
 	return _remove;
 }
 
+/*
+* Destrói a tabela ARP
+* @param table ponteiro para a tabela arp
+*
+* @return void
+*
+* @since           2.0
+*/
 void 
 FlushArpTable (ArpTable * table)
 {

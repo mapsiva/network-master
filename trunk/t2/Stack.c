@@ -6,14 +6,20 @@
 	Márcio Aparecido Inacio da Silva
 	Maxwell Sampaio dos Santos
 	
-	Xnoop - Analizador de Pacotes [Trabalho 1]
+	Subnet
 */
 #ifndef STACK_C_
 #define STACK_C_
 #include "Stack.h"
 #include "stdlib.h"
 #include <stdio.h>
-
+/*
+* Empilha um elemento na pilha
+* @param stack ponteiro para o topo da pilha
+* @param value valor a ser armazenado
+* @return void
+* @since 1.0
+*/
 void
 push ( Stack * stack, DWORD value)
 {
@@ -28,6 +34,12 @@ push ( Stack * stack, DWORD value)
     stack->length++;
 }
 
+/*
+* Desempilha um elemento na pilha
+* @param stack ponteiro para o topo da pilha
+* @return Node* nó removido ou NULL caso a pilha esteja vazia
+* @since 1.0
+*/
 Node *
 pop (Stack * stack)
 {
@@ -41,7 +53,11 @@ pop (Stack * stack)
     
     return _node;
 }
-
+/*
+* Inicializa a pilha
+* @return Stack * ponteiro para o topo da pliha criada
+* @since 1.0
+*/
 Stack*
 make_stack ()
 {
@@ -54,6 +70,12 @@ make_stack ()
      return _stack;
 }
 
+/*
+* Destrói a pilha
+* @param stack ponteiro para o topo da pilha
+* @return void
+* @since 1.0
+*/
 void
 flush (Stack * stack)
 {

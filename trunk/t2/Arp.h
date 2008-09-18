@@ -72,13 +72,13 @@ BuildArpTableEntry( CHAR_T*,CHAR_T* , int);
 /*
 *Adiciona uma entrada na tabela ARP
 */
-void * 
+void  
 AddArpTableEntry( ArpTable * table, ArpTableEntry * entry);
 
 /*
 *Remove uma entrada da tabela ARP
 */
-void * 
+ArpTableEntry *
 RemoveArpTableEntry( ArpTable * table, ArpTableEntry * entry );
 
 /*
