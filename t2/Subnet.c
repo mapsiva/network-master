@@ -31,6 +31,7 @@
 
 ArpTable *arpTable;
 
+
 void buildArpHeader (DWORD *_dmac, WORD _dip, WORD type_op )
 {
 	ARP_HEADER *arp;
@@ -74,8 +75,11 @@ int passive_UDP_socket(u_short port)
     return sockd;
 }
 
-
-/* */
+/*
+* @param buf lista de comandos digitados na shell
+* 
+* @since           2.0
+*/
 void sub_xnoop(char *buf)
 {
 	unsigned int i = 0, j = 0;
@@ -117,7 +121,11 @@ void sub_xnoop(char *buf)
 	}
 }
 
-/* */
+/*
+* @param ptr Representa 
+* 
+* @since           2.0
+*/
 void *subnet_send(void *ptr)
 {
     int sockd, aux, i, hosts;

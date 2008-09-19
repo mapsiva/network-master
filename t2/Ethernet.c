@@ -1,9 +1,9 @@
 /**
 	Universidade Federal de Mato Grosso do Sul
-	Mestrado em Ciência da Computação DCT - UFMS
+	Mestrado em Cincia da Computao DCT - UFMS
 	Redes de Computadores 2008
 	
-	Márcio Aparecido Inacio da Silva
+	Mrcio Aparecido Inacio da Silva
 	Maxwell Sampaio dos Santos
 	
 	Subnet
@@ -12,29 +12,39 @@
 #define ETHERNET_C_
 #include "Ethernet.h"
 #include "Arp.h"
+#include "Ip.h"
 #include "PackageHeader.h"
 #include <stdio.h>
 #include <netinet/in.h>
 
 
 /*
-* Imprimei o cabeçalho ethernet
-* @param eth ponteiro para o cabeçalho ethernet
-* @param ID identificação de ordem do pacote usado no xnoop
-* @param modo indica qual modo de execução do XNOOP (Modo verboso, verboso extendido, modo simples)
-* @param pkg_broadcast variável auxiliar para indicar brodcast
-* @param broadcast variável auxiliar para indicar brodcast
+* Imprimei o cabealho ethernet
+* @param eth ponteiro para o cabealho ethernet
+* @param ID identificao de ordem do pacote usado no xnoop
+* @param modo indica qual modo de execuo do XNOOP (Modo verboso, verboso extendido, modo simples)
+* @param pkg_broadcast varivel auxiliar para indicar brodcast
+* @param broadcast varivel auxiliar para indicar brodcast
 */
 CHAR_T*
 trace_ethernet(ETHERNET_HEADER* eth, int ID,  int modo, int *pkg_broadcast, int *broadcast)
 {
+	IP_HEADER *ip;
+	int length = 0;
 	if (modo == VERB_EXT)
 	{
 		printf ("\nETHER: ----- Ether Header -----\n");
 		printf ("ETHER:\n");
 		printf ("ETHER: Packet %d\n", ID);
 		
-		printf ("ETHER: Packet size = %u bytes\n", sizeof(ETHERNET_HEADER)+ sizeof(ETHERNET_PKT)+sizeof(ARP_HEADER));
+		if ((unsigned int) ntohs(eth->type) == ARP)
+			length = sizeof(ARP_HEADER);
+		else if((unsigned int) ntohs(eth->type) == IP)
+		{
+			ip = (IP_HEADER *) eth + 1;
+			length = sizeof(IP_HEADER) + ntohs(ip->total_length);
+		}
+		printf ("ETHER: Packet size = %u bytes\n", sizeof(ETHERNET_HEADER)+sizeof(ETHERNET_PKT)+length);
 			
 		printf ("ETHER: Destination = %02X:%02X:%02X:%02X:%02X:%02X %s\n", eth->receiver[0], eth->receiver[1], eth->receiver[2], eth->receiver[3], eth->receiver[4], eth->receiver[5], (is_broadcast(eth->receiver)?"(brodcast)":""));	
 		printf ("ETHER: Source      = %.02X:%02X:%02X:%02X:%02X:%.02X\n", eth->sender[0], eth->sender[1], eth->sender[2], eth->sender[3], eth->sender[4], eth->sender[5]);	
@@ -52,9 +62,9 @@ trace_ethernet(ETHERNET_HEADER* eth, int ID,  int modo, int *pkg_broadcast, int 
 }
 
 /*
-* Retorna se o mac passado como parámetro é de broadcast
-* @param byte ponteiro para o primeiro byte do endereço MAC
-* @return int 0 indica que não eh broadcast, e 1 caso contrário
+* Retorna se o mac passado como parmetro  de broadcast
+* @param byte ponteiro para o primeiro byte do endereo MAC
+* @return int 0 indica que no eh broadcast, e 1 caso contrrio
 * @since 1.0
 */
 int 
