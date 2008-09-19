@@ -508,7 +508,7 @@ void send_pkt(u_short len, BYTE iface, BYTE *da, u_short type, BYTE *data)
     PKT_QUEUE *qaux;
     ETHERNET_HEADER * ether;
      
-    pkt = malloc(len + sizeof(ETHERNET_PKT));
+    pkt = malloc(len + sizeof(ETHERNET_PKT) );
     pkt->len   = len + sizeof(ETHERNET_PKT);
     pkt->iface = iface;
     pkt->net   = ifaces[iface].net;
@@ -986,7 +986,9 @@ void * update_table(void *p)
 
 		if(arpTable->length == 1 && _entry->TTL == 1)
 		{
+
 			buildArpHeader(_entry->MAC, *(_entry->IP), ARP_REQUEST);
+
 			free(_entry);
 			arpTable->length--;
 			arpTable->list = NULL;			
