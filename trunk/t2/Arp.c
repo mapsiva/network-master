@@ -22,7 +22,7 @@
 * Impressão do cabeçalho ARP
 */
 CHAR_T*
-trace_arp( ARP_HEADER * pkg, int translation, int modo, int broadcast)
+trace_arp( ARP_HEADER * pkg, int translation, int modo, int *pkg_for_me, int broadcast, INTERFACE ifaces[])
 {
     CHAR_T *ip, *name;
     if (modo == VERB_EXT)
@@ -123,6 +123,11 @@ trace_arp( ARP_HEADER * pkg, int translation, int modo, int broadcast)
 			printf("is-at %02X:%02X:%02X:%02X:%02X:%02X", pkg->sender_hardware_addr[0], pkg->sender_hardware_addr[1], pkg->sender_hardware_addr[2], pkg->sender_hardware_addr[3], pkg->sender_hardware_addr[4], pkg->sender_hardware_addr[5]);			
 		}
 		printf("\n");
+	}
+	else /* modo == BASIC */
+	{
+		if(pkg->target_ip_addr == ifaces[0].ip)
+			(*pkg_for_me)++;
 	}
     return 0;
 }
@@ -264,32 +269,25 @@ void AddArpTableEntry( ArpTable * table, ArpTableEntry * entry)
 ArpTableEntry * 
 RemoveArpTableEntry( ArpTable * table, ArpTableEntry * entry )
 {
-	ArpTableEntry *_entry, *_remove;
+	ArpTableEntry *_entry = NULL, *_remove = NULL;
 	
 	if(!table->length)
-		return NULL;
+		return NULL;		
 	
-	if(table->length == 1)	
-	{
-		_remove = table->list;
-		
-		table->list = NULL;
-		
-	}	
-	
-	else if( (_entry = FindArpTableEntry (table, entry, 0 )))
+	if( (_entry = FindArpTableEntry (table, entry, 0 )))
 	{
 		if(_entry == table->list)
+		{
+			_remove = table->list; 
 			table->list = table->list->next;
+		}
 		else
 		{	
 			_remove = _entry->next;
 			_entry->next = _remove->next;
 		}
-		
+		table->length --;		
 	}
-	
-	table->length --;
 	
 	return _remove;
 }

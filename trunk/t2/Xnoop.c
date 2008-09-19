@@ -78,7 +78,7 @@ int check_parameters(int argc, char *argv[], _XNOOP *_x)
 	return 1;
 }
 
-int xnoop(int argc, char *argv[], ETHERNET_HEADER * pkg_ethernet, _XNOOP *_x)
+int xnoop(int argc, char *argv[], ETHERNET_HEADER * pkg_ethernet, _XNOOP *_x, INTERFACE ifaces[])
 {
     IP_HEADER * pkg_ip;      
 	TCP_HEADER * pkg_tcp;
@@ -106,7 +106,7 @@ int xnoop(int argc, char *argv[], ETHERNET_HEADER * pkg_ethernet, _XNOOP *_x)
 		        
 		        pkg_ip = (IP_HEADER *)( pkg_ethernet + 1 ); 
 		        
-		        trace_ip (pkg_ip, (*_x).translation, (*_x).modo, &((*_x).count[T_PKG_ME]), pkg_broadcast);
+		        trace_ip (pkg_ip, (*_x).translation, (*_x).modo, &((*_x).count[T_PKG_ME]), pkg_broadcast, ifaces);
 		        
 		        switch (pkg_ip->protocol)
 		        {
@@ -126,7 +126,7 @@ int xnoop(int argc, char *argv[], ETHERNET_HEADER * pkg_ethernet, _XNOOP *_x)
 		        }
 		        break;
 		    case ARP:
-		        trace_arp ((ARP_HEADER *)(pkg_ethernet + 1), (*_x).translation, (*_x).modo, pkg_broadcast);
+		        trace_arp ((ARP_HEADER *)(pkg_ethernet + 1), (*_x).translation, (*_x).modo, &((*_x).count[T_PKG_ME]), pkg_broadcast, ifaces);
 		       	(*_x).count[T_ARP]++;
 		        break;
 		}	

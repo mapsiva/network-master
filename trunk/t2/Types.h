@@ -1,9 +1,9 @@
 /**
 	Universidade Federal de Mato Grosso do Sul
-	Mestrado em Ciência da Computação DCT - UFMS
+	Mestrado em Cincia da Computao DCT - UFMS
 	Redes de Computadores 2008
 	
-	Márcio Aparecido Inacio da Silva
+	Mrcio Aparecido Inacio da Silva
 	Maxwell Sampaio dos Santos
 	
 	Xnoop - Analizador de Pacotes [Trabalho 1]
@@ -158,13 +158,37 @@ enum type_pkgs
     T_PKG_ME    
 };
 
+#define MAX_HOSTS		10
+
+/* */
+typedef struct {
+    SWORD  port;
+    unsigned ip;
+} NET_HOSTS;
+
+/* */
+typedef struct {
+    BYTE	interface;		/* Interface number		*/
+    BYTE	mac[6];			/* MAC address			*/
+    SWORD	mtu;			/* MTU value			*/
+    unsigned	ip;			/* IP address			*/
+    unsigned	mask;			/* IP network mask		*/
+    unsigned    ip_bcast;		/* IP broadcast address		*/
+    unsigned	pkt_tx;			/* Number of packets transmitted*/
+    unsigned	pkt_rx;			/* Number of packets received	*/
+    NET_HOSTS	hosts[MAX_HOSTS];	/* Hosts in the same network	*/
+    BYTE	nhosts;			/* Number of hosts in the net	*/
+    BYTE	up;			/* Interface up or down		*/
+    BYTE	net;			/* Simul. network number	*/
+} INTERFACE;
+
 /* Definitions for XNOOP */
 typedef struct {
     int modo;						/*modo de funcionamento (BASIC)*/
     int translation;				/*traducao de nomes*/
 	unsigned long npkgs;			/*quantidade atual de pacotes analisados*/
-	unsigned long npkgs_max; 		/*quantidade máxima de pacotes a serem analisados*/
-	int position;					/*posicao da lista de parâmetros onde começam os filtros */	
+	unsigned long npkgs_max; 		/*quantidade mxima de pacotes a serem analisados*/
+	int position;					/*posicao da lista de parmetros onde comeam os filtros */	
 
 	int count[8];	/*contadores para os tipos de pacotes analisados*/
 } _XNOOP;
