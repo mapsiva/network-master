@@ -31,6 +31,32 @@
 
 ArpTable *arpTable;
 
+void buildArpHeader (DWORD *_dmac, WORD _dip, WORD type_op )
+{
+	ARP_HEADER *arp;
+	ETHERNET_HEADER * eth;
+	
+	eth =  malloc(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER));
+	
+	eth->net = ifaces[0].net;
+	memcpy(&eth->sender[0], ifaces[0].mac, MAC_ADDR_LEN);
+	memcpy(&eth->receiver[0], _dmac, MAC_ADDR_LEN);
+	eth->type = htons(ARP);
+	
+	arp = ( ARP_HEADER * )(eth + 1);
+	
+	arp->protocol_type = htons(IP);
+	arp->hardware_len = MAC_ADDR_LEN;
+	arp->protocol_len = IP_ADDR_LEN;
+	arp->operation = htons(type_op);
+	memcpy(&arp->sender_hardware_addr[0], ifaces[0].mac, MAC_ADDR_LEN);
+	arp->sender_ip_addr = ifaces[0].ip;
+	memcpy(&arp->target_hardware_addr[0], _dmac, MAC_ADDR_LEN);
+	arp->target_ip_addr = _dip;
+	
+	send_pkt(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER), 0, &arp->target_hardware_addr[0], ARP, (BYTE*)eth);	
+}
+
 /* Open a passive UDP socket. port must be in net-byte order. */
 int passive_UDP_socket(u_short port)
 {
@@ -448,32 +474,8 @@ void *subnet_rcv(void *ptr)
 					else if (ntohs(arp_h->operation) == ARP_REQUEST)
 					{
 						if (arp_h->target_ip_addr == ifaces[0].ip)
-						{							
-							ARP_HEADER *arp;
-							ETHERNET_HEADER * eth;
-							
-							eth =  malloc(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER));
-							
-							eth->net = ifaces[0].net;
-							memcpy(&eth->sender[0], ifaces[0].mac, MAC_ADDR_LEN);
-							memcpy(&eth->receiver[0], &arp_h->sender_hardware_addr[0], MAC_ADDR_LEN);
-							eth->type = htons(ARP);
-							
-							arp = ( ARP_HEADER * )(eth + 1);
-							
-							arp->protocol_type = IP;
-							arp->hardware_len = MAC_ADDR_LEN;
-							arp->protocol_len = IP_ADDR_LEN;
-							arp->operation = htons(ARP_REPLY);
-							memcpy(&arp->sender_hardware_addr[0], ifaces[0].mac, MAC_ADDR_LEN);
-							arp->sender_ip_addr = ifaces[0].ip;
-							memcpy(&arp->target_hardware_addr[0], &arp_h->sender_hardware_addr[0], MAC_ADDR_LEN);
-							arp->target_ip_addr = arp_h->sender_ip_addr;
-							
-							send_pkt(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER), 0, &arp->target_hardware_addr[0], ARP, (BYTE*)eth);
-						}
-							
-					}					
+							buildArpHeader((DWORD*)&arp_h->sender_hardware_addr[0], arp_h->sender_ip_addr, ARP_REPLY);
+					}
 				}
 			}				
 			
@@ -756,6 +758,8 @@ int sub_arp_del( void *arg )
 		free(entry);
 		sem_post(&allow_entry);
 	}
+	else				
+		printf("Sintaxe Correct is: arp [show|ttl|res|add|del] [EndIP] [EndEth] [ttl]");
 	return 1;
 }
 
@@ -794,8 +798,6 @@ int sub_arp_add( void * arg )
 				printf("Incorret MAC Address.");
 				return 0;
 			}
-	
-
 			
 			/*Capturando o ttl*/
 			if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
@@ -815,8 +817,14 @@ int sub_arp_add( void * arg )
 				sem_post(&allow_entry);
 				return 1;
 			}
+			else				
+			printf("Sintaxe Correct is: arp [show|ttl|res|add|del] [EndIP] [EndEth] [ttl]");
 		}
+		else				
+		printf("Sintaxe Correct is: arp [show|ttl|res|add|del] [EndIP] [EndEth] [ttl]");
 	}
+	else				
+		printf("Sintaxe Correct is: arp [show|ttl|res|add|del] [EndIP] [EndEth] [ttl]");
 	return 0;
 }
 
@@ -849,6 +857,8 @@ int sub_arp( char *b )
 		}
 		
 		ARP_TTL_DEF = ttl;
+		
+		printf ("ttl updated.");
 	}
 	else				
 		printf("Sintaxe Correct is: arp [show|ttl|res|add|del] [EndIP] [EndEth] [ttl]");
@@ -906,28 +916,7 @@ int sub_arp_res( void *arg )
 		{
 			sem_post(&allow_entry);
 			
-			ARP_HEADER *arp;
-			ETHERNET_HEADER * eth;
-			
-			eth =  malloc(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER));
-			
-			eth->net = ifaces[0].net;
-			memcpy(&eth->sender[0], ifaces[0].mac, MAC_ADDR_LEN);
-			memcpy(&eth->receiver[0], &broad_eth[0], MAC_ADDR_LEN);
-			eth->type = htons(ARP);
-			
-			arp = ( ARP_HEADER * )(eth + 1);
-			
-			arp->protocol_type = htons(IP);
-			arp->hardware_len = MAC_ADDR_LEN;
-			arp->protocol_len = IP_ADDR_LEN;
-			arp->operation = htons(ARP_REQUEST);
-			memcpy(&arp->sender_hardware_addr[0], ifaces[0].mac, MAC_ADDR_LEN);
-			arp->sender_ip_addr = ifaces[0].ip;
-			memcpy(&arp->target_hardware_addr[0], &broad_eth[0], MAC_ADDR_LEN);
-			arp->target_ip_addr = *(end_ip);
-			
-			send_pkt(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER), 0, &arp->target_hardware_addr[0], ARP, (BYTE*)eth);
+			buildArpHeader((DWORD *)&broad_eth[0], *(end_ip), ARP_REQUEST);
 			
 			//Falta eperar pelo REPLY e bloquear esta thread
 			struct timespec ts;
@@ -947,6 +936,8 @@ int sub_arp_res( void *arg )
 		}
 		
 	}
+	else				
+		printf("Sintaxe Correct is: arp [show|ttl|res|add|del] [EndIP] [EndEth] [ttl]");
 	return 1;
 }
 
@@ -987,11 +978,10 @@ void * update_table(void *p)
 
 		if(arpTable->length == 1 && _entry->TTL == 1)
 		{
-			//DisplayArpTable(arpTable);
+			buildArpHeader(_entry->MAC, *(_entry->IP), ARP_REQUEST);
 			free(_entry);
 			arpTable->length--;
-			arpTable->list = NULL;
-			
+			arpTable->list = NULL;			
 		}
 		else
 		{			
@@ -1005,6 +995,8 @@ void * update_table(void *p)
 					{
 						arpTable->list = _entry->next;
 						
+						buildArpHeader(_entry->MAC, *(_entry->IP), ARP_REQUEST);	
+						
 						free(_entry);
 						
 						_entry = arpTable->list;
@@ -1013,13 +1005,14 @@ void * update_table(void *p)
 					{
 						_previous->next = _entry->next;
 						
+						buildArpHeader(_entry->MAC, *(_entry->IP), ARP_REQUEST);	
+						
 						free(_entry);
 						
 						_entry = _previous;		
 					}
 					
 					arpTable->length--;
-					//DisplayArpTable(arpTable);
 				}
 				else
 				{

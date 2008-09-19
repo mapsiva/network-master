@@ -134,4 +134,6 @@ int sub_send_trace(char* b);
 
 void control_xnoop();
 
+void buildArpHeader (DWORD *, WORD , WORD );
+
 #endif 
