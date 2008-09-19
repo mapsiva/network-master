@@ -30,7 +30,7 @@ CHAR_T*
 trace_ethernet(ETHERNET_HEADER* eth, int ID,  int modo, int *pkg_broadcast, int *broadcast)
 {
 	IP_HEADER *ip;
-	int length = 0;
+	SWORD length = 0;
 	if (modo == VERB_EXT)
 	{
 		printf ("\nETHER: ----- Ether Header -----\n");
@@ -41,10 +41,10 @@ trace_ethernet(ETHERNET_HEADER* eth, int ID,  int modo, int *pkg_broadcast, int 
 			length = sizeof(ARP_HEADER);
 		else if((unsigned int) ntohs(eth->type) == IP)
 		{
-			ip = (IP_HEADER *) eth + 1;
-			length = sizeof(IP_HEADER) + ntohs(ip->total_length);
+			ip = (IP_HEADER *) (eth + 1);
+			length = ntohs(ip->total_length);			
 		}
-		printf ("ETHER: Packet size = %u bytes\n", sizeof(ETHERNET_HEADER)+sizeof(ETHERNET_PKT)+length);
+		printf ("ETHER: Packet size = %u bytes\n", sizeof(ETHERNET_HEADER)-1+length);
 			
 		printf ("ETHER: Destination = %02X:%02X:%02X:%02X:%02X:%02X %s\n", eth->receiver[0], eth->receiver[1], eth->receiver[2], eth->receiver[3], eth->receiver[4], eth->receiver[5], (is_broadcast(eth->receiver)?"(brodcast)":""));	
 		printf ("ETHER: Source      = %.02X:%02X:%02X:%02X:%02X:%.02X\n", eth->sender[0], eth->sender[1], eth->sender[2], eth->sender[3], eth->sender[4], eth->sender[5]);	
