@@ -38,12 +38,12 @@ typedef struct
 */
 typedef struct 
 {
-    WORD len;
+    SWORD len;
     BYTE  iface;
     BYTE  net;
     BYTE  da[6];
     BYTE  sa[6];
-    WORD type;
+    SWORD type;
 } ETHERNET_PKT;
 
 /*

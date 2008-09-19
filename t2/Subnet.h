@@ -25,7 +25,7 @@
 #define MAX_NETWORKS	20
 #define MAX_PARAMETERS	256
 #define MAX_SIZE_PARAMETER	20
-#define TIMEOUT				1
+#define TIMEOUT				10
 
 /* */
 typedef struct {
