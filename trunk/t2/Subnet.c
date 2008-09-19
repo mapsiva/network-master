@@ -183,6 +183,7 @@ void read_net_cfg(char *fname, u_short port, u_short iface)
 				p->ip   = inet_addr(s);
 				if (p->port == port) {
 					my_ip  = p->ip;
+					ifaces[iface].ip = p->ip;
 					s = strtok(NULL, ",");
 					ifaces[iface].mtu = atoi(s);
 					s = strtok(NULL, ",");
@@ -822,6 +823,36 @@ int sub_arp_add( void * arg )
 /* */
 int sub_arp( char *b )
 {
+	char *aux1 = NULL, *aux2 = NULL;
+	int tam, ttl;
+	
+	//Capturando os parâmetros passados juntamente com o arp add
+	tam = strlen(b);
+	b[tam-1] = ' ';
+	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o arp*/
+	
+	/*Capturando o ttl*/
+	if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+	{
+		if (!is_decimal ((CHAR_T *)aux2))
+		{
+			printf("Incorret ttl.");
+			return 0;
+		}
+
+		ttl = strtoul((const char *)aux2, NULL, 10);
+		
+		if (ttl <= 0)
+		{
+			printf("Incorret ttl. Just ttl more than zero.");
+			return 0;
+		}
+		
+		ARP_TTL_DEF = ttl;
+	}
+	else				
+		printf("Sintaxe Correct is: arp [show|ttl|res|add|del] [EndIP] [EndEth] [ttl]");
+	
 	return 0;
 }
 
@@ -1068,7 +1099,6 @@ int main(int argc, char *argv[])
 		else if (!strncasecmp(buf, "ARP DEL", 7))
 			sub_arp_del((void *)buf);
 		else if (!strncasecmp(buf, "ARP", 3)) {
-			printf("Sintaxe Correct is: arp [show|ttl|res|add|del] [EndIP] [EndEth] [ttl]");
 			sub_arp((char *)buf);
 		}
 		else if (!strncasecmp(buf, "IFCONFIG SHOW", 13)) {
