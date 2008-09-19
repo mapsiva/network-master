@@ -135,10 +135,10 @@ void sub_xnoop(char *buf)
 }
 
 /*
-* @param ptr 
-* 
-* @since           2.0
-*/
+ * @param ptr
+ * 
+ * @since           2.0
+ */
 void *subnet_send(void *ptr)
 {
     int sockd, aux, i, hosts;
@@ -213,8 +213,9 @@ char *ip2str(char *buf, unsigned ip)
 }
 
 /* Lê dados de um arquivo (CFG) que representa a configuração da rede virtual
- * @param buf End. IP no formato de string convertido
- * @param addr End. IP no formato decimal
+ * @param fname Nome do arquivo (CFG) de entrada
+ * @param port
+ * @param iface 
  * 
  * @since           2.0
  */
@@ -261,7 +262,13 @@ void read_net_cfg(char *fname, u_short port, u_short iface)
     }
 }
 
-/* */
+/* Tratamento do comando ifconfig <interface> <EndIP> <EndMAC>
+ * @param b String com os comandos digitados na shell
+ * 
+ * @return 1 qdo não detectou problemas no comando ou 0, caso contrário
+ * 
+ * @since           2.0
+ */
 int sub_ifconfig(char *b)
 {
 	unsigned int id_iface = -1, i, find=0;
@@ -327,13 +334,28 @@ int sub_ifconfig(char *b)
 				ifaces[i].mask = (unsigned) (*end_mask);				
 			}
 			ifaces[i].ip = (unsigned) (*end_ip);
+			
+			print_if_info(i);	//Exibir informacoes de apenas uma interface
 		}
-		print_if_info(i);	//Exibir informacoes de apenas uma interface
+		else
+			printf("Usage:  ifconfig <interface> <IPaddres> <MASKaddress>");
+	}
+	else
+	{
+		printf("Usage:  ifconfig <interface> <IPaddres> <MASKaddress>");
+		printf("\n\tifconfig [show]");
 	}
 		
 	return 1;
 }
 
+/* Tratamento do comando if <interface> [down|up]
+ * @param b String com os comandos digitados na shell
+ * 
+ * @return 1 qdo não detectou problemas no comando ou 0, caso contrário
+ * 
+ * @since           2.0
+ */
 int sub_if( char* b)
 {
 	unsigned int id_iface = -1, i, find = 0;
@@ -390,56 +412,48 @@ int sub_if( char* b)
 			
 			print_if_info(i);
 		}
+		else
+			printf("Usage:  if <interface> [down|up]");	
 	}
 	else
-		printf("Sintaxe Correct is: if <interface> [down|up]");
+		printf("Usage:  if <interface> [down|up]");
 	
-	return 0;
+	return 1;
 }
 
-/* */
-int print_if_info(int id_iface)
+/* Imprime informações da interface id_iface
+ * @param id_iface Representa o id da interface
+ * 
+ * @since           2.0
+ */
+void print_if_info(int id_iface)
 {
-    int i;
-    char ip_s[16], bcast_s[16], mask_s[16];
+    char ip_s[16], bcast_s[16], mask_s[16];    
     
-    if (id_iface != -1)
-    {
-    	BYTE *pb;
-		printf("\nif%d\tHWaddr %02X:%02X:%02X:%02X:%02X:%02X\n",
-			   id_iface, ifaces[id_iface].mac[0], ifaces[id_iface].mac[1], ifaces[id_iface].mac[2],
-			   ifaces[id_iface].mac[3], ifaces[id_iface].mac[4], ifaces[id_iface].mac[5]);
-		pb = (BYTE *)&ifaces[id_iface].ip;
-		printf("\tinet addr: %s Bcast: %s Mask: %s\n",
-			   ip2str(ip_s, ifaces[id_iface].ip),
-			   ip2str(bcast_s, ifaces[id_iface].ip_bcast),
-			   ip2str(mask_s, ifaces[id_iface].mask));
-		printf("\t%s MTU: %d\n", ifaces[id_iface].up ? "UP" : "DOWN",
-			   ifaces[id_iface].mtu);
-		printf("\tRX packets: %d TX packet: %d\n",
-			   ifaces[id_iface].pkt_rx, ifaces[id_iface].pkt_tx);
-		return 0;
-	}
-	
-	for (i = 0; i < nifaces; i++) {
-		BYTE *pb;
-		printf("\nif%d\tHWaddr %02X:%02X:%02X:%02X:%02X:%02X\n",
-			   i, ifaces[i].mac[0], ifaces[i].mac[1], ifaces[i].mac[2],
-			   ifaces[i].mac[3], ifaces[i].mac[4], ifaces[i].mac[5]);
-		pb = (BYTE *)&ifaces[i].ip;
-		printf("\tinet addr: %s Bcast: %s Mask: %s\n",
-			   ip2str(ip_s, ifaces[i].ip),
-			   ip2str(bcast_s, ifaces[i].ip_bcast),
-			   ip2str(mask_s, ifaces[i].mask));
-		printf("\t%s MTU: %d\n", ifaces[i].up ? "UP" : "DOWN",
-			   ifaces[i].mtu);
-		printf("\tRX packets: %d TX packet: %d\n",
-			   ifaces[i].pkt_rx, ifaces[i].pkt_tx);
-	}
-	return 0;
+	BYTE *pb;
+	printf("\nif%d\tHWaddr %02X:%02X:%02X:%02X:%02X:%02X\n",
+		   id_iface, ifaces[id_iface].mac[0], ifaces[id_iface].mac[1], ifaces[id_iface].mac[2],
+		   ifaces[id_iface].mac[3], ifaces[id_iface].mac[4], ifaces[id_iface].mac[5]);
+	pb = (BYTE *)&ifaces[id_iface].ip;
+	printf("\tinet addr: %s Bcast: %s Mask: %s\n",
+		   ip2str(ip_s, ifaces[id_iface].ip),
+		   ip2str(bcast_s, ifaces[id_iface].ip_bcast),
+		   ip2str(mask_s, ifaces[id_iface].mask));
+	printf("\t%s MTU: %d\n", ifaces[id_iface].up ? "UP" : "DOWN",
+		   ifaces[id_iface].mtu);
+	printf("\tRX packets: %d TX packet: %d\n",
+		   ifaces[id_iface].pkt_rx, ifaces[id_iface].pkt_tx);
 }
 
-/* */
+/* Responsável por capturar os pacotes transmitidos na rede e 
+ * exibi-los quando necessário, além disso trata os pacotes ARP
+ * do tipo REQUEST e REPLY recebidos pelo host fazendo os ajustes
+ * necessários 
+ * 
+ * @param ptr representa a porta de escuta dos pacotes
+ * 
+ * @since           2.0
+ */
 void *subnet_rcv(void *ptr)
 {
     unsigned port = *((unsigned *)ptr);
@@ -467,8 +481,6 @@ void *subnet_rcv(void *ptr)
 		else 
 		{
 			qtd_pkgs++;
-			//printf("\nEthertype 0x%04X\n",eth_h->type);
-			//printf("\nEther %d\n",eth_h->net);
 			if (!memcmp(eth_h->receiver, broad_eth,6) || !memcmp(eth_h->receiver, ifaces[0].mac, 6))
 			{
 				ifaces[riface].pkt_rx++; /* The packet must be processed */
@@ -476,8 +488,7 @@ void *subnet_rcv(void *ptr)
 				{
 					arp_h = (ARP_HEADER *) (eth_h + 1);
 					if (ntohs(arp_h->operation) == ARP_REPLY)
-					{				
-						//BYTE *arp_ip = (BYTE *)&arp_h->sender_ip_addr;
+					{
 						CHAR_T * _ip = format_address(arp_h->sender_ip_addr);
 						CHAR_T * _mac = malloc(17);
 						sprintf(
@@ -500,7 +511,6 @@ void *subnet_rcv(void *ptr)
 							ARP_TTL_DEF
 						);
 						
-						//printf("\n%s %d\n",cmd_arp_add, strlen(cmd_arp_add));
 						sub_arp_add((void *)cmd_arp_add);
 						
 						if (arp_resolving)
@@ -526,13 +536,20 @@ void *subnet_rcv(void *ptr)
 				xnoop(qtd_parameters, parameters, eth_h, &_xnoop, ifaces);
 				sem_post(&sem_xnoop);
 			}
-			
-			//printf("Packet received (0x%04X) ()\n",(unsigned short) ntohs(eth_h->type));
 		}
     }
 }
 			
-/* */
+/* Responsável por criar pacotes e empilhá-los na PILHA de pacotes
+ * 
+ * @param len Tamanho do pacote, desconsiderando o tamanho de ETHERNET_PKT
+ * @param iface Identificação da interface de envio do pacote
+ * @param da End. MAC de destino do pacote
+ * @param type Tipo do pacote
+ * @param data Dados do pacote
+ * 
+ * @since           2.0
+ */
 void send_pkt(u_short len, BYTE iface, BYTE *da, u_short type, BYTE *data)
 {
     ETHERNET_PKT *pkt;
@@ -565,7 +582,15 @@ void send_pkt(u_short len, BYTE iface, BYTE *da, u_short type, BYTE *data)
     sem_post(&sem_queue);
 }
 
-/* */
+/* Responsável por criar pacotes oriundos do arquivo TRACE e empilhá-los na PILHA de pacotes
+ * 
+ * @param len Tamanho do pacote, desconsiderando o tamanho de ETHERNET_PKT e ETHERNET_HEADER
+ * @param da End. MAC de destino do pacote
+ * @param type_ether Tipo do pacote
+ * @param data Dados do pacote
+ * 
+ * @since           2.0
+ */
 void xnoop_send_pkt(u_short len, u_short type_ether, BYTE *data)
 {
     ETHERNET_PKT *pkt;
@@ -613,7 +638,14 @@ void xnoop_send_pkt(u_short len, u_short type_ether, BYTE *data)
     sem_post(&sem_queue);
 }
 
-/* */
+/* Responsável por ler pacotes do arquivo TRACE e enviá-los para a rede
+ * 
+ * @param b String com os comandos digitados na shell
+ * 
+ * @return 1 qdo não detectou problemas no comando ou 0, caso contrário
+ * 
+ * @since           2.0
+ */
 int sub_send_trace(char* b)
 {
 	unsigned int tam;
@@ -720,9 +752,9 @@ int sub_send_trace(char* b)
 		printf("\nPackets Sended.\n");
 	}
 	else
-		printf("Sintaxe Correct is: send <trace> <interval>");
+		printf("Usage: send <trace> <interval>");
 	
-	return 0;
+	return 1;
 }
 
 /* */

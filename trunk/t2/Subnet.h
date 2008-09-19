@@ -89,7 +89,7 @@ char *ip2str(char *, unsigned);
 
 void read_net_cfg(char *, u_short, u_short);
 
-int print_if_info(int);
+void print_if_info(int);
 
 void sub_xnoop(char *);
 
@@ -111,6 +111,6 @@ int sub_send_trace(char* b);
 
 void control_xnoop();
 
-void send_arp_pkt (DWORD *, WORD , WORD );
+void buildArpHeader (DWORD *, WORD , WORD );
 
 #endif 
