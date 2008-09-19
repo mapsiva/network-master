@@ -18,7 +18,6 @@
 #include <stdio.h>
 /* */
 #define MAX_PKT_SZ		65536
-#define MAX_HOSTS		10
 #define MAC_ADDR_LEN	6
 #define IP_ADDR_LEN		4
 #define MAX_IFACES		5
@@ -28,29 +27,7 @@
 #define TIMEOUT				10
 
 /* */
-typedef struct {
-    u_short  port;
-    unsigned ip;
-} NET_HOSTS;
-
-/* */
 BYTE net2iface[MAX_NETWORKS];
-
-/* */
-typedef struct {
-    BYTE	interface;		/* Interface number		*/
-    BYTE	mac[6];			/* MAC address			*/
-    u_short	mtu;			/* MTU value			*/
-    unsigned	ip;			/* IP address			*/
-    unsigned	mask;			/* IP network mask		*/
-    unsigned    ip_bcast;		/* IP broadcast address		*/
-    unsigned	pkt_tx;			/* Number of packets transmitted*/
-    unsigned	pkt_rx;			/* Number of packets received	*/
-    NET_HOSTS	hosts[MAX_HOSTS];	/* Hosts in the same network	*/
-    BYTE	nhosts;			/* Number of hosts in the net	*/
-    BYTE	up;			/* Interface up or down		*/
-    BYTE	net;			/* Simul. network number	*/
-} INTERFACE;
 
 /* */
 typedef struct _pq {

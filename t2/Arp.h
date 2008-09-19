@@ -103,7 +103,7 @@ FlushArpTable (ArpTable * table);
 * Imprime um cabeçalho ARP
 */
 CHAR_T*
-trace_arp( ARP_HEADER *, int, int, int);
+trace_arp( ARP_HEADER *, int, int, int*, int, INTERFACE[]);
 
 /*
 * Visualiza o campo Type do pacote ARP

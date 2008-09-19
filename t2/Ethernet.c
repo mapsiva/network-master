@@ -44,6 +44,7 @@ trace_ethernet(ETHERNET_HEADER* eth, int ID,  int modo, int *pkg_broadcast, int 
 			ip = (IP_HEADER *) (eth + 1);
 			length = ntohs(ip->total_length);			
 		}
+		
 		printf ("ETHER: Packet size = %u bytes\n", sizeof(ETHERNET_HEADER)-1+length);
 			
 		printf ("ETHER: Destination = %02X:%02X:%02X:%02X:%02X:%02X %s\n", eth->receiver[0], eth->receiver[1], eth->receiver[2], eth->receiver[3], eth->receiver[4], eth->receiver[5], (is_broadcast(eth->receiver)?"(brodcast)":""));	

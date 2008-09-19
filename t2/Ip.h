@@ -30,7 +30,7 @@ struct in_addr addr;
 struct hostent *resolved;
 
 CHAR_T*
-trace_ip( IP_HEADER *, int, int, int*, int);
+trace_ip( IP_HEADER *, int, int, int*, int, INTERFACE []);
 
 CHAR_T*
 resolve_address( WORD ) ;

@@ -1,9 +1,9 @@
 /**
 	Universidade Federal de Mato Grosso do Sul
-	Mestrado em Ciência da Computação DCT - UFMS
+	Mestrado em Cincia da Computao DCT - UFMS
 	Redes de Computadores 2008
 	
-	Márcio Aparecido Inacio da Silva
+	Mrcio Aparecido Inacio da Silva
 	Maxwell Sampaio dos Santos
 	
 	Xnoop - Analizador de Pacotes [Trabalho 1]
@@ -24,13 +24,9 @@
 #include <arpa/inet.h>
 
 CHAR_T*
-trace_ip( IP_HEADER * pkg, int translation, int modo, int *pkg_for_me, int broadcast)
+trace_ip( IP_HEADER * pkg, int translation, int modo, int *pkg_for_me, int broadcast, INTERFACE ifaces[])
 {
-    CHAR_T *ip, *name;    
-
-    struct ifreq ifr;
-	struct sockaddr_in saddr;
-	int fd;
+    CHAR_T *ip, *name;   
     
     if (modo == VERB_EXT)
     {
@@ -111,12 +107,7 @@ trace_ip( IP_HEADER * pkg, int translation, int modo, int *pkg_for_me, int broad
 	}
 	else /* modo == BASIC */
     {
-		fd = socket(PF_INET, SOCK_STREAM, 0);
-		strcpy (ifr.ifr_name, "eth0");
-		ioctl (fd, SIOCGIFADDR, &ifr);
-		saddr = *((struct sockaddr_in *)(&(ifr.ifr_addr)));
-		
-		if(saddr.sin_addr.s_addr == pkg->destination_address)
+		if(pkg->destination_address == ifaces[0].ip)
 			(*pkg_for_me)++;
     }
     return 0;
@@ -178,7 +169,7 @@ ip_is_broadcast (WORD *ip)
 
 char * get_precedence_name(SWORD service)
 {
-	char *text;
+	char *text = NULL;
 	int aux;
 	
 	aux = service >> 5;

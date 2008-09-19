@@ -110,6 +110,7 @@ void sub_xnoop(char *buf)
 	_xnoop.translation = 1;
 	_xnoop.npkgs_max = 400000000;
 	_xnoop.position = 1;
+	_xnoop.modo = BASIC;
 	
 	//Verifica se os [options] e [filters] estão corretos
 	if (check_parameters(i, parameters, &_xnoop))
@@ -492,7 +493,7 @@ void *subnet_rcv(void *ptr)
 			if (run_xnoop)
 			{
 				sem_wait(&sem_xnoop);
-				xnoop(qtd_parameters, parameters, eth_h, &_xnoop);
+				xnoop(qtd_parameters, parameters, eth_h, &_xnoop, ifaces);
 				sem_post(&sem_xnoop);
 			}
 			
@@ -763,7 +764,11 @@ int sub_arp_del( void *arg )
 		sem_wait(&allow_entry);
 		entry = BuildArpTableEntry((CHAR_T*)_ip, NULL, 0);		
 		entry = RemoveArpTableEntry (arpTable, entry);
-		free(entry);
+		if(entry)
+		{
+			free(entry);
+			DisplayArpTable(arpTable);
+		}
 		sem_post(&allow_entry);
 	}
 	else				
@@ -810,13 +815,13 @@ int sub_arp_add( void * arg )
 			/*Capturando o ttl*/
 			if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
 			{
-				if (!is_decimal ((CHAR_T *)aux2))
+				ttl = strtoul((const char *)aux2, NULL, 10);
+				
+				if (ttl < -1)
 				{
 					printf("Incorret ttl.");
 					return 0;
 				}
-	
-				ttl = strtoul((const char *)aux2, NULL, 10);
 	
 				/* Código para inserção na tabela */
 				sem_wait(&allow_entry);
@@ -850,17 +855,11 @@ int sub_arp( char *b )
 	/*Capturando o ttl*/
 	if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
 	{
-		if (!is_decimal ((CHAR_T *)aux2))
-		{
-			printf("Incorret ttl.");
-			return 0;
-		}
-
 		ttl = strtoul((const char *)aux2, NULL, 10);
 		
-		if (ttl <= 0)
+		if (ttl < -1)
 		{
-			printf("Incorret ttl. Just ttl more than zero.");
+			printf("Incorret ttl. Just ttl more than -1.");
 			return 0;
 		}
 		
@@ -982,11 +981,10 @@ void * update_table(void *p)
 		{
 			sem_post(&allow_entry);
 			continue;
-		}	
+		}
 
 		if(arpTable->length == 1 && _entry->TTL == 1)
 		{
-
 			buildArpHeader(_entry->MAC, *(_entry->IP), ARP_REQUEST);
 
 			free(_entry);
@@ -997,9 +995,15 @@ void * update_table(void *p)
 		{			
 			while (_entry)
 			{
+				if (_entry->TTL == -1)
+				{
+					_entry = _entry->next;	
+					continue;
+				}
+				
 				_entry->TTL--;
 						
-				if(_entry->TTL <= 0)
+				if(_entry->TTL == 0)
 				{
 					if(arpTable->list == _entry)
 					{
