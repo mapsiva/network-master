@@ -31,8 +31,15 @@
 
 ArpTable *arpTable;
 
-
-void buildArpHeader (DWORD *_dmac, WORD _dip, WORD type_op )
+/*
+ * Envia pacotes ARP do tipo type_op e com endereço MAC _dmac e endereço IP _dip 
+* @param _dmac ponteiro para o endereço MAC de destino do pacote ARP
+* @param _dip endereço IP de destino do pacote ARP
+* @param _type_op tipo do pacote ARP: ARP_REQUEST ou ARP_REPLY
+* 
+* @since           2.0
+*/
+void send_arp_pkt (DWORD *_dmac, WORD _dip, WORD type_op )
 {
 	ARP_HEADER *arp;
 	ETHERNET_HEADER * eth;
@@ -58,7 +65,12 @@ void buildArpHeader (DWORD *_dmac, WORD _dip, WORD type_op )
 	send_pkt(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER), 0, &arp->target_hardware_addr[0], ARP, (BYTE*)eth);	
 }
 
-/* Open a passive UDP socket. port must be in net-byte order. */
+/*
+ * Open a passive UDP socket. port must be in net-byte order.
+ * @param port 
+ * 
+ * @since           2.0
+ */
 int passive_UDP_socket(u_short port)
 {
     int sockd;		    /* socket descriptor	*/
@@ -76,7 +88,7 @@ int passive_UDP_socket(u_short port)
 }
 
 /*
-* @param buf lista de comandos digitados na shell
+* @param buf String com os comandos digitados na shell
 * 
 * @since           2.0
 */
@@ -123,7 +135,7 @@ void sub_xnoop(char *buf)
 }
 
 /*
-* @param ptr Representa 
+* @param ptr 
 * 
 * @since           2.0
 */
@@ -167,7 +179,13 @@ void *subnet_send(void *ptr)
 		}
     }
 }
-/* */
+
+/* Converte um endereço MAC no formato de string em um numero hexadecimal que representa o end. MAC
+ * @param s End. MAC no formato de string
+ * @param addr End. MAC no formato hexadecimal convertido
+ * 
+ * @since           2.0
+ */
 void str2eth(char *s, BYTE addr[])
 {
     int i;
@@ -180,14 +198,26 @@ void str2eth(char *s, BYTE addr[])
     }
     addr[i] = strtol(p, NULL, 16);
 }
-/* */
+
+/* Converte um endereço IP no formato decimal em um End. IP no formato de string
+ * @param buf End. IP no formato de string convertido
+ * @param addr End. IP no formato decimal
+ * 
+ * @since           2.0
+ */
 char *ip2str(char *buf, unsigned ip)
 {
     BYTE *pb = (BYTE*)&ip;
     sprintf(buf, "%d.%d.%d.%d", pb[0], pb[1], pb[2], pb[3]);
     return buf;
 }
-/* */
+
+/* Lê dados de um arquivo (CFG) que representa a configuração da rede virtual
+ * @param buf End. IP no formato de string convertido
+ * @param addr End. IP no formato decimal
+ * 
+ * @since           2.0
+ */
 void read_net_cfg(char *fname, u_short port, u_short iface)
 {
     FILE *cfg_file;
@@ -483,7 +513,7 @@ void *subnet_rcv(void *ptr)
 					else if (ntohs(arp_h->operation) == ARP_REQUEST)
 					{
 						if (arp_h->target_ip_addr == ifaces[0].ip)
-							buildArpHeader((DWORD*)&arp_h->sender_hardware_addr[0], arp_h->sender_ip_addr, ARP_REPLY);
+							send_arp_pkt((DWORD*)&arp_h->sender_hardware_addr[0], arp_h->sender_ip_addr, ARP_REPLY);
 					}
 				}
 			}				
@@ -923,7 +953,7 @@ int sub_arp_res( void *arg )
 		{
 			sem_post(&allow_entry);
 			
-			buildArpHeader((DWORD *)&broad_eth[0], *(end_ip), ARP_REQUEST);
+			send_arp_pkt((DWORD *)&broad_eth[0], *(end_ip), ARP_REQUEST);
 			
 			//Falta eperar pelo REPLY e bloquear esta thread
 			struct timespec ts;
@@ -985,7 +1015,7 @@ void * update_table(void *p)
 
 		if(arpTable->length == 1 && _entry->TTL == 1)
 		{
-			buildArpHeader(_entry->MAC, *(_entry->IP), ARP_REQUEST);
+			send_arp_pkt(_entry->MAC, *(_entry->IP), ARP_REQUEST);
 
 			free(_entry);
 			arpTable->length--;
@@ -1009,7 +1039,7 @@ void * update_table(void *p)
 					{
 						arpTable->list = _entry->next;
 						
-						buildArpHeader(_entry->MAC, *(_entry->IP), ARP_REQUEST);	
+						send_arp_pkt(_entry->MAC, *(_entry->IP), ARP_REQUEST);	
 						
 						free(_entry);
 						
@@ -1019,7 +1049,7 @@ void * update_table(void *p)
 					{
 						_previous->next = _entry->next;
 						
-						buildArpHeader(_entry->MAC, *(_entry->IP), ARP_REQUEST);	
+						send_arp_pkt(_entry->MAC, *(_entry->IP), ARP_REQUEST);	
 						
 						free(_entry);
 						
