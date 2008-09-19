@@ -111,6 +111,6 @@ int sub_send_trace(char* b);
 
 void control_xnoop();
 
-void buildArpHeader (DWORD *, WORD , WORD );
+void send_arp_pkt (DWORD *, WORD , WORD );
 
 #endif 
