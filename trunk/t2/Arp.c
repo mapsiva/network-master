@@ -142,7 +142,10 @@ ArpTableEntry * BuildArpTableEntry( CHAR_T* IP, CHAR_T* MAC , int TTL)
 	 ArpTableEntry * _entry =  (ArpTableEntry *) malloc(sizeof(ArpTableEntry));
 	 
 	 _entry->IP =  (WORD *)to_ip_byte ( IP);
-	 _entry->MAC = to_mac_byte ( MAC );
+	 if (MAC)
+	 	_entry->MAC = to_mac_byte ( MAC );
+	 else
+	 	_entry->MAC = NULL;
 	 _entry->TTL = TTL;
 	 _entry->next = NULL;
 	 return _entry;
@@ -245,8 +248,6 @@ void AddArpTableEntry( ArpTable * table, ArpTableEntry * entry)
 		_entry->MAC = entry->MAC;
 		_entry->TTL = entry->TTL;
 	}
-	
-	return _entry;
 }
 
 /*

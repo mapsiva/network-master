@@ -25,6 +25,7 @@
 #define MAX_NETWORKS	20
 #define MAX_PARAMETERS	256
 #define MAX_SIZE_PARAMETER	20
+#define TIMEOUT				1
 
 /* */
 typedef struct {
@@ -66,6 +67,7 @@ sem_t sem_data_ready;
 sem_t sem_queue;
 sem_t sem_xnoop;
 sem_t sem_main;
+sem_t sem_arp_res;
 
 /* */
 INTERFACE ifaces[MAX_IFACES];	/* Interfaces of the host/router */
@@ -84,11 +86,13 @@ BYTE broad_eth[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 char in_buf[MAX_PKT_SZ];
 
 /* Definitions for XNOOP */
-int qtd_parameters, run_xnoop, qtd_pkgs, sending_packets;
+int qtd_parameters, run_xnoop, qtd_pkgs, sending_packets, arp_resolving;
 
 char *parameters[MAX_PARAMETERS];
 
 _XNOOP _xnoop;
+
+unsigned int ARP_TTL_DEF = 60;
 
 /* functions*/
 
@@ -121,6 +125,8 @@ int sub_arp_del( void* );
 int sub_arp_res( void* );
 
 int sub_arp_add( void* );
+
+int sub_arp( char* );
 
 int sub_get_parameters( char**, char*);
 

@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <errno.h>
 #include "Subnet.h"
 #include "Xnoop.h"
 #include "Analyzer.h"
@@ -408,28 +409,70 @@ void *subnet_rcv(void *ptr)
 				if (ntohs(eth_h->type) == ARP)
 				{
 					arp_h = (ARP_HEADER *) (eth_h + 1);
-					if ((ntohs(arp_h->operation) == ARP_REPLY))
+					if (ntohs(arp_h->operation) == ARP_REPLY)
 					{				
-						BYTE *arp_ip = (BYTE *)&arp_h->sender_ip_addr;
-						char *cmd_arp_add = malloc(45);
+						//BYTE *arp_ip = (BYTE *)&arp_h->sender_ip_addr;
+						CHAR_T * _ip = format_address(arp_h->sender_ip_addr);
+						CHAR_T * _mac = malloc(17);
 						sprintf(
-							cmd_arp_add, 
-							"arp add %d.%d.%d.%d %02X:%02X:%02X:%02X:%02X:%02X %d",
-							arp_ip[0],
-							arp_ip[1],
-							arp_ip[2],
-							arp_ip[3],
+							(char*)_mac,
+							"%02X:%02X:%02X:%02X:%02X:%02X",
 							arp_h->sender_hardware_addr[0], 
 							arp_h->sender_hardware_addr[1], 
 							arp_h->sender_hardware_addr[2], 
 							arp_h->sender_hardware_addr[3], 
 							arp_h->sender_hardware_addr[4], 
-							arp_h->sender_hardware_addr[5],
-							10
+							arp_h->sender_hardware_addr[5]
+						);						
+							
+						char *cmd_arp_add = malloc(45);
+						sprintf(
+							cmd_arp_add, 
+							"arp add %s %s %d\n",
+							(char*)_ip,
+							(char*)_mac,
+							ARP_TTL_DEF
 						);
-						//printf("\n\ninseriu novo elemento\n\n");
-						sub_arp_add((void *)cmd_arp_add);						
+						
+						//printf("\n%s %d\n",cmd_arp_add, strlen(cmd_arp_add));
+						sub_arp_add((void *)cmd_arp_add);
+						
+						if (arp_resolving)
+						{
+							printf("(%s, %s, %d)\n", (char*)_ip, (char*)_mac, ARP_TTL_DEF);
+							sem_post(&sem_arp_res);
+							
+						}						
 					}
+					else if (ntohs(arp_h->operation) == ARP_REQUEST)
+					{
+						if (arp_h->target_ip_addr == ifaces[0].ip)
+						{							
+							ARP_HEADER *arp;
+							ETHERNET_HEADER * eth;
+							
+							eth =  malloc(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER));
+							
+							eth->net = ifaces[0].net;
+							memcpy(&eth->sender[0], ifaces[0].mac, MAC_ADDR_LEN);
+							memcpy(&eth->receiver[0], &arp_h->sender_hardware_addr[0], MAC_ADDR_LEN);
+							eth->type = htons(ARP);
+							
+							arp = ( ARP_HEADER * )(eth + 1);
+							
+							arp->protocol_type = IP;
+							arp->hardware_len = MAC_ADDR_LEN;
+							arp->protocol_len = IP_ADDR_LEN;
+							arp->operation = htons(ARP_REPLY);
+							memcpy(&arp->sender_hardware_addr[0], ifaces[0].mac, MAC_ADDR_LEN);
+							arp->sender_ip_addr = ifaces[0].ip;
+							memcpy(&arp->target_hardware_addr[0], &arp_h->sender_hardware_addr[0], MAC_ADDR_LEN);
+							arp->target_ip_addr = arp_h->sender_ip_addr;
+							
+							send_pkt(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER), 0, &arp->target_hardware_addr[0], ARP, (BYTE*)eth);
+						}
+							
+					}					
 				}
 			}				
 			
@@ -680,10 +723,10 @@ int sub_arp_del( void *arg )
 	if (!arg)
 		return 0;
 	int tam;
-	
+	ArpTableEntry *entry;
 	char *aux1 = NULL;
 	char *aux2 = NULL;
-	
+	char *_ip;	
 	DWORD * end_ip;
 	
 	char *b = (char *)arg;
@@ -695,9 +738,9 @@ int sub_arp_del( void *arg )
 	aux2 = strtok_r(NULL," ", &aux1);	/*Desconsidera o del*/
 	
 	/*Capturando o end. IP*/
-	if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+	if ((_ip = strtok_r(NULL, " ", &aux1)) != NULL)
 	{
-		if (!is_ip ((CHAR_T *)aux2))
+		if (!is_ip ((CHAR_T *)_ip))
 		{
 			printf("Incorret IP Address.");
 			return 0;
@@ -706,6 +749,11 @@ int sub_arp_del( void *arg )
 		end_ip = to_ip_byte((CHAR_T *)aux2);
 		
 		/* Código para remoção na tabela */
+		sem_wait(&allow_entry);
+		entry = BuildArpTableEntry((CHAR_T*)_ip, NULL, 0);		
+		entry = RemoveArpTableEntry (arpTable, entry);
+		free(entry);
+		sem_post(&allow_entry);
 	}
 	return 1;
 }
@@ -772,14 +820,22 @@ int sub_arp_add( void * arg )
 }
 
 /* */
+int sub_arp( char *b )
+{
+	return 0;
+}
+
+/* */
 int sub_arp_res( void *arg )
 {
 	if (!arg)
 		return 0;
 	int tam;
+	int rv;
 	
 	char *aux1 = NULL;
 	char *aux2 = NULL;
+	CHAR_T *_mac = NULL;
 	
 	DWORD * end_ip;
 	
@@ -790,7 +846,6 @@ int sub_arp_res( void *arg )
 	b[tam-1] = ' ';
 	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o arp*/
 	aux2 = strtok_r(NULL," ", &aux1);	/*Desconsidera o res*/
-	
 	/*Capturando o end. IP*/
 	if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
 	{
@@ -803,6 +858,63 @@ int sub_arp_res( void *arg )
 		end_ip = to_ip_byte((CHAR_T *)aux2);
 		
 		/* Código para resolução de endereços */
+		sem_wait(&allow_entry);
+		ArpTableEntry * entry;
+		entry = BuildArpTableEntry((CHAR_T *)aux2, NULL, 0);
+		entry = FindArpTableEntry (arpTable, entry, 1);	
+		
+		if (entry)
+		{
+			_mac = format_mac_address(*(entry->MAC));
+			entry->TTL = ARP_TTL_DEF;
+			AddArpTableEntry(arpTable,entry);
+			printf ("\n(%s, %s, %d)\n", aux2, (char*)_mac, entry->TTL);
+			sem_post(&allow_entry);
+		}			
+		else
+		{
+			sem_post(&allow_entry);
+			
+			ARP_HEADER *arp;
+			ETHERNET_HEADER * eth;
+			
+			eth =  malloc(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER));
+			
+			eth->net = ifaces[0].net;
+			memcpy(&eth->sender[0], ifaces[0].mac, MAC_ADDR_LEN);
+			memcpy(&eth->receiver[0], &broad_eth[0], MAC_ADDR_LEN);
+			eth->type = htons(ARP);
+			
+			arp = ( ARP_HEADER * )(eth + 1);
+			
+			arp->protocol_type = htons(IP);
+			arp->hardware_len = MAC_ADDR_LEN;
+			arp->protocol_len = IP_ADDR_LEN;
+			arp->operation = htons(ARP_REQUEST);
+			memcpy(&arp->sender_hardware_addr[0], ifaces[0].mac, MAC_ADDR_LEN);
+			arp->sender_ip_addr = ifaces[0].ip;
+			memcpy(&arp->target_hardware_addr[0], &broad_eth[0], MAC_ADDR_LEN);
+			arp->target_ip_addr = *(end_ip);
+			
+			send_pkt(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER), 0, &arp->target_hardware_addr[0], ARP, (BYTE*)eth);
+			
+			//Falta eperar pelo REPLY e bloquear esta thread
+			struct timespec ts;
+			
+			ts.tv_sec = time(NULL) + TIMEOUT;
+			ts.tv_nsec = 0;
+			
+			arp_resolving = 1;
+			
+			while ((rv = sem_timedwait(&sem_arp_res, &ts) ) == -1 && errno == EINTR)
+               continue;
+
+			arp_resolving = 0;
+			
+			if (rv == -1 && errno == ETIMEDOUT) //the semaphore returned
+	 			printf("Ip address not found!\n");
+		}
+		
 	}
 	return 1;
 }
@@ -844,7 +956,7 @@ void * update_table(void *p)
 
 		if(arpTable->length == 1 && _entry->TTL == 1)
 		{
-			DisplayArpTable(arpTable);
+			//DisplayArpTable(arpTable);
 			free(_entry);
 			arpTable->length--;
 			arpTable->list = NULL;
@@ -876,7 +988,7 @@ void * update_table(void *p)
 					}
 					
 					arpTable->length--;
-					DisplayArpTable(arpTable);
+					//DisplayArpTable(arpTable);
 				}
 				else
 				{
@@ -926,11 +1038,9 @@ int main(int argc, char *argv[])
 	sem_init(&sem_data_ready, 0, 0);
 	sem_init(&sem_queue, 0, 1);
 	sem_init(&sem_xnoop, 0, 1);
-
 	sem_init (&allow_entry, 0, 1);
-
 	sem_init(&sem_main, 0, 0);
-
+	sem_init(&sem_arp_res, 0, 0);
 	
 	/* Create sender and receiver threads */
 	printf("Listening on port: %d\n", ntohs(my_port));
@@ -949,45 +1059,30 @@ int main(int argc, char *argv[])
 	
 		if (!strncasecmp(buf, "XNOOP", 5)) 
 			sub_xnoop(buf);			
-		else if (!strncasecmp(buf, "ARP SHOW", 8)) 
-		{
-			
+		else if (!strncasecmp(buf, "ARP SHOW", 8)) 			
 			DisplayArpTable(arpTable);
-		}
 		else if (!strncasecmp(buf, "ARP ADD", 7)) 
-		{
-			
 			sub_arp_add((void *)buf);
-		}
 		else if (!strncasecmp(buf, "ARP RES", 7)) 
-		{
-			printf("RES\n");
 			sub_arp_res((void *)buf);
-		}
 		else if (!strncasecmp(buf, "ARP DEL", 7))
-		{ 
-			printf("DEL\n");
 			sub_arp_del((void *)buf);
-		}
 		else if (!strncasecmp(buf, "ARP", 3)) {
 			printf("Sintaxe Correct is: arp [show|ttl|res|add|del] [EndIP] [EndEth] [ttl]");
+			sub_arp((char *)buf);
 		}
 		else if (!strncasecmp(buf, "IFCONFIG SHOW", 13)) {
 			for (i=0; i<nifaces;i++)
 				print_if_info(i);
 		}
-		else if (!strncasecmp(buf, "IFCONFIG", 8)) {
+		else if (!strncasecmp(buf, "IFCONFIG", 8))
 			sub_ifconfig(buf);
-		}
-		else if (!strncasecmp(buf, "IF", 2)) {
+		else if (!strncasecmp(buf, "IF", 2))
 			sub_if(buf);
-		}
-		else if (!strncasecmp(buf, "EXIT", 4)) {
+		else if (!strncasecmp(buf, "EXIT", 4))
 			exit(0);
-		}
-		else if (!strncasecmp(buf, "SEND", 4)) {
+		else if (!strncasecmp(buf, "SEND", 4))
 			sub_send_trace(buf);
-		}
 		else if (!strncasecmp(buf,"\n",1))
 		{}
 		else
