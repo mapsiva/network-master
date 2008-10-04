@@ -13,7 +13,7 @@ int main(int argc , char *argv[])
 
 	if (argc >= 2 && argc <= 4)
 	{
-		if(!strncasecmp(argv[1], "-F", 2))
+		if(!strncasecmp(argv[1], "-T", 2))
 		{
 			modo = _HTTP_THREAD;
 			if (argc > 2)
@@ -28,11 +28,11 @@ int main(int argc , char *argv[])
 				exit(1);
 			}
 		}
-		else if(!strncasecmp(argv[1], "-T", 2))
+		else if(!strncasecmp(argv[1], "-F", 2))
 		{
 			modo = _HTTP_PROCESS;
 			if (argc == 3)
-				port = atoi(argv[3]);	//capturando o número da porta de escuta (a porta padrão é a SERVER_PORT)					
+				port = atoi(argv[2]);	//capturando o número da porta de escuta (a porta padrão é a SERVER_PORT)					
 			else
 			{
 				printf("\nUsage: httpd -f ([port])\n");
