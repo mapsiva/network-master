@@ -21,13 +21,13 @@ int Thread::Start(void * arg)
    return code;
 }
 
-int Thread::Run(void * arg)
+int Thread::Run()
 {
-   
    while(true)
    {
-   		WhoIAm();
-   		sleep(1);
+	   Acquire();
+	   Execute();
+	   Release();
    }
    return 0;
 }
@@ -41,9 +41,19 @@ void * Thread::EntryPoint(void * pthis)
 		printf("NULO");
 		return 0;
 	}
-   pt->Run( pt->Arg() );
+   pt->Run();
    return 0;
 }
+
+void Thread::Acquire(){}
+void Thread::Execute()
+{
+	
+	WhoIAm();
+   		
+}
+void Thread::Release(){}
+
 void Thread::WhoIAm()
 {
 	printf("I am thread %d\n", (int)_ThreadId);

@@ -3,7 +3,7 @@
 
 #include <pthread.h>
 #include <stdio.h>
-#include <semaphore.h>
+
 #include <signal.h>
 #include <unistd.h>
 
@@ -14,7 +14,7 @@ class Thread
       int Start(void * arg);
       static int _Instances;
    protected:
-      int Run(void * arg);
+     virtual  int Run();
      
       static void * EntryPoint(void*);
      
@@ -22,10 +22,16 @@ class Thread
      
       void Arg(void* a){_Arg = a;}
      
+      virtual void Acquire();
+      virtual void Execute();
+      virtual void Release();
+      
       void WhoIAm();
-
-      pthread_t _ThreadId;
-      void * _Arg;
+	  
+	  pthread_t _ThreadId;
+	  
+	  void * _Arg;
+	  int SleepTime;
      
 
 };
