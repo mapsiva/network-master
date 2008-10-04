@@ -12,16 +12,21 @@ class Thread
    public:
       Thread();
       int Start(void * arg);
+      static int _Instances;
    protected:
       int Run(void * arg);
+     
       static void * EntryPoint(void*);
+     
       void * Arg() const {return _Arg;}
+     
       void Arg(void* a){_Arg = a;}
-      inline void WhoIAm();
-   private:
+     
+      void WhoIAm();
+
       pthread_t _ThreadId;
       void * _Arg;
-      static int _id;
+     
 
 };
 

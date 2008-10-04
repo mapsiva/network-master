@@ -5,8 +5,12 @@
 #include <unistd.h>
 #include "Thread.h"
 
+int Thread::_Instances = 0;
 
-Thread::Thread() {Thread::_id++;}
+Thread::Thread() 
+{
+	Thread::_Instances ++;
+}
 
 int Thread::Start(void * arg)
 {
@@ -22,8 +26,8 @@ int Thread::Run(void * arg)
    
    while(true)
    {
-   		printf("thread rodando\n");
-   		sleep(2);
+   		WhoIAm();
+   		sleep(1);
    }
    return 0;
 }
@@ -40,7 +44,7 @@ void * Thread::EntryPoint(void * pthis)
    pt->Run( pt->Arg() );
    return 0;
 }
-inline void Thread::WhoIAm()
+void Thread::WhoIAm()
 {
-	printf("I am thread %d", Thread::_id);
+	printf("I am thread %d\n", (int)_ThreadId);
 }
