@@ -27,7 +27,7 @@ int Httpd::PassiveTCPSocket()
 
     if ((sockd = socket(PF_INET, SOCK_STREAM, 0)) < 0)
 		perror_exit("Socket error");
-		
+	
 	setsockopt(sockd, SOL_SOCKET, SO_REUSEADDR, &reusage, sizeof(reusage));
     
     if (bind(sockd, (struct sockaddr *)&sin, sizeof(sin)) < 0) 
@@ -35,6 +35,7 @@ int Httpd::PassiveTCPSocket()
     
     if (listen(sockd, _QLEN) < 0) 
 		perror_exit("Listen error");
+	
     return sockd;
 }
 
@@ -47,13 +48,15 @@ void Httpd::Run()
     pid_t ppid;					/* id of process			*/
     
     msock = PassiveTCPSocket();
-    
+    	printf("sockect criado \n");
     while(1) {
 		alen = sizeof(struct sockaddr_in);
-		ssock = accept(msock, (struct sockaddr *)&fsin, &alen);
+		printf("escutando porta \n");   
+		ssock = accept(msock, (struct sockaddr *)&fsin,(socklen_t *) &alen);
+		printf("client conected \n");   
 		if (ssock  < 0) 
 		    perror_exit("accept: ");
-		   
+		
 		//Verificando o tipo de funcionamento do Servidor HTTP 
 		if (_modo == _HTTP_PROCESS)
 		{
