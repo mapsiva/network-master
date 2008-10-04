@@ -33,11 +33,6 @@ int main(int argc , char *argv[])
 			modo = _HTTP_PROCESS;
 			if (argc == 3)
 				port = atoi(argv[2]);	//capturando o número da porta de escuta (a porta padrão é a SERVER_PORT)					
-			else
-			{
-				printf("\nUsage: httpd -f ([port])\n");
-				exit(1);
-			}
 		}
 		server = new Httpd(modo, qtd_threads, port);
 		server->Run();
