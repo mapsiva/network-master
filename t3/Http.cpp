@@ -1,13 +1,17 @@
 #include <stdio.h>
 #include "Thread.h"
-
+#include "Syncronize.h"
 int main(int argv , char * argc[])
 {
-	Thread *t = new Thread();
-	Thread *c = new Thread();
+	sem_t s;
+	Syncronize **t = new Syncronize*[100];
 	
-	t->Start(NULL);
-	c->Start(NULL);
+	for (int i=0; i<100; i++)
+	{
+		t[i] = new Syncronize();
+		t[i]->SetSemaphore(&s);
+		t[i]->Start(0,1);
+	}
 	while(true)
 	{
 		sleep(2);
