@@ -1,25 +1,33 @@
 CC     = g++
 CFLAGS = -Wall -g -fpack-struct
 
-HTTP  		= Http
+MAIN		= Main
+HTTPD  		= Httpd
 THR    		= Thread
+UTIL		= Util
 SYN         = Syncronize
 
-HEADERS =  $(THR).h $(SYN).h
-OBJECTS = $(THR).o $(SYN).o $(HTTP).o
+HEADERS =  $(THR).h $(HTTPD).h $(UTIL).h $(SYN).h
+OBJECTS = $(THR).o $(HTTPD).o $(UTIL).o $(SYN).o $(MAIN).o 
 
 # ****************************************************
 
-http: $(OBJECTS)
+httpd: $(OBJECTS)
 	$(CC) $(CFLAGS) -lpthread -o $@ $^
 
-$(THR).o: $(THR).cpp $(THR).h 
+$(UTIL).o: $(UTIL).cpp $(UTIL).h
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+$(HTTPD).o: $(HTTPD).cpp $(HTTPD).h
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+$(THR).o: $(THR).cpp $(THR).h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 $(SYN).o: $(SYN).cpp $(SYN).h 
 	$(CC) $(CFLAGS) -o $@ -c $<
 		
-$(HTTP).o: $(HTTP).cpp $(HEADERS)
+$(MAIN).o: $(MAIN).cpp $(HEADERS)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 clean:
