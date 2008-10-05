@@ -6,9 +6,10 @@ HTTPD  		= Httpd
 THR    		= Thread
 UTIL		= Util
 SYN         = Syncronize
+FLM			= FileManager
 
-HEADERS =  $(THR).h $(HTTPD).h $(UTIL).h $(SYN).h
-OBJECTS = $(THR).o $(HTTPD).o $(UTIL).o $(SYN).o $(MAIN).o 
+HEADERS =  $(THR).h $(HTTPD).h $(UTIL).h $(SYN).h $(FLM).h
+OBJECTS = $(THR).o $(HTTPD).o $(UTIL).o $(SYN).o $(FLM).o $(MAIN).o 
 
 # ****************************************************
 
@@ -26,7 +27,10 @@ $(THR).o: $(THR).cpp $(THR).h
 
 $(SYN).o: $(SYN).cpp $(SYN).h 
 	$(CC) $(CFLAGS) -o $@ -c $<
-		
+
+$(FLM).o: $(FLM).cpp $(FLM).h
+	$(CC) $(CFLAGS) -o $@ -c $<
+			
 $(MAIN).o: $(MAIN).cpp $(HEADERS)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
