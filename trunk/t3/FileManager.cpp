@@ -33,7 +33,7 @@ void FileManager::Write()
 	{
 		printf("Arquivo aberto");
 		
-		sprintf(buf, "HTTP/1.1 200 Document follows\r\nServer: %s\r\nContent-Type: %s\r\n\r\n", "DCT", "text/html");
+		sprintf(buf, "HTTP/1.1 200 Document follows\r\nServer: %s\r\nContent-Type: %s \r\n\r\n", "DCT", "text/html");
 			 	
 		write (*Ssock, buf, strlen (buf));
 		while (!feof (Handle))					
