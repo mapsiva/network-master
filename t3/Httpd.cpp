@@ -69,14 +69,19 @@ void Httpd::Run()
 			    
 			    
 			    char bc;
-			    //while (read(ssock, &bc, sizeof(bc)))
-					//    printf("%c", bc);
-					
-					FileManager *f = new FileManager("index.html", &ssock);
-					f->Write();
+			    while (read(ssock, &bc, sizeof(bc)))
+			    {
+					    //tratamento da página que deve ser aberta tem que ser feita aqui
+					    //por enquanto ele tenta abrir uma página de teste index.html
+					    //precisamos arrumar uma função que descobre o mimetype do arquivo
+					    printf("%c", bc);
+						FileManager *f = new FileManager("index.html", &ssock);
+						f->Write();
+			    		delete f;
+			    		break;
+			    }	
 			    
-			    close(ssock);
-			    if (execv("/bin/date", NULL) < 0) 
+			   if (execv("/bin/date", NULL) < 0) 
 					perror_exit("execv");
 			}
 			else 
@@ -91,7 +96,7 @@ void Httpd::Run()
 					
 					
 					
-					close(ssock);
+					
 					exit(1);
 			    }
 			    else		
