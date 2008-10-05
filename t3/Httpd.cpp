@@ -66,7 +66,16 @@ void Httpd::Run()
 			    /* It's in the child process */
 			    printf("It'is in the child process\n");
 			    close(msock);
-			    getchar();
+			    
+			    
+			    char bc;
+			    //while (read(ssock, &bc, sizeof(bc)))
+					//    printf("%c", bc);
+					
+					FileManager *f = new FileManager("index.html", &ssock);
+					f->Write();
+			    
+			    close(ssock);
 			    if (execv("/bin/date", NULL) < 0) 
 					perror_exit("execv");
 			}
@@ -77,15 +86,11 @@ void Httpd::Run()
 			    ppid = fork();
 			    if (ppid == 0) 
 			    {
-					char bc;
+					
 					close(msock);
 					
 					
-					//while (read(ssock, &bc, sizeof(bc)))
-					  //  printf("%c", bc);
 					
-					FileManager *f = new FileManager("index.html", &ssock);
-					f->Write();
 					close(ssock);
 					exit(1);
 			    }
