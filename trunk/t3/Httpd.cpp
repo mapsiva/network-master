@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include "Httpd.h"
 #include "Util.h"
+#include "FileManager.h"
 
 Httpd::Httpd(int modo, int qtd_t, int port) 
 {
@@ -69,15 +70,22 @@ void Httpd::Run()
 			    if (execv("/bin/date", NULL) < 0) 
 					perror_exit("execv");
 			}
-			else {
+			else 
+			{
 			    /* It's in the parent process */
 			    printf("It'is in the parent process\n");
 			    ppid = fork();
-			    if (ppid == 0) {
+			    if (ppid == 0) 
+			    {
 					char bc;
 					close(msock);
-					while (read(ssock, &bc, sizeof(bc)))
-					    printf("%c", bc);
+					
+					
+					//while (read(ssock, &bc, sizeof(bc)))
+					  //  printf("%c", bc);
+					
+					FileManager *f = new FileManager("index.html", &ssock);
+					f->Write();
 					close(ssock);
 					exit(1);
 			    }
