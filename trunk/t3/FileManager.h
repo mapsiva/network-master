@@ -8,6 +8,12 @@
 #include <unistd.h>
 //#include <sys/signal.h>
 //#include <wait.h>
+struct Parameter
+{
+	char *name;
+	char *value;	
+};
+
 class FileManager
 {
 	public:
@@ -18,7 +24,7 @@ class FileManager
 		~FileManager();
 		bool Open();
 		void Write();
-		int GetParameters(char ***, const char *);
+		int GetParameters(Parameter **, char *);
    		static char * GetExtension(const char *);
 		char* strmcpy(char *dest, const char *src, int n);
 	private:
@@ -26,5 +32,6 @@ class FileManager
 		char *FileName;
 		int *Ssock;	
 		char buf[1024];
+		Parameter *parameters;
 };
 #endif /*FILEMANAGER_H_*/
