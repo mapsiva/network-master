@@ -19,8 +19,8 @@ class FileManager
 		bool Open();
 		void Write();
 		int GetParameters(char ***, const char *);
-   		char * GetExtension(const char *);
-		
+   		static char * GetExtension(const char *);
+		char* strmcpy(char *dest, const char *src, int n);
 	private:
 		FILE *Handle;
 		char *FileName;

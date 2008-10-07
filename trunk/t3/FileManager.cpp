@@ -1,6 +1,6 @@
 
 #include "FileManager.h"
-
+#include "Mime.h"
 
 							 
 bool FileManager::FileExist()
@@ -12,12 +12,12 @@ FileManager::FileManager(){}
 
 FileManager::FileManager(char *file, int *s)
 {
-	FileName = file;
+	strmcpy(FileName, file, strlen(file));
 	Ssock = s;
 }
 FileManager::FileManager(const char *file, int *s)
 {
-	FileName = (char *)file;
+	strmcpy(FileName, (char *)file, strlen((char *)file));
 	Ssock = s;
 }
 FileManager::~FileManager(){}
@@ -26,15 +26,29 @@ bool FileManager::Open()
 {
 	return ((Handle = fopen(FileName, "r")));
 }
+
+char*
+FileManager::strmcpy(char *dest, const char *src, int n)
+{
+       int i;
+
+       for (i = 0 ; i < n-1 && src[i] != '\0' ; i++)
+           dest[i] = src[i+1];
+       for ( ; i < n ; i++)
+           dest[i] = '\0';
+
+       return dest;
+   }
+
 void FileManager::Write()
 {
-	printf("Load file...\n");
-	if(Open())
-	{
-		printf("Arquivo aberto");
-		
-		sprintf(buf, "HTTP/1.1 200 Document follows\r\nServer: %s\r\nContent-Type: %s \r\n\r\n", "DCT", "text/html");
-			 	
+	Mime *mime = Mime::GetInstance();
+	MimeTableEntry *_m = mime->FindMimeType(FileManager::GetExtension(FileName));
+	printf("FileName => %s\n", FileName);	
+	if(_m && Open())
+	{		
+		sprintf(buf, "HTTP/1.1 200 Document follows\r\nServer: %s\r\nContent-Type: %s \r\n\r\n", "DCT", (char *)_m->mime);
+
 		write (*Ssock, buf, strlen (buf));
 		while (!feof (Handle))					
 		{
@@ -47,11 +61,11 @@ void FileManager::Write()
 	else
 	{
 		printf("erro ao carregar o arquivo");
-		sprintf(buf, "<h1>Object Not Found</h2>");
+		sprintf(buf, "<h1>Ih! Ferrou!</h2>");
 		write (*Ssock, buf, strlen (buf));
 		//error page load here
 	}
-	printf("DONE!...\n");
+	
 }
 
 /*
@@ -91,14 +105,13 @@ char * FileManager::GetExtension(const char *b)
 	for (i=0; i<tam2; i++)
 		ext[i] = '\0';
 	j = 0;
-	for (i=pos; i<tam; i++)
+	for (i=pos+1; i<tam; i++)
 	{
 		if (b[i] == '&' || b[i] == '?')
 			break;
 		ext[j] = b[i];
 		j++;
 	}
-	
+	printf("Extensao [%s]\n", ext);
 	return ext;
 }
-

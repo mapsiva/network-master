@@ -10,7 +10,9 @@ int main(int argc , char *argv[])
 	int qtd_threads = 0;
 	int modo;
 	Httpd *server;
+	
 
+		
 	if (argc >= 2 && argc <= 4)
 	{
 		if(!strncasecmp(argv[1], "-T", 2))
