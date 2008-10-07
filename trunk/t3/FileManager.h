@@ -18,6 +18,8 @@ class FileManager
 		~FileManager();
 		bool Open();
 		void Write();
+		int GetParameters(char ***, const char *);
+   		char * GetExtension(const char *);
 		
 	private:
 		FILE *Handle;
