@@ -53,3 +53,52 @@ void FileManager::Write()
 	}
 	printf("DONE!...\n");
 }
+
+/*
+ * Recebe uma string (GET_STRING)
+ * Retorna por referência um array com as variaveis e seus valores
+ * Retorna a quantidade de variaveis encontradas 
+ */
+int FileManager::GetParameters(char ***p, const char *a)
+{
+	int qtd = 0;	
+	
+	return qtd;	
+}
+
+/*
+ * Recebe uma string (GET_STRING)
+ * Retorna a extensão do arquivo sendo solicitado
+ */
+char * FileManager::GetExtension(const char *b)
+{
+	int i, j, tam, tam2, pos;
+	char *ext;
+	
+	tam = strlen(b);
+	pos = tam;
+	for (i=0; i<tam; i++)
+	{
+		if (b[i] == '.')
+			pos = i;
+	}
+	
+	if (pos == tam)
+		return '\0';
+	
+	tam2 = tam-pos-1;
+	ext = (char *) malloc(tam2);
+	for (i=0; i<tam2; i++)
+		ext[i] = '\0';
+	j = 0;
+	for (i=pos; i<tam; i++)
+	{
+		if (b[i] == '&' || b[i] == '?')
+			break;
+		ext[j] = b[i];
+		j++;
+	}
+	
+	return ext;
+}
+
