@@ -67,11 +67,10 @@ void Httpd::Run()
 			    /* It's in the child process */
 			    printf("It'is in the child process\n");
 			    close(msock);
-			    
-			    
-			    char bc[512];
+				
+				char bc[512];
 			    char *query;
-			    int i =0;
+			    //int i =0;
 			    read(ssock, bc, sizeof(bc));
 			    query =  strtok (bc, " ");
 			    
@@ -81,8 +80,6 @@ void Httpd::Run()
 					
 				FileManager *f = new FileManager(query, &ssock);
 				f->Write();
-				
-					
 					
 				delete f;
 			

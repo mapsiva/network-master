@@ -70,14 +70,49 @@ void FileManager::Write()
 
 /*
  * Recebe uma string (GET_STRING)
- * Retorna por referência um array com as variaveis e seus valores
+ * Retorna por referência um vetor de parameters com as variaveis e seus valores
  * Retorna a quantidade de variaveis encontradas 
  */
-int FileManager::GetParameters(char ***p, const char *a)
+int FileManager::GetParameters(Parameter **p, char *a)
 {
-	int qtd = 0;	
+	int qtd = 0;
+	int i, tam, tam2;
+	char *aux1, *aux2, *aux3, *aux4;
 	
-	return qtd;	
+	aux1 = aux2 = aux3 = aux4 = NULL;
+	
+	tam = strlen(a);
+	
+	a[tam-1] = '&';
+	aux1 = strtok(a,"?");
+	
+	if (aux1)
+	{
+		//Determina a quantidade de parametros
+		while ((aux1 = strtok(NULL, "&")) != NULL)
+			qtd++;
+			
+		p = new Parameter*[qtd];
+		
+		i = 0;
+		aux1 = strtok(a,"?");
+		while ((aux1 = strtok(NULL, "&")) != NULL)
+		{
+			p[i++] = new Parameter();
+			
+			aux1[tam2-1] = '=';
+			
+			aux2 = strtok(aux1,"=");
+			p[i]->name = (char *) malloc(sizeof(aux3));
+			memcpy(p[i]->name, aux3, sizeof(aux3)); 			
+			
+			aux3 = strtok(NULL,"=");
+			p[i]->value = (char *) malloc(sizeof(aux3));
+			memcpy(p[i]->value, aux3, sizeof(aux3));			
+		}
+	}
+	
+	return qtd;
 }
 
 /*
