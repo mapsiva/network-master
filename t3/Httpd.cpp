@@ -79,7 +79,7 @@ void Httpd::Run()
 						FileManager *f = new FileManager("index.html", &ssock);
 						f->Write();
 						
-						Mime *mime = Mime::GetInstance();
+						//Mime *mime = Mime::GetInstance();
 						
 						
 							
