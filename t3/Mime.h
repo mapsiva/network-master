@@ -6,7 +6,7 @@ class MimeTableEntry
 {
 	public:
 		const char* Extension;
-		const char* Mime;
+		const char* mime;
 		long Code;
 
 };

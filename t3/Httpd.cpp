@@ -69,26 +69,26 @@ void Httpd::Run()
 			    close(msock);
 			    
 			    
-			    char bc;
-			    while (read(ssock, &bc, sizeof(bc)))
-			    {
-					    //tratamento da página que deve ser aberta tem que ser feita aqui
-					    //por enquanto ele tenta abrir uma página de teste index.html
-					    //precisamos arrumar uma função que descobre o mimetype do arquivo
-					    printf("%c", bc);
-						FileManager *f = new FileManager("index.html", &ssock);
-						f->Write();
-						
-						//Mime *mime = Mime::GetInstance();
-						
-						
-							
-			    		delete f;
-			    		break;
-			    }	
+			    char bc[512];
+			    char *query;
+			    int i =0;
+			    read(ssock, bc, sizeof(bc));
+			    query =  strtok (bc, " ");
 			    
-			   if (execv("/bin/date", NULL) < 0) 
-					perror_exit("execv");
+		    	query =  strtok (NULL, " ");
+		    	printf("QUERY[%s]\n", query);
+				
+					
+				FileManager *f = new FileManager(query, &ssock);
+				f->Write();
+				
+					
+					
+				delete f;
+			
+			    
+			   //if (execv("/bin/date", NULL) < 0) 
+					//perror_exit("execv");
 			}
 			else 
 			{
