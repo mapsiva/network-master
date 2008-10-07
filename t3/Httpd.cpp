@@ -8,6 +8,7 @@
 #include "Httpd.h"
 #include "Util.h"
 #include "FileManager.h"
+#include "Mime.h"
 
 Httpd::Httpd(int modo, int qtd_t, int port) 
 {
@@ -77,6 +78,11 @@ void Httpd::Run()
 					    printf("%c", bc);
 						FileManager *f = new FileManager("index.html", &ssock);
 						f->Write();
+						
+						Mime *mime = Mime::GetInstance();
+						
+						
+							
 			    		delete f;
 			    		break;
 			    }	
