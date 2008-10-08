@@ -84,7 +84,12 @@ FileManager::Write()
 			 
 			 while ((pent = readdir(pdir)))
 			 {
-			  	m = sprintf(buf, "<a href=\"./%s\">%s</a><br>", pent->d_name, pent->d_name);
+			  	if(strcmp(pent->d_name, "."))
+			  		m = sprintf(buf, "<a href=\"./%s\">%s</a><br>", pent->d_name, "Refresh");
+			  	else if(strcmp(pent->d_name, ".."))
+			  		m = sprintf(buf, "<a href=\"./%s\">%s</a><br>", pent->d_name, "Back");
+			  	else
+			  		m = sprintf(buf, "<a href=\"./%s\">%s</a><br>", pent->d_name, pent->d_name);
 			  	
 			  	for(int k=0; k<m; k+=n)
 					n = write (*Ssock, buf, m-k);
