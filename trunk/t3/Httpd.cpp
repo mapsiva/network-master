@@ -50,61 +50,36 @@ void Httpd::Run()
     pid_t ppid;					/* id of process			*/
     
     msock = PassiveTCPSocket();
-    	printf("sockect criado \n");
-    while(1) {
+    	
+    while(1) 
+    {
 		alen = sizeof(struct sockaddr_in);
-		printf("escutando porta \n");   
 		ssock = accept(msock, (struct sockaddr *)&fsin,(socklen_t *) &alen);
 		printf("client conected \n");   
 		if (ssock  < 0) 
 		    perror_exit("accept: ");
 		
+		char *queryString;
+		char bc[1024];	
+	    read(ssock, bc, sizeof(bc));
+	    queryString =  strtok (bc, " ");
+    	queryString =  strtok (NULL, " ");
+		FileManager *f = new FileManager(queryString, &ssock);    
+			
 		//Verificando o tipo de funcionamento do Servidor HTTP 
 		if (_modo == _HTTP_PROCESS)
 		{
 			ppid = fork();
-			if (ppid == 0) {
-			    /* It's in the child process */
-			    printf("It'is in the child process\n");
-			    close(msock);
-				
-				char bc[512];
-			    char *query;
-			    //int i =0;
-			    read(ssock, bc, sizeof(bc));
-			    query =  strtok (bc, " ");
-			    
-		    	query =  strtok (NULL, " ");
-		    	printf("QUERY[%s]\n", query);
-				
-					
-				FileManager *f = new FileManager(query, &ssock);
-				f->Write();
-					
-				delete f;
-			
-			    
-			   //if (execv("/bin/date", NULL) < 0) 
-					//perror_exit("execv");
-			}
-			else 
+			if (ppid == 0) 
 			{
-			    /* It's in the parent process */
-			    printf("It'is in the parent process\n");
-			    ppid = fork();
-			    if (ppid == 0) 
-			    {
-					
-					close(msock);
-					
-					
-					
-					
-					exit(1);
-			    }
-			    else		
-					close(ssock);	    
+			    close(msock);
+				f->Write();
+				delete f;
+			    close(ssock);
+			    exit(1);
 			}
+			else		    
+				close(ssock);	    
 		}
 		//else //_modo == _HTTP_THREAD
 		//{}

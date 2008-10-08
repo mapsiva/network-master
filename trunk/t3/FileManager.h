@@ -28,7 +28,7 @@ class FileManager
    		static char * GetExtension(const char *);
 		char* strmcpy(char *dest, const char *src, int n);
 	private:
-		FILE *Handle;
+		int Handle;
 		char *FileName;
 		int *Ssock;	
 		char buf[1024];

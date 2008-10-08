@@ -1,7 +1,7 @@
 
 #include "FileManager.h"
 #include "Mime.h"
-
+#include <fcntl.h>
 							 
 bool FileManager::FileExist()
 {
@@ -12,11 +12,13 @@ FileManager::FileManager(){}
 
 FileManager::FileManager(char *file, int *s)
 {
+	FileName = file;
 	strmcpy(FileName, file, strlen(file));
 	Ssock = s;
 }
 FileManager::FileManager(const char *file, int *s)
 {
+	FileName = (char *)file;
 	strmcpy(FileName, (char *)file, strlen((char *)file));
 	Ssock = s;
 }
@@ -24,7 +26,7 @@ FileManager::~FileManager(){}
 
 bool FileManager::Open()
 {
-	return ((Handle = fopen(FileName, "r")));
+	return ((Handle = open(FileName, O_RDONLY)));
 }
 
 char*
@@ -37,6 +39,7 @@ FileManager::strmcpy(char *dest, const char *src, int n)
        for ( ; i < n ; i++)
            dest[i] = '\0';
 
+		
        return dest;
    }
 
@@ -46,17 +49,19 @@ void FileManager::Write()
 	MimeTableEntry *_m = mime->FindMimeType(FileManager::GetExtension(FileName));
 	printf("FileName => %s\n", FileName);	
 	if(_m && Open())
-	{		
-		sprintf(buf, "HTTP/1.1 200 Document follows\r\nServer: %s\r\nContent-Type: %s \r\n\r\n", "DCT", (char *)_m->mime);
+	{	
+		printf("ABRIU [%s]", FileName);	
+		sprintf(buf, "HTTP/1.1 200 Document follows\r\nServer: %s\r\nContent-Type: %s\r\n\r\n", "DCT", (char *)_m->mime);
 
 		write (*Ssock, buf, strlen (buf));
-		while (!feof (Handle))					
-		{
-			fread(&buf, 512, 1, Handle);
-			
-			write (*Ssock, buf, strlen (buf));				
+		int n,m;
+		while ((m = read(Handle, buf, 1024)) > 0)					
+		{	
+			for(int k=0; k<m; k+=n)
+				n = write (*Ssock, buf, m-k);				
 		}
-		fclose(Handle);
+		close(Handle);
+		printf("FECHOU [%s] MIME[%s]", FileName, (char *)_m->mime);	
 	}
 	else
 	{
