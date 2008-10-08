@@ -54,12 +54,12 @@ void
 FileManager::Write()
 {
 	Mime *mime = Mime::GetInstance();
-	printf("AQUIIII\n");
 	MimeTableEntry *_m = mime->FindMimeType(FileManager::GetExtension(FileName));
 	int n,m;
+	
 	if(_m && Open())
 	{	
-		printf("ABRIU [%s]", FileName);	
+		
 		HeaderAccept((char *)_m->mime);
 		
 		
@@ -70,7 +70,7 @@ FileManager::Write()
 				n = write (*Ssock, buf, m-k);				
 		}
 		close(Handle);
-		printf("FECHOU [%s] MIME[%s]", FileName, (char *)_m->mime);	
+		
 	}
 	else
 	{
@@ -84,9 +84,9 @@ FileManager::Write()
 			 
 			 while ((pent = readdir(pdir)))
 			 {
-			  	if(strcmp(pent->d_name, "."))
-			  		m = sprintf(buf, "<a href=\"./%s\">%s</a><br>", pent->d_name, "Refresh");
-			  	else if(strcmp(pent->d_name, ".."))
+			  	if(!strcmp(pent->d_name, "."))
+			  		m = sprintf(buf, "<a href=\"./%s\">%s</a><br>", FileName, "Refresh");
+			  	else if(!strcmp(pent->d_name, ".."))
 			  		m = sprintf(buf, "<a href=\"./%s\">%s</a><br>", pent->d_name, "Back");
 			  	else
 			  		m = sprintf(buf, "<a href=\"./%s\">%s</a><br>", pent->d_name, pent->d_name);
@@ -189,6 +189,6 @@ char * FileManager::GetExtension(const char *b)
 		ext[j] = b[i];
 		j++;
 	}
-	printf("Extensao [%s]\n", ext);
+	
 	return ext;
 }
