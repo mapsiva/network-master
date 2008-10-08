@@ -1,8 +1,9 @@
 
 #include "FileManager.h"
-#include "Mime.h"
+
 #include <fcntl.h>
-							 
+#include <dirent.h>
+			 
 bool FileManager::FileExist()
 {
 	return Handle;
@@ -42,19 +43,27 @@ FileManager::strmcpy(char *dest, const char *src, int n)
 		
        return dest;
    }
+void 
+FileManager::HeaderAccept(char * mime)
+{
+	sprintf(buf, "HTTP/1.1 200 Document follows\r\nServer: %s\r\nContent-Type: %s\r\n\r\n", "DCT",mime);
 
-void FileManager::Write()
+	write (*Ssock, buf, strlen (buf));
+}
+void 
+FileManager::Write()
 {
 	Mime *mime = Mime::GetInstance();
+	printf("AQUIIII\n");
 	MimeTableEntry *_m = mime->FindMimeType(FileManager::GetExtension(FileName));
-	printf("FileName => %s\n", FileName);	
+	int n,m;
 	if(_m && Open())
 	{	
 		printf("ABRIU [%s]", FileName);	
-		sprintf(buf, "HTTP/1.1 200 Document follows\r\nServer: %s\r\nContent-Type: %s\r\n\r\n", "DCT", (char *)_m->mime);
-
-		write (*Ssock, buf, strlen (buf));
-		int n,m;
+		HeaderAccept((char *)_m->mime);
+		
+		
+		
 		while ((m = read(Handle, buf, 1024)) > 0)					
 		{	
 			for(int k=0; k<m; k+=n)
@@ -65,9 +74,31 @@ void FileManager::Write()
 	}
 	else
 	{
-		printf("erro ao carregar o arquivo");
-		sprintf(buf, "<h1>Ih! Ferrou!</h2>");
-		write (*Ssock, buf, strlen (buf));
+		DIR * pdir;
+		struct dirent *pent;
+		if(!strcmp(FileName, ""))
+			strcpy(FileName, ".");
+		if(!_m && (pdir=opendir(FileName)))
+		{
+			 HeaderAccept((char *)"text/html");
+			 
+			 while ((pent = readdir(pdir)))
+			 {
+			  	m = sprintf(buf, "<a href=\"./%s\">%s</a><br>", pent->d_name, pent->d_name);
+			  	
+			  	for(int k=0; k<m; k+=n)
+					n = write (*Ssock, buf, m-k);
+			 	
+			 }
+			 closedir(pdir);
+			
+		}
+		else
+		{
+			printf("erro ao carregar o arquivo");
+			sprintf(buf, "<h1>Ih! Ferrou!</h2>");
+			write (*Ssock, buf, strlen (buf));
+		}
 		//error page load here
 	}
 	
@@ -126,6 +157,7 @@ int FileManager::GetParameters(Parameter **p, char *a)
  */
 char * FileManager::GetExtension(const char *b)
 {
+	
 	int i, j, tam, tam2, pos;
 	char *ext;
 	
@@ -138,7 +170,7 @@ char * FileManager::GetExtension(const char *b)
 	}
 	
 	if (pos == tam)
-		return '\0';
+		return NULL;
 	
 	tam2 = tam-pos-1;
 	ext = (char *) malloc(tam2);
