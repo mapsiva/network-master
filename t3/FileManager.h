@@ -6,6 +6,9 @@
 #include <arpa/inet.h>
 #include <sys/errno.h>
 #include <unistd.h>
+#include <string.h>
+#include "Mime.h"
+
 //#include <sys/signal.h>
 //#include <wait.h>
 struct Parameter
@@ -27,6 +30,7 @@ class FileManager
 		int GetParameters(Parameter **, char *);
    		static char * GetExtension(const char *);
 		char* strmcpy(char *dest, const char *src, int n);
+		void HeaderAccept(char *);
 	private:
 		int Handle;
 		char *FileName;

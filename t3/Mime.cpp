@@ -60,13 +60,15 @@ END_MIMETYPE_TABLE;
 MimeTableEntry*
 Mime::SearchMimeType(MimeTableEntry* k, const char* ext)
 {
+	if(!ext)
+		return NULL;
 	while (k->Extension)
     {
 		if (!strcasecmp((const char *)k->Extension, (const char*)ext))
 			return k;
 		k++;
 	}
-	return 0;
+	return NULL;;
 }
 
 Mime*
