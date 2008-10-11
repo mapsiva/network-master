@@ -10,13 +10,17 @@
 
 int Thread::_Instances = 0;
 
-Thread::Thread(FileManager *f, int sock) 
+Thread::Thread(FileManager *fm, int *sock) 
 {
-	file = f;
-	socket = sock;
+	f = fm;
+	ssock = sock;
 	Thread::_Instances ++;	
 }
+Thread::~Thread() 
+{
+	Thread::_Instances--;
 
+}
 int Thread::Start(void * arg)
 {
    Arg(arg); // store user data
@@ -28,9 +32,13 @@ int Thread::Start(void * arg)
 
 int Thread::Run()
 {
-   //Acquire();
-   Execute();
-   //Release();
+
+  
+	   Acquire();
+	   Execute();
+	   Release();
+  
+
    return 0;
 }
 
@@ -47,11 +55,16 @@ void * Thread::EntryPoint(void * pthis)
    	return 0;
 }
 
+void Thread::Load (FileManager * fm)
+{
+	f = fm;
+}
 void Thread::Acquire(){}
 void Thread::Execute()
 {
 	WhoIAm();
-	file->Write();
+   	f->Write();	
+   	printf("escreveu\n");
 }
 void Thread::Release(){}
 

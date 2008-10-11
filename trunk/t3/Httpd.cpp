@@ -142,6 +142,7 @@ void Httpd::Run()
 		//Verificando o tipo de funcionamento do Servidor HTTP 
 		if (_modo == _HTTP_PROCESS)
 		{
+			
 			ppid = fork();
 			if (ppid == -1)
 				perror_exit("Error Process:");
@@ -160,12 +161,16 @@ void Httpd::Run()
 			else		    
 				close(ssock);	    
 		}
-		else if (_modo == _HTTP_THREAD)//_modo == _HTTP_THREAD
+		else
 		{
-			close(msock);
-			Thread *thread = new Thread(f, ssock);
-			thread->Start(NULL);
+			//close(msock);
+			Thread *th = new Thread(f, &ssock);
+			
+			th->Start(NULL);
+			delete f;
+			delete th;
 			close(ssock);
-		}
+		} //_modo == _HTTP_THREAD
+		
     }
 }
