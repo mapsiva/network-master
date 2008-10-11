@@ -123,7 +123,9 @@ void Httpd::Run()
     pid_t ppid;					/* id of process			*/
     
     msock = PassiveTCPSocket();
-    	
+   
+    Thread ** Pool = new Thread*[_qtd_threads];
+   	int I= 0;
     while(1) 
     {
 		alen = sizeof(struct sockaddr_in);
@@ -164,13 +166,10 @@ void Httpd::Run()
 		}
 		else
 		{
-			//close(msock);
-			Thread *th = new Thread(f, &ssock);
+			Pool[(I%_qtd_threads)+1] = new Thread(f, &ssock);
+			Pool[(I%_qtd_threads)+1]->Start(NULL);
+			I++;
 			
-			th->Start(NULL);
-			delete f;
-			delete th;
-			close(ssock);
 		} //_modo == _HTTP_THREAD
 		
     }
