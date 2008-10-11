@@ -36,7 +36,7 @@ Httpd::Config_Server()
 	
 	cfg_file = fopen(cfg_file_name, "r");
 	if (!cfg_file)
-		perror_exit("cfg: ");
+		perror_exit("Error cfg file");
 	else
 	{
 		while (fgets(line, sizeof(line), cfg_file))

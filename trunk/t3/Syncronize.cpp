@@ -1,5 +1,6 @@
 #include "Syncronize.h"
 int Syncronize::shared = 0;
+
 Syncronize::Syncronize()
 {
 }
