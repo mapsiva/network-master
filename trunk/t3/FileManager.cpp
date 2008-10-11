@@ -74,55 +74,59 @@ FileManager::Write()
 	else
 	{
 		DIR * pdir;
+		char aux[MAX_SIZE_BUF], aux2[MAX_SIZE_BUF];
 		struct dirent *pent;
-		if(!strcmp(FileName, ""))
-			strcpy(FileName, ".");
-		if(!_m && (pdir=opendir(FileName)))
+		strcpy(aux2, "\0");
+		strcpy(aux2, FileName);
+		
+		if (strlen(FileName) == 0)
+			strcpy(aux2, ".");
+		else
+		{		
+			if (aux2[strlen(aux2)-1] != '/')
+				strcat(aux2, "/");
+		}
+		
+		printf("--%s--\n\n", aux2);
+		if(!_m && (pdir=opendir(aux2)))
 		{
 			 HeaderAccept((char *)"text/html");
-			
+			 isDir = true;
 			 while ((pent = readdir(pdir)))
 			 {
-			 	isDir = true;
-			 	char aux[MAX_SIZE_BUF];
-			  	strcpy(aux, "\0");
-			  			  		
-			  	if(!strcmp(pent->d_name, "."))
+			 	strcpy(aux, "\0");
+			 	strcpy(aux, aux2); 
+			  	if(!strcmp(pent->d_name, "."))  
 			  	{
-			  		if (strcmp(FileName, "."))
-			  		{
-			  			strcat(aux,FileName);
-			  			strcat(aux, "/");
-			  		}
-			  		strcat(aux, ".");
-			  		m = sprintf(buf, "<a href=\"./%s\">%s</a><br>", aux, "Refresh");
+			  		if (strlen(FileName) == 0)
+			  			m = sprintf(buf, "<a href=\"./.\">%s</a><br>", "Refresh");
+			  		else
+			  			m = sprintf(buf, "<a href=\"%s.\">%s</a><br>", aux, "Refresh");
 			  	}
 			  	else if(!strcmp(pent->d_name, ".."))
 			  	{
-			  		if (strcmp(FileName, "."))
-			  		{
-			  			strcat(aux,FileName);
-			  			strcat(aux, "/");
-			  		}
-			  		strcat(aux, "..");
-			  		m = sprintf(buf, "<a href=\"./%s\">%s</a><br>", aux, "Back");
+			  		if (strlen(FileName) == 0)	
+			  			m = sprintf(buf, "<a href=\"./..\">%s</a><br>", "Back");
+			  		else
+			  			m = sprintf(buf, "<a href=\"%s..\">%s</a><br>", aux, "Back");
 			  	}
-			  	else	
+			  	else
 			  	{
-			  		if (strcmp(FileName, "."))
+			  		printf("#%s#\n", aux);
+			  		printf("#%s#\n", pent->d_name);
+			  		if (strlen(FileName) == 0)
+			  			m = sprintf(buf, "<a href=\"%s\">%s</a><br>", pent->d_name, pent->d_name);
+			  		else
 			  		{
-			  			strcpy(aux, FileName);
-			  			strcat(aux, "/");
-			  		}			  		
-			  		strcat(aux, pent->d_name);		  		
-			  		m = sprintf(buf, "<a href=\"./%s\">%s</a><br>", aux, pent->d_name);
+			  			strcat(aux, pent->d_name);
+			  			m = sprintf(buf, "<a href=\"%s\">%s</a><br>", aux, pent->d_name);
+			  		}
 			  	}
 			  	
 			  	for(int k=0; k<m; k+=n)
-					n = write (*Ssock, buf, m-k);			 	
+					n = write (*Ssock, buf, m-k);
 			 }
-			 closedir(pdir);	
-			
+			 closedir(pdir);
 		}
 		else
 		{
