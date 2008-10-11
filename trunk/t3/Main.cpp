@@ -10,8 +10,6 @@ int main(int argc , char *argv[])
 	int qtd_threads = 0;
 	int modo;
 	Httpd *server;
-	
-
 		
 	if (argc >= 2 && argc <= 4)
 	{
@@ -37,7 +35,7 @@ int main(int argc , char *argv[])
 				port = atoi(argv[2]);	//capturando o número da porta de escuta (a porta padrão é a SERVER_PORT)					
 		}
 		server = new Httpd(modo, qtd_threads, port);
-		server->Run();
+		server->Start();
 	}
 	else
 	{
