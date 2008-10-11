@@ -3,13 +3,18 @@
 #include <semaphore.h>
 #include <signal.h>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include "Thread.h"
+#include "FileManager.h"
 
 int Thread::_Instances = 0;
 
-Thread::Thread() 
+Thread::Thread(FileManager *f, int sock) 
 {
-	Thread::_Instances ++;
+	file = f;
+	socket = sock;
+	Thread::_Instances ++;	
 }
 
 int Thread::Start(void * arg)
@@ -23,12 +28,9 @@ int Thread::Start(void * arg)
 
 int Thread::Run()
 {
-   while(true)
-   {
-	   Acquire();
-	   Execute();
-	   Release();
-   }
+   //Acquire();
+   Execute();
+   //Release();
    return 0;
 }
 
@@ -38,19 +40,18 @@ void * Thread::EntryPoint(void * pthis)
 	Thread * pt = (Thread*)pthis;
 	if(!pthis)
 	{
-		printf("NULO");
+		printf("NULO\n");
 		return 0;
 	}
-   pt->Run();
-   return 0;
+   	pt->Run();
+   	return 0;
 }
 
 void Thread::Acquire(){}
 void Thread::Execute()
 {
-	
 	WhoIAm();
-   		
+	file->Write();
 }
 void Thread::Release(){}
 

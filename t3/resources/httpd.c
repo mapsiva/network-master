@@ -9,10 +9,11 @@
 #define SERVER_PORT	5000
 #define QLEN		5
 /* */
-perror_exit(char *msg)
+int perror_exit(char *msg)
 {
     perror(msg);
     exit(1);
+    return 0;
 }
 /* */
 int passiveTCPsocket(int port, int qlen)
@@ -77,7 +78,7 @@ void httpd(int port)
     }
 }
 /* */
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     int port;
     
@@ -93,4 +94,6 @@ main(int argc, char *argv[])
 	exit(1);
     }
     httpd(port);
+    
+    return 0;
 }

@@ -5,12 +5,12 @@ MAIN		= Main
 HTTPD  		= Httpd
 THR    		= Thread
 UTIL		= Util
-SYN         = Syncronize
+#SYN         = Syncronize
 FLM			= FileManager
 MIM		    = Mime
 
-HEADERS =  $(THR).h $(HTTPD).h $(UTIL).h $(SYN).h $(FLM).h $(MIM).h
-OBJECTS = $(THR).o $(HTTPD).o $(UTIL).o $(SYN).o $(FLM).o $(MIM).o $(MAIN).o 
+HEADERS =  $(THR).h $(HTTPD).h $(UTIL).h $(FLM).h $(MIM).h 
+OBJECTS = $(THR).o $(HTTPD).o $(UTIL).o $(FLM).o $(MIM).o $(MAIN).o
 
 # ****************************************************
 
@@ -26,8 +26,8 @@ $(HTTPD).o: $(HTTPD).cpp $(HTTPD).h
 $(THR).o: $(THR).cpp $(THR).h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-$(SYN).o: $(SYN).cpp $(SYN).h 
-	$(CC) $(CFLAGS) -o $@ -c $<
+#$(SYN).o: $(SYN).cpp $(SYN).h 
+#	$(CC) $(CFLAGS) -o $@ -c $<
 
 $(FLM).o: $(FLM).cpp $(FLM).h
 	$(CC) $(CFLAGS) -o $@ -c $<

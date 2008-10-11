@@ -100,7 +100,7 @@ FileManager::Write()
 		}
 		else
 		{
-			printf("erro ao carregar o arquivo");
+			printf("erro ao carregar o arquivo\n");
 			sprintf(buf, "<h1>Ih! Ferrou!</h2>");
 			write (*Ssock, buf, strlen (buf));
 		}
