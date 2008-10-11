@@ -19,7 +19,8 @@ Thread::Thread(FileManager *fm, int *sock)
 Thread::~Thread() 
 {
 	Thread::_Instances--;
-
+	
+	printf("thread se matou\n");
 }
 int Thread::Start(void * arg)
 {
@@ -38,7 +39,7 @@ int Thread::Run()
 	   Execute();
 	   Release();
   
-
+close(*ssock);
    return 0;
 }
 
@@ -52,6 +53,7 @@ void * Thread::EntryPoint(void * pthis)
 		return 0;
 	}
    	pt->Run();
+  
    	return 0;
 }
 
@@ -62,9 +64,8 @@ void Thread::Load (FileManager * fm)
 void Thread::Acquire(){}
 void Thread::Execute()
 {
-	WhoIAm();
-   	f->Write();	
-   	printf("escreveu\n");
+   	f->Write();
+   	//delete this;
 }
 void Thread::Release(){}
 
