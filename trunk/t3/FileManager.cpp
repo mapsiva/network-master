@@ -1,4 +1,4 @@
-
+#include "Util.h"
 #include "FileManager.h"
 
 #include <fcntl.h>
@@ -33,16 +33,16 @@ bool FileManager::Open()
 char*
 FileManager::strmcpy(char *dest, const char *src, int n)
 {
-       int i;
+	int i;
+	
+	for (i = 0 ; i < n-1 && src[i] != '\0' ; i++)
+	   dest[i] = src[i+1];
+	for ( ; i < n ; i++)
+	   dest[i] = '\0';
+	
+	return dest;
+}
 
-       for (i = 0 ; i < n-1 && src[i] != '\0' ; i++)
-           dest[i] = src[i+1];
-       for ( ; i < n ; i++)
-           dest[i] = '\0';
-
-		
-       return dest;
-   }
 void 
 FileManager::HeaderAccept(char * mime)
 {
@@ -50,6 +50,7 @@ FileManager::HeaderAccept(char * mime)
 
 	write (*Ssock, buf, strlen (buf));
 }
+
 void 
 FileManager::Write()
 {
@@ -59,19 +60,15 @@ FileManager::Write()
 	int n,m;
 	
 	if(_m && Open())
-	{	
-		
+	{		
 		HeaderAccept((char *)_m->mime);
-		
-		
 		
 		while ((m = read(Handle, buf, 1024)) > 0)					
 		{	
 			for(int k=0; k<m; k+=n)
 				n = write (*Ssock, buf, m-k);				
 		}
-		close(Handle);
-		
+		close(Handle);		
 	}
 	else
 	{
@@ -85,19 +82,44 @@ FileManager::Write()
 			 
 			 while ((pent = readdir(pdir)))
 			 {
+			 	char aux[MAX_SIZE_BUF];
+			  	strcpy(aux, "\0");
+			  			  		
 			  	if(!strcmp(pent->d_name, "."))
-			  		m = sprintf(buf, "<a href=\"./%s\">%s</a><br>", FileName, "Refresh");
+			  	{
+			  		if (strcmp(FileName, "."))
+			  		{
+			  			strcat(aux,FileName);
+			  			strcat(aux, "/");
+			  		}
+			  		strcat(aux, ".");
+			  		m = sprintf(buf, "<a href=\"./%s\">%s</a><br>", aux, "Refresh");
+			  	}
 			  	else if(!strcmp(pent->d_name, ".."))
-			  		m = sprintf(buf, "<a href=\"./%s\">%s</a><br>", pent->d_name, "Back");
-			  	else
-			  		m = sprintf(buf, "<a href=\"./%s\">%s</a><br>", pent->d_name, pent->d_name);
+			  	{
+			  		if (strcmp(FileName, "."))
+			  		{
+			  			strcat(aux,FileName);
+			  			strcat(aux, "/");
+			  		}
+			  		strcat(aux, "..");
+			  		m = sprintf(buf, "<a href=\"./%s\">%s</a><br>", aux, "Back");
+			  	}
+			  	else	
+			  	{
+			  		if (strcmp(FileName, "."))
+			  		{
+			  			strcpy(aux, FileName);
+			  			strcat(aux, "/");
+			  		}			  		
+			  		strcat(aux, pent->d_name);		  		
+			  		m = sprintf(buf, "<a href=\"./%s\">%s</a><br>", aux, pent->d_name);
+			  	}
 			  	
 			  	for(int k=0; k<m; k+=n)
-					n = write (*Ssock, buf, m-k);
-			 	
+					n = write (*Ssock, buf, m-k);			 	
 			 }
-			 closedir(pdir);
-			
+			 closedir(pdir);			
 		}
 		else
 		{
