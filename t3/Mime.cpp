@@ -41,6 +41,7 @@ DEFINE_MIMETYPE_TABLE(Mime)
 	MIMETYPE("avi", "video/msvideo",0),
 	MIMETYPE("bat", "application/bat",0),
 	MIMETYPE("bin", "application/octet-stream",0),
+	MIMETYPE("exe", "application/octet-stream",0),
 	MIMETYPE("dll", "application/x-msdownload",0),
 	MIMETYPE("fla", "application/x-shockwave-flash",0),
 	MIMETYPE("hqx", "application/binhex",0),

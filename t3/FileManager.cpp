@@ -53,6 +53,7 @@ FileManager::HeaderAccept(char * mime)
 void 
 FileManager::Write()
 {
+	
 	Mime *mime = Mime::GetInstance();
 	MimeTableEntry *_m = mime->FindMimeType(FileManager::GetExtension(FileName));
 	int n,m;

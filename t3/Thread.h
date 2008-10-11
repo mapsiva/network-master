@@ -11,26 +11,36 @@ class Thread
 {
    public:
    	  Thread();
-      Thread(FileManager *, int);
+      Thread(FileManager *, int*);
+      ~Thread();
       int Start(void * arg);
+      void Load (FileManager *);
       static int _Instances;
    protected:
-   	  //Attributes
-   	  pthread_t _ThreadId;
-	  FileManager *file;
-	  int socket;
+
+     virtual  int Run();
+     
+      static void * EntryPoint(void*);
+     
+      void * Arg() const {return _Arg;}
+     
+      void Arg(void* a){_Arg = a;}
+     
+      virtual void Acquire();
+      virtual void Execute();
+      virtual void Release();
+      
+      void WhoIAm();
+	  
+	  pthread_t _ThreadId;
+	  
+
+   	
+	  FileManager *f;
+	 int *ssock;	
+
 	  void * _Arg;
 	  int SleepTime;
-      
-      //Methods
-      int Run();
-      static void * EntryPoint(void*);     
-      void * Arg() const {return _Arg;}     
-      void Arg(void* a){_Arg = a;}     
-      void Acquire();
-      void Execute();
-      void Release();      
-      void WhoIAm();
 };
 
 #endif /*THREAD_H_*/
