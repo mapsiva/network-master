@@ -124,23 +124,25 @@ void Httpd::Run()
     pid_t ppid;					/* id of process			*/
     
     msock = PassiveTCPSocket();
+    
+    printf("Server Running.\n");
    
     Thread ** Pool = new Thread*[_qtd_threads];
    	int I= 0;
+
     while(1) 
     {
 		alen = sizeof(struct sockaddr_in);
 		ssock = accept(msock, (struct sockaddr *)&fsin,(socklen_t *) &alen);
-		
 		if (ssock  < 0)
 		    perror_exit("Error Accept: ");
-		
+		printf("Client Conected.\n");
 		char *queryString;
 		char bc[1024];	
 	    read(ssock, bc, sizeof(bc));
 	    queryString =  strtok (bc, " ");
     	queryString =  strtok (NULL, " ");
-    	printf("%s\n", queryString);
+    	//printf("%s\n", queryString);
 		FileManager *f = new FileManager(queryString, &ssock);    
 			
 		//Verificando o tipo de funcionamento do Servidor HTTP 
@@ -172,8 +174,7 @@ void Httpd::Run()
 			else
 			{
 				Pool[(I%_qtd_threads)+1] = new Thread(f, &ssock);
-				Pool[(I%_qtd_threads)+1]->Start(NULL);
-				
+				Pool[(I%_qtd_threads)+1]->Start(NULL);				
 				I++;
 			}
 		} //_modo == _HTTP_THREAD
