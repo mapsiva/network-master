@@ -4,7 +4,7 @@
 #include "Httpd.h"
 #include "Util.h"
 
-int main(int argc , char *argv[])
+int main(int argc, char *argv[])
 {
 	int port = _SERVER_PORT;
 	int qtd_threads = 0;

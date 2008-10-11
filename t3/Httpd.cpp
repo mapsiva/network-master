@@ -137,6 +137,7 @@ void Httpd::Run()
 	    read(ssock, bc, sizeof(bc));
 	    queryString =  strtok (bc, " ");
     	queryString =  strtok (NULL, " ");
+    	printf("%s\n", queryString);
 		FileManager *f = new FileManager(queryString, &ssock);    
 			
 		//Verificando o tipo de funcionamento do Servidor HTTP 
