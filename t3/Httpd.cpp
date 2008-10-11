@@ -80,7 +80,7 @@ Httpd::Kill_Defuncts()
 {
 	int status;
 	while (wait3(&status, WNOHANG, (struct rusage *) 0) > 0)
-	{	}
+	{	//printf("matando defuntos\n");}
 	return 0;
 }
 
@@ -130,7 +130,7 @@ void Httpd::Run()
     {
 		alen = sizeof(struct sockaddr_in);
 		ssock = accept(msock, (struct sockaddr *)&fsin,(socklen_t *) &alen);
-		printf("Client Conected \n");
+		
 		if (ssock  < 0)
 		    perror_exit("Error Accept: ");
 		
@@ -153,7 +153,7 @@ void Httpd::Run()
 			{
 				//interpreta o sinal SIGCHLD
 				//Tem que ver pq não está funfando
-				//signal(SIGCHLD, (void *)Httpd::Kill_Defuncts);
+				signal(SIGCHLD,(sighandler_t)Httpd::Kill_Defuncts);
 		
 			    close(msock);
 				f->Write();
@@ -166,10 +166,15 @@ void Httpd::Run()
 		}
 		else
 		{
-			Pool[(I%_qtd_threads)+1] = new Thread(f, &ssock);
-			Pool[(I%_qtd_threads)+1]->Start(NULL);
-			I++;
-			
+			if(Thread::_Instances >= _qtd_threads)
+				printf("Pool Overflow \n");
+			else
+			{
+				Pool[(I%_qtd_threads)+1] = new Thread(f, &ssock);
+				Pool[(I%_qtd_threads)+1]->Start(NULL);
+				
+				I++;
+			}
 		} //_modo == _HTTP_THREAD
 		
     }

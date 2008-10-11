@@ -19,8 +19,6 @@ Thread::Thread(FileManager *fm, int *sock)
 Thread::~Thread() 
 {
 	Thread::_Instances--;
-	
-	printf("thread se matou\n");
 }
 int Thread::Start(void * arg)
 {
@@ -33,14 +31,11 @@ int Thread::Start(void * arg)
 
 int Thread::Run()
 {
-
-  
-	   Acquire();
-	   Execute();
-	   Release();
-  
-close(*ssock);
-   return 0;
+	Acquire();
+	Execute();
+	Release();
+	close(*ssock);
+   return 1;
 }
 
 /*static */
@@ -49,11 +44,10 @@ void * Thread::EntryPoint(void * pthis)
 	Thread * pt = (Thread*)pthis;
 	if(!pthis)
 	{
-		printf("NULO\n");
 		return 0;
 	}
    	pt->Run();
-  
+  delete pt;
    	return 0;
 }
 
