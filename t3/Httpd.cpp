@@ -43,33 +43,33 @@ Httpd::Config_Server()
 		if (line[0] != '#' && line[0] != '\n') //ignorando comentários e linhas em branco do arquivo de configurcao
 		{
 			aux = strtok(line, " ");
-			if (!strncasecmp(aux, "DOCUMENTROOT", 12))
+			if (!strncasecmp(aux, "DOCUMENT_ROOT", 12))
 			{
 				aux = strtok(NULL, "\n");
 				strcpy(DOCUMENT_ROOT, aux);
 			}
-			else if (!strncasecmp(aux, "DEFAULTINDEX", 12))
+			else if (!strncasecmp(aux, "DEFAULT_INDEX", 12))
 			{
 				aux = strtok(NULL, "\n");
 				strcpy(DEFAULT_INDEX, aux);
 			}
-			else if (!strncasecmp(aux, "SERVERTYPE", 10))
+			else if (!strncasecmp(aux, "SERVER_TYPE", 10))
 			{
 				aux = strtok(NULL, "\n");
 				strcpy(SERVER_TYPE, aux);
 			}
-			else if (!strncasecmp(aux, "CGIPATH", 7))
+			else if (!strncasecmp(aux, "CGI_PATH", 7))
 			{
 				aux = strtok(NULL, "\n");
 				strcpy(CGI_PATH, aux);
 			}				
-			else if (!strncasecmp(aux, "DEBUGMODE", 9))
+			else if (!strncasecmp(aux, "DEBUG_MODE", 9))
 			{
 				aux = strtok(NULL, "\n");
 				if (!strncasecmp(aux, "TRUE", 4))
-					DEBUG_MODE = 1;
+					DEBUG_MODE = true;
 				else
-					DEBUG_MODE = 0;
+					DEBUG_MODE = false;
 			}
 		}
 	}	
