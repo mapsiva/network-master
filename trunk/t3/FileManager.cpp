@@ -58,7 +58,8 @@ FileManager::Write()
 	Mime *mime = Mime::GetInstance();
 	MimeTableEntry *_m = mime->FindMimeType(FileManager::GetExtension(FileName));
 	int n,m;
-	
+	bool isDir = false;
+	 
 	if(_m && Open())
 	{		
 		HeaderAccept((char *)_m->mime);
@@ -79,9 +80,10 @@ FileManager::Write()
 		if(!_m && (pdir=opendir(FileName)))
 		{
 			 HeaderAccept((char *)"text/html");
-			 
+			
 			 while ((pent = readdir(pdir)))
 			 {
+			 	isDir = true;
 			 	char aux[MAX_SIZE_BUF];
 			  	strcpy(aux, "\0");
 			  			  		
@@ -119,11 +121,31 @@ FileManager::Write()
 			  	for(int k=0; k<m; k+=n)
 					n = write (*Ssock, buf, m-k);			 	
 			 }
-			 closedir(pdir);			
+			 closedir(pdir);	
+			
 		}
 		else
 		{
-			printf("erro ao carregar o arquivo\n");
+			if(!strncasecmp(FileName, "cgi-bin/", 8))
+			{
+				FILE *file;
+				HeaderAccept((char *)"text/html");
+				 
+				putenv((char *)"QUERY_STRING=par1&par2"); 
+				
+				if ((file = popen("./test", "r"))) 
+				{
+					while(fgets(buf, 1024, file))
+					{
+						printf("%s %d", buf, sizeof(buf));
+						write (*Ssock, buf, sizeof(buf));		
+					}
+					pclose(file);
+				
+				}
+				else
+					printf("Error executing test\n");
+			}
 			sprintf(buf, "<h1>Ih! Ferrou!</h2>");
 			write (*Ssock, buf, strlen (buf));
 		}

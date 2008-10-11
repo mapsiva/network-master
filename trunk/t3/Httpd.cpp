@@ -80,7 +80,8 @@ Httpd::Kill_Defuncts()
 {
 	int status;
 	while (wait3(&status, WNOHANG, (struct rusage *) 0) > 0)
-	{	//printf("matando defuntos\n");}
+	{	//printf("matando defuntos\n");
+	}
 	return 0;
 }
 

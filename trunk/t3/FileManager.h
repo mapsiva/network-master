@@ -9,8 +9,6 @@
 #include <string.h>
 #include "Mime.h"
 
-//#include <sys/signal.h>
-//#include <wait.h>
 struct Parameter
 {
 	char *name;
