@@ -2,7 +2,9 @@
 #define HTTPD_H_
 
 #include <stdio.h>
-
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <wait.h>
 class Httpd
 {
    	public:
