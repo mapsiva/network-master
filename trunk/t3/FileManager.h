@@ -32,6 +32,7 @@ class FileManager
    		
 		char* strmcpy(char *dest, const char *src, int n);
 		void HeaderAccept(char *);
+		void FileNotFound();
 	private:
 		int Handle;
 		char *FileName;

@@ -1,5 +1,6 @@
 #include "Util.h"
 #include "FileManager.h"
+#include "Config.h"
 
 #include <fcntl.h>
 #include <dirent.h>
@@ -26,9 +27,24 @@ FileManager::FileManager(const char *file, int *s)
 }
 FileManager::~FileManager(){}
 
-bool FileManager::Open()
+bool 
+FileManager::Open()
 {
-	return ((Handle = open(FileName, O_RDONLY)));
+	char *aux;
+	sprintf(aux, "%s/%s", Config::GetDocumentRoot(),FileName);
+	
+	//Verificando se realmente existe o arquivo FileName
+	if((Handle = open(aux, O_RDONLY)) > 0 )
+		return true;
+
+	//Caso contrário verifica se existe o arquivo DEFAULT_INDEX dentro 
+	//de um diretório apontado por FileName
+	if (strlen(FileName) > 0 && FileName[strlen(FileName)-1] != '/')
+		strcat(aux, "/");
+	
+	strcat(aux, Config::GetDefaultIndex());
+	
+	return ((Handle = open(aux, O_RDONLY)));
 }
 
 char*
@@ -74,9 +90,15 @@ inline char * FileManager::GetScript()
 	return script;
 }
 void 
-FileManager::Write()
+FileManager::FileNotFound()
 {
-	
+	sprintf(buf,"<html>\r\n\t<head>\r\n\t\t<title>404 Not Found</title>\r\n\t</head>\r\n\t<body>\r\n\t\t<h1>Not Found</h1>\r\n\t\t<p>The request URL /%s was not found on this server.</p>\r\n\t\t<hr>\r\n\t\t<address>%s</address>\r\n\t</body>\r\n</html>",FileName,Config::GetServerType());
+	write (*Ssock, buf, strlen(buf));
+}
+
+void 
+FileManager::Write()
+{	
 	Mime *mime = Mime::GetInstance();
 	MimeTableEntry *_m = mime->FindMimeType(FileManager::GetExtension(FileName));
 	int n,m;
@@ -91,36 +113,43 @@ FileManager::Write()
 			for(int k=0; k<m; k+=n)
 				n = write (*Ssock, buf, m-k);				
 		}
-		close(Handle);		
+		close(Handle);
 	}
 	else
 	{
 		DIR * pdir;
-		char aux[MAX_SIZE_BUF], aux2[MAX_SIZE_BUF];
+		char aux[MAX_SIZE_BUF], aux2[MAX_SIZE_BUF], aux3[MAX_SIZE_BUF];
 		struct dirent *pent;
+
+		sprintf(aux3, "%s%s",Config::GetDocumentRoot(), FileName);
+		
 		strcpy(aux2, "\0");
 		strcpy(aux2, FileName);
 		
 		if (strlen(FileName) == 0)
+		{
 			strcpy(aux2, ".");
+			strcat(aux3, ".");
+		}
 		else
-		{		
+		{
 			if (aux2[strlen(aux2)-1] != '/')
 				strcat(aux2, "/");
+			if (aux3[strlen(aux3)-1] != '/')
+				strcat(aux3, "/");
 		}
 		
-		//printf("--%s--\n\n", aux2);
-		if(!_m && (pdir=opendir(aux2)))
+		if(!_m && (pdir=opendir(aux3)))
 		{
 			 HeaderAccept((char *)"text/html");
 			 isDir = true;
-			 sprintf(buf,"<html>\r\n\t<head>\r\n\t\t<title></title>\r\n\t</head>\r\n\t<body>\r\n\t\t%s<hr>\r\n",aux2);
+			 sprintf(buf,"<html>\r\n\t<head>\r\n\t\t<title></title>\r\n\t</head>\r\n\t<body>\r\n\t\t%s<hr>",aux2);
 			 write (*Ssock, buf, strlen(buf));
 			 
 			 while ((pent = readdir(pdir)))
 			 {
 			 	strcpy(aux, "\0");
-			 	strcpy(aux, aux2); 
+			 	strcpy(aux, aux2);
 			  	if(!strcmp(pent->d_name, "."))  
 			  	{
 			  		if (strlen(FileName) == 0)
@@ -150,7 +179,7 @@ FileManager::Write()
 			  	for(int k=0; k<m; k+=n)
 					n = write (*Ssock, buf, m-k);
 			 }
-			 sprintf(buf,"<hr>\r\n</pre>\r\n\t\t<i>%s</i>\r\n\t</body>\r\n</html>", "DCT-REDES-2008/1.0");
+			 sprintf(buf,"<hr>\r\n\t\t<i>%s</i>\r\n\t</body>\r\n</html>", Config::GetServerType());
 			 write (*Ssock, buf, strlen(buf));
 			 closedir(pdir);
 		}
@@ -178,10 +207,7 @@ FileManager::Write()
 					printf("Error executing test\n");
 			}
 			else
-			{
-				sprintf(buf, "<h1>Ih! Ferrou!</h2>");
-				write (*Ssock, buf, strlen (buf));
-			}
+				FileNotFound();
 		}
 		//error page load here
 	}

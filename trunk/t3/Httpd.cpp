@@ -13,66 +13,14 @@
 #include "FileManager.h"
 #include "Mime.h"
 #include "Thread.h"
+#include "Config.h"
 
 Httpd::Httpd(int modo, int qtd_t, int port)
 {
 	_modo = modo;
 	_qtd_threads = qtd_t;
 	_port = port;
-	strcpy(cfg_file_name, "httpd.conf");
-	strcpy (DOCUMENT_ROOT, "/");
-	strcpy (CGI_PATH, "/cgi-bin");
-	strcpy (DEFAULT_INDEX, "/index.html");
-	strcpy (SERVER_TYPE, "DCT-REDES-2008/1.0");
-	DEBUG_MODE = false;
-}
-
-void
-Httpd::Config_Server()
-{
-	FILE *cfg_file;
-	char line[MAX_SIZE_BUF];
-	char *aux;
-	
-	cfg_file = fopen(cfg_file_name, "r");
-	if (!cfg_file)
-		perror_exit("Error Config File");
-	else
-	{
-		while (fgets(line, sizeof(line), cfg_file))
-		if (line[0] != '#' && line[0] != '\n') //ignorando comentários e linhas em branco do arquivo de configurcao
-		{
-			aux = strtok(line, " ");
-			if (!strncasecmp(aux, "DOCUMENT_ROOT", 12))
-			{
-				aux = strtok(NULL, "\n");
-				strcpy(DOCUMENT_ROOT, aux);
-			}
-			else if (!strncasecmp(aux, "DEFAULT_INDEX", 12))
-			{
-				aux = strtok(NULL, "\n");
-				strcpy(DEFAULT_INDEX, aux);
-			}
-			else if (!strncasecmp(aux, "SERVER_TYPE", 10))
-			{
-				aux = strtok(NULL, "\n");
-				strcpy(SERVER_TYPE, aux);
-			}
-			else if (!strncasecmp(aux, "CGI_PATH", 7))
-			{
-				aux = strtok(NULL, "\n");
-				strcpy(CGI_PATH, aux);
-			}				
-			else if (!strncasecmp(aux, "DEBUG_MODE", 9))
-			{
-				aux = strtok(NULL, "\n");
-				if (!strncasecmp(aux, "TRUE", 4))
-					DEBUG_MODE = true;
-				else
-					DEBUG_MODE = false;
-			}
-		}
-	}	
+	Config::Config();
 }
 
 void *
@@ -111,7 +59,6 @@ int Httpd::PassiveTCPSocket()
 
 void Httpd::Start()
 {
-	Config_Server();
 	Run();
 }
 
