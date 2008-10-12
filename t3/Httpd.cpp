@@ -36,7 +36,7 @@ Httpd::Config_Server()
 	
 	cfg_file = fopen(cfg_file_name, "r");
 	if (!cfg_file)
-		perror_exit("Error cfg file");
+		perror_exit("Error Config File");
 	else
 	{
 		while (fgets(line, sizeof(line), cfg_file))
@@ -144,7 +144,7 @@ void Httpd::Run()
     	queryString =  strtok (NULL, " ");
     	//printf("%s\n", queryString);
 		FileManager *f = new FileManager(queryString, &ssock);    
-			
+		
 		//Verificando o tipo de funcionamento do Servidor HTTP 
 		if (_modo == _HTTP_PROCESS)
 		{

@@ -87,11 +87,14 @@ FileManager::Write()
 				strcat(aux2, "/");
 		}
 		
-		printf("--%s--\n\n", aux2);
+		//printf("--%s--\n\n", aux2);
 		if(!_m && (pdir=opendir(aux2)))
 		{
 			 HeaderAccept((char *)"text/html");
 			 isDir = true;
+			 sprintf(buf,"<html>\r\n\t<head>\r\n\t\t<title></title>\r\n\t</head>\r\n\t<body>\r\n\t\t%s<hr>\r\n",aux2);
+			 write (*Ssock, buf, strlen(buf));
+			 
 			 while ((pent = readdir(pdir)))
 			 {
 			 	strcpy(aux, "\0");
@@ -99,33 +102,36 @@ FileManager::Write()
 			  	if(!strcmp(pent->d_name, "."))  
 			  	{
 			  		if (strlen(FileName) == 0)
-			  			m = sprintf(buf, "<a href=\"./.\">%s</a><br>", "Refresh");
+			  			m = sprintf(buf, "\r\n\t\t<a href=\"./.\">%s</a><br>", "Refresh");
 			  		else
-			  			m = sprintf(buf, "<a href=\"%s.\">%s</a><br>", aux, "Refresh");
+			  			m = sprintf(buf, "\r\n\t\t<a href=\"%s.\">%s</a><br>", aux, "Refresh");
 			  	}
 			  	else if(!strcmp(pent->d_name, ".."))
 			  	{
 			  		if (strlen(FileName) == 0)	
-			  			m = sprintf(buf, "<a href=\"./..\">%s</a><br>", "Back");
+			  			m = sprintf(buf, "\r\n\t\t<a href=\"./..\">%s</a><br>", "Back");
 			  		else
-			  			m = sprintf(buf, "<a href=\"%s..\">%s</a><br>", aux, "Back");
+			  			m = sprintf(buf, "\r\n\t\t<a href=\"%s..\">%s</a><br>", aux, "Back");
 			  	}
 			  	else
 			  	{
+			  		printf("#%s#\n", FileName);
 			  		printf("#%s#\n", aux);
 			  		printf("#%s#\n", pent->d_name);
 			  		if (strlen(FileName) == 0)
-			  			m = sprintf(buf, "<a href=\"%s\">%s</a><br>", pent->d_name, pent->d_name);
+			  			m = sprintf(buf, "\r\n\t\t<a href=\"%s\">%s</a><br>", pent->d_name, pent->d_name);
 			  		else
 			  		{
 			  			strcat(aux, pent->d_name);
-			  			m = sprintf(buf, "<a href=\"%s\">%s</a><br>", aux, pent->d_name);
+			  			m = sprintf(buf, "\r\n\t\t<a href=\"%s\">%s</a><br>", aux, pent->d_name);
 			  		}
 			  	}
 			  	
 			  	for(int k=0; k<m; k+=n)
 					n = write (*Ssock, buf, m-k);
 			 }
+			 sprintf(buf,"<hr>\r\n</pre>\r\n\t\t<i>%s</i>\r\n\t</body>\r\n</html>", "DCT-REDES-2008/1.0");
+			 write (*Ssock, buf, strlen(buf));
 			 closedir(pdir);
 		}
 		else
