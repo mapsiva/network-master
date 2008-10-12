@@ -3,7 +3,8 @@
 
 #include <fcntl.h>
 #include <dirent.h>
-			 
+
+		 
 bool FileManager::FileExist()
 {
 	return Handle;
@@ -51,6 +52,27 @@ FileManager::HeaderAccept(char * mime)
 	write (*Ssock, buf, strlen (buf));
 }
 
+inline char * 
+FileManager::GetQueryString()
+{
+	char * url = new char[1024], *query;
+	strcat (url, "QUERY_STRING=");
+	query = strtok(FileName, "?");
+	query = strtok(NULL, "?");
+	strcat (url, query);
+	return url;
+}
+
+inline char * FileManager::GetScript()
+{	
+	char * script;
+	
+	script = strtok(FileName, "?");
+	script = strtok(script, "/");
+	script = strtok(NULL, "/");
+	
+	return script;
+}
 void 
 FileManager::Write()
 {
@@ -115,9 +137,7 @@ FileManager::Write()
 			  	}
 			  	else
 			  	{
-			  		printf("#%s#\n", FileName);
-			  		printf("#%s#\n", aux);
-			  		printf("#%s#\n", pent->d_name);
+			  		
 			  		if (strlen(FileName) == 0)
 			  			m = sprintf(buf, "\r\n\t\t<a href=\"/%s\">%s</a><br>", pent->d_name, pent->d_name);
 			  		else
@@ -139,27 +159,29 @@ FileManager::Write()
 			if(!strncasecmp(FileName, "cgi-bin/", 8))
 			{
 				FILE *file;
+				char pipeContent[1024];
+				char scriptName[64]={"cgi-bin/./"};
+				putenv( GetQueryString () ); 
 				
-				 
-				putenv((char *)"QUERY_STRING=par1&par2"); 
-				char *p;
 				HeaderAccept((char *)"text/html");
-				if ((file = popen("./test", "r"))) 
-				{
-					
-					while((p = fgets(buf, 50, file)))
-					{
-						printf("%s %d\n", p, sizeof(buf));
-						write (*Ssock, buf, sizeof(buf));		
-					}
-					pclose(file);
 				
+				strcat(scriptName, GetScript ());
+				
+				if ((file = popen( scriptName , "r"))) 
+				{
+					while(fgets(pipeContent, sizeof(pipeContent), file))
+						write (*Ssock, pipeContent,  strlen(pipeContent));		
+				
+					pclose(file);
 				}
 				else
 					printf("Error executing test\n");
 			}
-			sprintf(buf, "<h1>Ih! Ferrou!</h2>");
-			write (*Ssock, buf, strlen (buf));
+			else
+			{
+				sprintf(buf, "<h1>Ih! Ferrou!</h2>");
+				write (*Ssock, buf, strlen (buf));
+			}
 		}
 		//error page load here
 	}
