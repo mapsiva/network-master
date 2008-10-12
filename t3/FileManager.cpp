@@ -104,14 +104,14 @@ FileManager::Write()
 			  		if (strlen(FileName) == 0)
 			  			m = sprintf(buf, "\r\n\t\t<a href=\"./.\">%s</a><br>", "Refresh");
 			  		else
-			  			m = sprintf(buf, "\r\n\t\t<a href=\"%s.\">%s</a><br>", aux, "Refresh");
+			  			m = sprintf(buf, "\r\n\t\t<a href=\"/%s.\">%s</a><br>", aux, "Refresh");
 			  	}
 			  	else if(!strcmp(pent->d_name, ".."))
 			  	{
 			  		if (strlen(FileName) == 0)	
 			  			m = sprintf(buf, "\r\n\t\t<a href=\"./..\">%s</a><br>", "Back");
 			  		else
-			  			m = sprintf(buf, "\r\n\t\t<a href=\"%s..\">%s</a><br>", aux, "Back");
+			  			m = sprintf(buf, "\r\n\t\t<a href=\"/%s..\">%s</a><br>", aux, "Back");
 			  	}
 			  	else
 			  	{
@@ -119,11 +119,11 @@ FileManager::Write()
 			  		printf("#%s#\n", aux);
 			  		printf("#%s#\n", pent->d_name);
 			  		if (strlen(FileName) == 0)
-			  			m = sprintf(buf, "\r\n\t\t<a href=\"%s\">%s</a><br>", pent->d_name, pent->d_name);
+			  			m = sprintf(buf, "\r\n\t\t<a href=\"/%s\">%s</a><br>", pent->d_name, pent->d_name);
 			  		else
 			  		{
 			  			strcat(aux, pent->d_name);
-			  			m = sprintf(buf, "\r\n\t\t<a href=\"%s\">%s</a><br>", aux, pent->d_name);
+			  			m = sprintf(buf, "\r\n\t\t<a href=\"/%s\">%s</a><br>", aux, pent->d_name);
 			  		}
 			  	}
 			  	
@@ -139,15 +139,17 @@ FileManager::Write()
 			if(!strncasecmp(FileName, "cgi-bin/", 8))
 			{
 				FILE *file;
-				HeaderAccept((char *)"text/html");
+				
 				 
 				putenv((char *)"QUERY_STRING=par1&par2"); 
-				
+				char *p;
+				HeaderAccept((char *)"text/html");
 				if ((file = popen("./test", "r"))) 
 				{
-					while(fgets(buf, 1024, file))
+					
+					while((p = fgets(buf, 50, file)))
 					{
-						printf("%s %d", buf, sizeof(buf));
+						printf("%s %d\n", p, sizeof(buf));
 						write (*Ssock, buf, sizeof(buf));		
 					}
 					pclose(file);
