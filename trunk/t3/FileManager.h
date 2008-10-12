@@ -27,6 +27,9 @@ class FileManager
 		void Write();
 		int GetParameters(Parameter **, char *);
    		static char * GetExtension(const char *);
+   		inline char * GetQueryString();
+   		inline char * GetScript();
+   		
 		char* strmcpy(char *dest, const char *src, int n);
 		void HeaderAccept(char *);
 	private:

@@ -26,6 +26,7 @@ class Httpd
    		
    		//methods
    		int PassiveTCPSocket();
+   		
    		static void* Kill_Defuncts();
    		void Config_Server();
 };
