@@ -6,7 +6,7 @@ class Config
 	public:
 		Config();
 		~Config();
-		static char* GetDocumentRoot();
+		static char* GetDocumentRoot(); 
 		static char* GetDefaultIndex();
 		static char* GetServerType();
 		static char* GetCgiPath();

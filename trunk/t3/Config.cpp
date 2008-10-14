@@ -5,9 +5,9 @@
 
 char Config::cfg_file_name[64] = "httpd.conf";
 char Config::DOCUMENT_ROOT[256] = "/";
-char Config::DEFAULT_INDEX[256] = "/index.html";
+char Config::DEFAULT_INDEX[256] = "index.html";
 char Config::SERVER_TYPE[256] = "DCT-REDES-2008/1.0";
-char Config::CGI_PATH[256] = "/index.html";
+char Config::CGI_PATH[256] = "cgi-bin/";
 bool Config::DEBUG_MODE = false;
 
 Config::Config()
@@ -50,8 +50,8 @@ Config::Config()
 					strcpy(CGI_PATH, aux);
 					
 					//Verificando se o usuário inseriu o '/' no fim
-					//if (CGI_PATH[strlen(CGI_PATH)-1] != '/')
-					//	strcat(CGI_PATH,"/");
+					if (CGI_PATH[strlen(CGI_PATH)-1] != '/')
+						strcat(CGI_PATH,"/");
 				}				
 				else if (!strncasecmp(aux, "DEBUG_MODE", 9))
 				{

@@ -39,23 +39,42 @@ FileManager::FileManager(const char *file, int *s)
 FileManager::~FileManager(){}
 
 bool 
-FileManager::Open()
+FileManager::Open(MimeTableEntry *&_mte)
 {
-	char *aux;
-	sprintf(aux, "%s/%s", Config::GetDocumentRoot(),FileName);
-	
-	//Verificando se realmente existe o arquivo FileName
-	if((Handle = open(aux, O_RDONLY)) > 0 )
-		return true;
-
-	//Caso contrário verifica se existe o arquivo DEFAULT_INDEX dentro 
-	//de um diretório apontado por FileName
-	if (strlen(FileName) > 0 && FileName[strlen(FileName)-1] != '/')
-		strcat(aux, "/");
-	
+	char *aux = new char[MAX_SIZE_BUF];
+	strcpy(aux,"\0");
+	sprintf(aux, "%s%s", Config::GetDocumentRoot(), FileName);
+	//Verifica se existe o arquivo DEFAULT_INDEX dentro 
+	//de um possível diretório apontado por FileName
+	if (strlen(aux) > 0 && aux[strlen(aux)-1] != '/')
+		strcat(aux, "/");	
 	strcat(aux, Config::GetDefaultIndex());
+	//printf("--%s--\n", aux);
+	if ((Handle = open(aux, O_RDONLY)) > 0)
+		return true;
 	
-	return ((Handle = open(aux, O_RDONLY)));
+	if (_mte == NULL)
+		return false;
+	
+	strcpy(aux,"\0");
+	sprintf(aux, "%s%s", Config::GetDocumentRoot(),FileName);
+	if (strlen(aux) > 0 && aux[strlen(aux)-1] != '/')
+		strcat(aux, "/");
+	//printf("%s\n", aux);
+	//Verifica se realmente existe um diretório apontado por FileName
+	//printf("--%s--\n", aux);
+	if ((Handle = open(aux, O_RDONLY)) > 0)
+	{
+		_mte = NULL;
+		return false;
+	}
+	
+	strcpy(aux,"\0");
+	sprintf(aux, "%s%s", Config::GetDocumentRoot(),FileName);
+	//printf("%s\n", aux);
+	//Verifica se realmente existe o arquivo FileName
+	//printf("--%s--\n", aux);
+	return ((Handle = open(aux, O_RDONLY)) > 0);
 }
 
 char*
@@ -72,7 +91,7 @@ FileManager::strmcpy(char *dest, const char *src, int n)
 }
 
 void 
-FileManager::HeaderAccept(char * mime)
+FileManager::HeaderAccept(char *mime)
 {
 	sprintf(buf, "HTTP/1.1 200 Document follows\r\nServer: %s\r\nContent-Type: %s\r\n\r\n", "DCT",mime);
 
@@ -121,9 +140,12 @@ FileManager::Write()
 	int n,m;
 	bool isDir = false;
 	 
-	if(_m && Open())
-	{		
-		HeaderAccept((char *)_m->mime);
+	if(Open(_m))	//o arquivo FileName ou um DEFAULT_INDEX dentro do diretório apontado por FileName
+	{
+		if (_m)
+			HeaderAccept((char *)_m->mime);
+		else
+			HeaderAccept((char *)"text/html");
 		
 		while ((m = read(Handle, buf, 1024)) > 0)					
 		{	
@@ -167,23 +189,22 @@ FileManager::Write()
 			 {
 			 	strcpy(aux, "\0");
 			 	strcpy(aux, aux2);
-			  	if(!strcmp(pent->d_name, "."))  
+			  	strcpy(buf, "\0");
+			  	m=0;
+			  	if(!strcmp(pent->d_name, ".."))
+			  	{
+			  		if (strlen(FileName) != 0)
+			  			m = sprintf(buf, "\r\n\t\t<a href=\"/%s..\">%s</a><br>", aux, "Back");
+			  	}
+			  	else if(!strcmp(pent->d_name, "."))  
 			  	{
 			  		if (strlen(FileName) == 0)
 			  			m = sprintf(buf, "\r\n\t\t<a href=\"./.\">%s</a><br>", "Refresh");
 			  		else
 			  			m = sprintf(buf, "\r\n\t\t<a href=\"/%s.\">%s</a><br>", aux, "Refresh");
 			  	}
-			  	else if(!strcmp(pent->d_name, ".."))
-			  	{
-			  		if (strlen(FileName) == 0)	
-			  			m = sprintf(buf, "\r\n\t\t<a href=\"./..\">%s</a><br>", "Back");
-			  		else
-			  			m = sprintf(buf, "\r\n\t\t<a href=\"/%s..\">%s</a><br>", aux, "Back");
-			  	}
 			  	else
-			  	{
-			  		
+			  	{			  		
 			  		if (strlen(FileName) == 0)
 			  			m = sprintf(buf, "\r\n\t\t<a href=\"/%s\">%s</a><br>", pent->d_name, pent->d_name);
 			  		else
@@ -202,7 +223,7 @@ FileManager::Write()
 		}
 		else
 		{
-			if(!strncasecmp(FileName, "cgi-bin/", 8))
+			if(!strncasecmp(FileName, Config::GetCgiPath() , 8))
 			{
 				FILE *file;
 				char pipeContent[1024];
