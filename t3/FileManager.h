@@ -23,7 +23,7 @@ class FileManager
 		FileManager(char *, int*);
 		FileManager(const char *, int*);
 		~FileManager();
-		bool Open();
+		bool Open(MimeTableEntry *&);
 		void Write();
 		int GetParameters(Parameter **, char *);
    		static char * GetExtension(const char *);
