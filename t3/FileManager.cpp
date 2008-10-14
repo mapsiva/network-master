@@ -1,3 +1,14 @@
+/** \file FileManager.cpp
+ * \brief Arquivo de difinução da classe FileManager.
+ *
+ * Trabalho 3 - Redes de Computadores - Mestrado 2008
+ * 
+ * Servidor HTTP
+ * 
+ * Márcio Aparecido Inácio da Silva
+ * Maxwell Sampaio dos Santos.
+ */
+
 #include "Util.h"
 #include "FileManager.h"
 #include "Config.h"
@@ -5,7 +16,7 @@
 #include <fcntl.h>
 #include <dirent.h>
 
-		 
+ 
 bool FileManager::FileExist()
 {
 	return Handle;
@@ -68,6 +79,17 @@ FileManager::HeaderAccept(char * mime)
 	write (*Ssock, buf, strlen (buf));
 }
 
+void 
+FileManager::HeaderNotFound()
+{
+	sprintf(buf, "HTTP/1.1 404 File Not Found\r\nServer: %s\r\nContent-Type: text/plain\r\n\r\n", Config::GetServerType());
+
+	write (*Ssock, buf, strlen (buf));
+	
+	sprintf(buf,"\r\n\t\r\n\t\t404 Not Found\r\n\t\r\n\t\r\n\t\tNot Found\r\n\t\tThe request URL /%s was not found on this server.\r\n\t\t\r\n\t\t%s\r\n\t\r\n",FileName,Config::GetServerType());
+	write (*Ssock, buf, strlen(buf));
+}
+
 inline char * 
 FileManager::GetQueryString()
 {
@@ -89,12 +111,7 @@ inline char * FileManager::GetScript()
 	
 	return script;
 }
-void 
-FileManager::FileNotFound()
-{
-	sprintf(buf,"<html>\r\n\t<head>\r\n\t\t<title>404 Not Found</title>\r\n\t</head>\r\n\t<body>\r\n\t\t<h1>Not Found</h1>\r\n\t\t<p>The request URL /%s was not found on this server.</p>\r\n\t\t<hr>\r\n\t\t<address>%s</address>\r\n\t</body>\r\n</html>",FileName,Config::GetServerType());
-	write (*Ssock, buf, strlen(buf));
-}
+
 
 void 
 FileManager::Write()
@@ -207,7 +224,7 @@ FileManager::Write()
 					printf("Error executing test\n");
 			}
 			else
-				FileNotFound();
+				HeaderNotFound();
 		}
 		//error page load here
 	}
