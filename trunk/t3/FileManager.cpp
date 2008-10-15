@@ -38,6 +38,12 @@ FileManager::FileManager(const char *file, int *s)
 }
 FileManager::~FileManager(){}
 
+void FileManager::Redirect()
+{
+	sprintf(buf, "HTTP/1.0 301 Moved Permanently\r\nServer: %s\r\nLocation: /%s/\r\nContent-Type: %s\r\n\r\n%s", Config::GetServerType(), FileName, "text/html", "Not Found");
+	write(*Ssock, buf, strlen(buf));	
+}
+
 bool 
 FileManager::Open(MimeTableEntry *&_mte)
 {
@@ -112,20 +118,26 @@ FileManager::HeaderNotFound()
 inline char * 
 FileManager::GetQueryString()
 {
-	char * url = new char[1024], *query;
-	strcat (url, "QUERY_STRING=");
+	char * url = new char[MAX_SIZE_BUF], *query;
+	strcpy (url, "QUERY_STRING=");
 	query = strtok(FileName, "?");
+	
 	query = strtok(NULL, "?");
-	strcat (url, query);
+	if (query)
+		strcat (url, query);
+	else
+		strcat(url, "");
+	
 	return url;
 }
 
 inline char * FileManager::GetScript()
 {	
-	char * script;
+	char * script = new char[MAX_SIZE_BUF];
 	
 	script = strtok(FileName, "?");
-	script = strtok(script, "/");
+	if (script)
+		script = strtok(script, "/");
 	script = strtok(NULL, "/");
 	
 	return script;
@@ -143,16 +155,32 @@ FileManager::Write()
 	if(Open(_m))	//o arquivo FileName ou um DEFAULT_INDEX dentro do diretório apontado por FileName
 	{
 		if (_m)
+		{
 			HeaderAccept((char *)_m->mime);
-		else
-			HeaderAccept((char *)"text/html");
-		
-		while ((m = read(Handle, buf, 1024)) > 0)					
-		{	
-			for(int k=0; k<m; k+=n)
-				n = write (*Ssock, buf, m-k);				
+			while ((m = read(Handle, buf, 1024)) > 0)					
+			{	
+				for(int k=0; k<m; k+=n)
+					n = write (*Ssock, buf, m-k);				
+			}
+			close(Handle);
 		}
-		close(Handle);
+		else
+		{
+			if (FileName[strlen(FileName) -1 ] == '/')
+			{
+				HeaderAccept((char *)"text/html");
+				while ((m = read(Handle, buf, 1024)) > 0)					
+				{	
+					for(int k=0; k<m; k+=n)
+						n = write (*Ssock, buf, m-k);				
+				}
+				close(Handle);
+			}
+			else					
+				Redirect();
+		}
+		
+		
 	}
 	else
 	{
@@ -223,18 +251,21 @@ FileManager::Write()
 		}
 		else
 		{
-			if(!strncasecmp(FileName, Config::GetCgiPath() , 8))
+			if(!strncasecmp(FileName, Config::GetCgiPath() , strlen(Config::GetCgiPath())))
 			{
 				FILE *file;
 				char pipeContent[1024];
-				char scriptName[64]={"cgi-bin/./"};
+				char scriptName[64];
+				strcpy(scriptName, Config::GetCgiPath());
+				strcat(scriptName, "./");
+				
 				putenv( GetQueryString () ); 
 				
-				HeaderAccept((char *)"text/html");
+				HeaderAccept((char *)"text/html");				
 				
-				strcat(scriptName, GetScript ());
+				strcat(scriptName, GetScript ());				
 				
-				if ((file = popen( scriptName , "r"))) 
+				if ((file = popen( scriptName , "r")) > 0) 
 				{
 					while(fgets(pipeContent, sizeof(pipeContent), file))
 						write (*Ssock, pipeContent,  strlen(pipeContent));		
@@ -242,7 +273,7 @@ FileManager::Write()
 					pclose(file);
 				}
 				else
-					printf("Error executing test\n");
+					HeaderNotFound();
 			}
 			else
 				HeaderNotFound();

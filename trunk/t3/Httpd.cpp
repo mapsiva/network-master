@@ -83,19 +83,17 @@ void Httpd::Run()
 		ssock = accept(msock, (struct sockaddr *)&fsin,(socklen_t *) &alen);
 		if (ssock  < 0)
 		    perror_exit("Error Accept: ");
-		printf("Client Conected.\n");
 		char *queryString;
 		char bc[1024];	
 	    read(ssock, bc, sizeof(bc));
 	    queryString =  strtok (bc, " ");
     	queryString =  strtok (NULL, " ");
-    	//printf("%s\n", queryString);
+    	
 		FileManager *f = new FileManager(queryString, &ssock);    
 		
 		//Verificando o tipo de funcionamento do Servidor HTTP 
 		if (_modo == _HTTP_PROCESS)
-		{
-			
+		{			
 			ppid = fork();
 			if (ppid == -1)
 				perror_exit("Error Process:");

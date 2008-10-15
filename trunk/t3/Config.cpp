@@ -33,6 +33,8 @@ Config::Config()
 					//Verificando se o usuário inseriu o '/' no fim
 					if (DOCUMENT_ROOT[strlen(DOCUMENT_ROOT)-1] != '/')
 						strcat(DOCUMENT_ROOT,"/");
+						
+					DOCUMENT_ROOT[strlen(DOCUMENT_ROOT)] = '\0';
 				}
 				else if (!strncasecmp(aux, "DEFAULT_INDEX", 12))
 				{
@@ -52,6 +54,7 @@ Config::Config()
 					//Verificando se o usuário inseriu o '/' no fim
 					if (CGI_PATH[strlen(CGI_PATH)-1] != '/')
 						strcat(CGI_PATH,"/");
+					CGI_PATH[strlen(CGI_PATH)] = '\0';
 				}				
 				else if (!strncasecmp(aux, "DEBUG_MODE", 9))
 				{

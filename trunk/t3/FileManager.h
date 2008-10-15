@@ -29,7 +29,7 @@ class FileManager
    		static char * GetExtension(const char *);
    		inline char * GetQueryString();
    		inline char * GetScript();
-   		
+   		void Redirect();
 		char* strmcpy(char *dest, const char *src, int n);
 		void HeaderAccept(char *);
 		void HeaderNotFound();
