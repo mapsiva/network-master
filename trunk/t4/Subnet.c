@@ -1104,6 +1104,226 @@ void * update_table(void *p)
 	return NULL;
 }
 /* */
+int sub_route_show( void *arg )
+{
+		
+	return 0;
+}
+
+/* */
+int sub_route_add( void *arg )
+{
+	if (!arg)
+		return 0;
+	int tam;
+	
+	char *aux1 = NULL;
+	char *aux2 = NULL;
+	DWORD *end_ip;
+	DWORD *mask;
+	DWORD *gateway;
+	
+	char *b = (char *)arg;
+	
+	//Capturando os parâmetros passados juntamente com o route add
+	tam = strlen(b);
+	b[tam-1] = ' ';
+	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o route*/
+	aux2 = strtok_r(NULL," ", &aux1);	/*Desconsidera o add*/
+	/*Capturando o end. IP de destino*/
+	if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+	{
+		if (!is_ip ((CHAR_T *)aux2))
+		{
+			printf("Incorret Target IP Address.");
+			return 0;
+		}
+		
+		end_ip = to_ip_byte((CHAR_T *)aux2);
+		
+		/*Capturando a mascara de subrede*/
+		if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+		{
+			if (!is_ip ((CHAR_T *)aux2))
+			{
+				printf("Incorret MASK Address.");
+				return 0;
+			}
+			
+			mask = to_ip_byte((CHAR_T *)aux2);
+			
+			/*Capturando o end. IP do Gateway*/
+			if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+			{
+				if (!is_ip ((CHAR_T *)aux2))
+				{
+					printf("Incorret Gateway IP Address.");
+					return 0;
+				}
+				
+				gateway = to_ip_byte((CHAR_T *)aux2);
+				
+				//TODO falta chamar a função responsável por adicionar uma entrada na tabela de roteamento
+				
+				return 1;
+			}
+			else				
+				printf("Sintaxe Correct is: route add [Target] [Netmask] [Gateway]");
+		}
+		else				
+			printf("Sintaxe Correct is: route add [Target] [Netmask] [Gateway]");
+	}
+	else				
+		printf("Sintaxe Correct is: route add [Target] [Netmask] [Gateway]");
+	
+	return 0;
+}
+
+/* */
+int sub_route_del( void *arg )
+{
+	if (!arg)
+		return 0;
+	int tam;
+	
+	char *aux1 = NULL;
+	char *aux2 = NULL;
+	DWORD *end_ip;
+	DWORD *mask;
+	DWORD *gateway;
+	
+	char *b = (char *)arg;
+	
+	//Capturando os parâmetros passados juntamente com o route del
+	tam = strlen(b);
+	b[tam-1] = ' ';
+	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o route*/
+	aux2 = strtok_r(NULL," ", &aux1);	/*Desconsidera o del*/
+	/*Capturando o end. IP de destino*/
+	if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+	{
+		if (!is_ip ((CHAR_T *)aux2))
+		{
+			printf("Incorret Target IP Address.");
+			return 0;
+		}
+		
+		end_ip = to_ip_byte((CHAR_T *)aux2);
+		
+		/*Capturando a mascara de subrede*/
+		if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+		{
+			if (!is_ip ((CHAR_T *)aux2))
+			{
+				printf("Incorret MASK Address.");
+				return 0;
+			}
+			
+			mask = to_ip_byte((CHAR_T *)aux2);
+			
+			/*Capturando o end. IP do Gateway*/
+			if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+			{
+				if (!is_ip ((CHAR_T *)aux2))
+				{
+					printf("Incorret Gateway IP Address.");
+					return 0;
+				}
+				
+				gateway = to_ip_byte((CHAR_T *)aux2);
+				
+				//TODO falta chamar a função responsável por remover uma entrada na tabela de roteamento
+				
+				return 1;
+			}
+			else				
+				printf("Sintaxe Correct is: route del [Target] [Netmask] [Gateway]");
+		}
+		else				
+			printf("Sintaxe Correct is: route del [Target] [Netmask] [Gateway]");
+	}
+	else				
+		printf("Sintaxe Correct is: route del [Target] [Netmask] [Gateway]");
+	
+	return 0;
+
+}
+
+/* */
+int sub_traceroute( void *arg )
+{
+	if (!arg)
+		return 0;
+	int tam;
+	
+	char *aux1 = NULL;
+	char *aux2 = NULL;
+	DWORD *end_ip;
+	
+	char *b = (char *)arg;
+	
+	//Capturando os parâmetros passados juntamente com o traceroute
+	tam = strlen(b);
+	b[tam-1] = ' ';
+	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o traceroute*/
+	/*Capturando o end. IP de destino*/
+	if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+	{
+		if (!is_ip ((CHAR_T *)aux2))
+		{
+			printf("Incorret Target IP Address.");
+			return 0;
+		}
+		
+		end_ip = to_ip_byte((CHAR_T *)aux2);
+		
+		//TODO falta chamar a função responsável pelo traceroute
+		
+		return 1;
+	}
+	else
+		printf("Sintaxe Correct is: traceroute [Target]");
+	return 0;
+}
+
+/* */
+int sub_ping( void *arg )
+{
+	if (!arg)
+		return 0;
+	int tam;
+	
+	char *aux1 = NULL;
+	char *aux2 = NULL;
+	DWORD *end_ip;
+	
+	char *b = (char *)arg;
+	
+	//Capturando os parâmetros passados juntamente com o ping
+	tam = strlen(b);
+	b[tam-1] = ' ';
+	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o ping*/
+	/*Capturando o end. IP de destino*/
+	if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+	{
+		if (!is_ip ((CHAR_T *)aux2))
+		{
+			printf("Incorret Target IP Address.");
+			return 0;
+		}
+		
+		end_ip = to_ip_byte((CHAR_T *)aux2);
+		
+		//TODO falta chamar a função responsável pelo ping
+		
+		return 1;
+	}
+	else
+		printf("Sintaxe Correct is: ping [Target]");
+	return 0;
+}
+
+/* */
 int main(int argc, char *argv[])
 {
 	pthread_t tid;
@@ -1182,6 +1402,16 @@ int main(int argc, char *argv[])
 			exit(0);
 		else if (!strncasecmp(buf, "SEND", 4))
 			sub_send_trace(buf);
+		else if (!strncasecmp(buf, "ROUTE SHOW", 10))
+			sub_route_show(buf);
+		else if (!strncasecmp(buf, "ROUTE ADD", 9))
+			sub_route_add(buf);
+		else if (!strncasecmp(buf, "ROUTE DEL", 9))
+			sub_route_add(buf);
+		else if (!strncasecmp(buf, "PING", 4))
+			sub_ping(buf);
+		else if (!strncasecmp(buf, "TRACEROUTE", 10))
+			sub_traceroute(buf);
 		else if (!strncasecmp(buf,"\n",1))
 		{}
 		else
