@@ -210,4 +210,184 @@ char * get_precedence_name(SWORD service)
 	return text;
 }
 
+/*
+* @param IP Ip da maquina
+* @param MAC mac da maquina
+* @param TTL tempo de vida da entrada
+* 
+* @return ArpTableEntry* retorna um ponteiro para a entrada criada
+* 
+* @since           2.0
+*/
+
+
+RouteTableEntry * BuildRouteTableEntry( CHAR_T* TARGET, CHAR_T* GATEWAY , CHAR_T* MASK, BYTE interface,  int TTL)
+{
+	 RouteTableEntry * _entry =  (RouteTableEntry *) malloc(sizeof(RouteTableEntry));
+	 
+	 _entry->TARGET =  	(WORD *)to_ip_byte ( TARGET );
+	 _entry->MASK = 	(WORD *)to_ip_byte ( MASK );
+	 _entry->GATEWAY = 	(WORD *)to_ip_byte ( GATEWAY );
+	 _entry->interface = interface;
+	 _entry->TTL = TTL;
+	 _entry->next = NULL;
+	 return _entry;
+}
+
+/*
+* @param void
+* @since           2.0
+*/
+
+RouteTable *
+BuildRouteTable()
+{
+	 RouteTable * _table =  (RouteTable *) malloc(sizeof(RouteTable));
+     
+     _table->list = NULL;
+     
+     _table->length = 0;
+     
+     return _table;
+}
+/* Funcao que imprime a tabela de Roteamento na tela
+ * 
+ * @param void
+ * @return void
+ */
+void DisplayRouteTable (RouteTable * table)
+{
+	RouteTableEntry *_entry = table->list;
+	printf ("Destino\t\t\t Gateway\t\t Máscara\t\t Interface\t TTL\n");
+	while (_entry)
+	{
+		printf ("%s\t\t\t %s\t\t %s\t\t %d\t %d\n", format_address((DWORD)*(_entry->TARGET)), 
+											 format_address((DWORD)*(_entry->GATEWAY)),
+											 format_address((DWORD)*(_entry->MASK)), 
+											 (int)_entry->interface,
+											 _entry->TTL);
+		
+		_entry = _entry->next;
+	}
+	
+}
+
+
+/*
+* Busca um elemento na tabela de Roteamento baseado no valor do IP
+* @param table ponteiro para a tabela de Roteamento
+* @param entry uma entrada da tabela de roteamento que se deseja encontrar
+* @param current flag que indica para funcao retornar o elemento corrente (1) na busca ou seu anterior(0)
+*
+* @return NULL ou uma entrada valida na tabela de Roteamento
+*
+* @since           2.0
+*/
+RouteTableEntry *
+FindRouteTableEntry( RouteTable * table, RouteTableEntry * entry, int current )
+{
+	RouteTableEntry *_entry = table->list;
+	
+	while ( _entry )
+	{
+		
+		if(current && *(_entry->TARGET) == *(entry->TARGET))
+			break;
+		else if(!current && _entry->next && *(_entry->next->TARGET) == *(entry->TARGET))
+			break;
+		else if(!current && *(table->list->TARGET) == *(entry->TARGET))	
+			break;
+		_entry = _entry->next;
+	}
+	return _entry;
+	
+}
+
+/*
+* @param table ponteiro para a tabela de Roteamento
+* @param entry uma entrada da tabela de roteamento que se deseja adicionar
+*
+* @return void
+*
+* @since           2.0
+*/
+
+void AddRouteTableEntry( RouteTable * table, RouteTableEntry * entry)
+{
+	RouteTableEntry *_entry;
+	
+	if( !(_entry = FindRouteTableEntry (table, entry ,1)))
+	{
+		entry->next = table->list;
+		
+		table->list = entry;
+		
+		table->length ++;
+	}
+	else
+		_entry->TTL = entry->TTL;
+}
+
+/*
+* Remove um elemento da tabela de Roteamento
+*
+* @param table ponteiro para a tabela de Roteamento
+* @param entry uma entrada da tabela de roteamento que se deseja remover
+*
+* @return NULL ou uma entrada valida na tabela de Roteamento
+*
+* @since           2.0
+*/
+
+RouteTableEntry * 
+RemoveRouteTableEntry( RouteTable * table, RouteTableEntry * entry )
+{
+	RouteTableEntry *_entry = NULL, *_remove = NULL;
+	
+	if(!table->length)
+		return NULL;		
+	
+	if( (_entry = FindRouteTableEntry (table, entry, 0 )))
+	{
+		if(_entry == table->list)
+		{
+			_remove = table->list; 
+			table->list = table->list->next;
+		}
+		else
+		{	
+			_remove = _entry->next;
+			_entry->next = _remove->next;
+		}
+		table->length --;		
+	}
+	
+	return _remove;
+}
+
+/*
+* Destrói a tabela de Roteamento
+* @param table ponteiro para a tabela de Roteamento
+*
+* @return void
+*
+* @since           2.0
+*/
+void 
+FlushRouteTable (RouteTable * table)
+{
+    RouteTableEntry *_remove,  *_entry = table->list;
+    
+    while (_entry)
+    {
+        _remove = _entry;
+        
+        _entry = _remove->next;
+        
+        free (_remove);
+    }
+    
+    table->length = 0;
+}
+
 #endif 
