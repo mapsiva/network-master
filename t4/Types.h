@@ -178,7 +178,7 @@ typedef struct {
     unsigned	pkt_rx;			/* Number of packets received	*/
     NET_HOSTS	hosts[MAX_HOSTS];	/* Hosts in the same network	*/
     BYTE	nhosts;			/* Number of hosts in the net	*/
-    BYTE	up;			/* Interface up or down		*/
+    BYTE	up;				/* Interface up or down		*/
     BYTE	net;			/* Simul. network number	*/
 } INTERFACE;
 

@@ -103,6 +103,16 @@ int sub_arp_res( void* );
 
 int sub_arp_add( void* );
 
+int sub_route_show( void* );
+
+int sub_route_add( void* );
+
+int sub_route_del( void* );
+
+int sub_traceroute( void* );
+
+int sub_ping( void* );
+
 int sub_arp( char* );
 
 int sub_get_parameters( char**, char*);
