@@ -18,7 +18,7 @@ Config::Config()
 	
 	cfg_file = fopen(cfg_file_name, "r");
 	if (!cfg_file)
-		perror_exit("Error Config File");
+		printf("Warning: Config file not found");
 	else
 	{
 		while (fgets(line, sizeof(line), cfg_file))

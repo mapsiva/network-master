@@ -70,21 +70,6 @@ Mime::SearchMimeType(MimeTableEntry* k, const char* ext)
 		k++;
 	}
 	return NULL;
-	
-//	char aux[64];
-//	if(!ext)
-//		strcpy(aux,"xxx");
-//	else
-//		strcpy(aux, ext);
-//		
-//	while (k->Extension)
-//    {
-//		if (!strcasecmp((const char *)k->Extension, (const char*)aux))
-//			return k;
-//		k++;
-//	}
-//	
-//	return SearchMimeType(k, "xxx");
 }
 
 Mime*
