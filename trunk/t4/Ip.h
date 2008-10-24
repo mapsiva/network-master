@@ -49,4 +49,68 @@ ip_view_flags ( IP_HEADER * );
 int 
 ip_is_broadcast(WORD *) ;
 
+
+/*
+* Entrada da tabela de Roteamnto com seus respectivos campos
+*/
+typedef struct tRouteTableEntry
+{
+    WORD *TARGET;
+    WORD *GATEWAY;
+    WORD *MASK;
+    BYTE interface;
+    int TTL;    
+    struct tRouteTableEntry* next;
+}RouteTableEntry;
+
+/*
+*  tabela de Roteamnto, estrututa de controle para a tabela
+*/
+typedef struct
+{
+    int length;
+    struct tRouteTableEntry *list ;
+}RouteTable;
+
+/*
+* Busca uma entrada na tabela de Roteamnto, caso sucesso retorna a entrada, caso contrário retorna NULL
+*/
+RouteTableEntry * 
+FindRouteTableEntry( RouteTable * table, RouteTableEntry * entry, int current);
+
+/*
+*constrói uma entrada para a tabela de Roteamento
+*/
+RouteTableEntry * 
+BuildRouteTableEntry( CHAR_T*, CHAR_T* , CHAR_T*, BYTE,  int);
+
+/*
+*Adiciona uma entrada na tabela de Roteamento
+*/
+void  
+AddRouteTableEntry( RouteTable * table, RouteTableEntry * entry);
+
+/*
+*Remove uma entrada da tabela de Roteamento
+*/
+RouteTableEntry *
+RemoveRouteTableEntry( RouteTable * table, RouteTableEntry * entry );
+
+/*
+*Instancia uma tabela de Roteamento
+*/
+RouteTable * 
+BuildRouteTable();
+
+/*
+*Imprime toda a tabela de Roteamento na tela
+*/
+void 
+DisplayRouteTable (RouteTable * table);
+
+/*
+* Destrói uma tabela de Roteamento
+*/
+void 
+FlushRouteTable (RouteTable * table);
 #endif 
