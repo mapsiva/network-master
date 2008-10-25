@@ -52,4 +52,16 @@ to_ip_byte( CHAR_T * );
 CHAR_T*
 format_mac_address( DWORD );
 
+unsigned 
+getBroadcast(unsigned, unsigned);
+
+void 
+str2eth(char *, BYTE[]);
+
+char*
+ip2str(char *, unsigned);
+
+int 
+is_netmask(char*);
+
 #endif 
