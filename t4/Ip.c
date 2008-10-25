@@ -258,14 +258,15 @@ BuildRouteTable()
 void DisplayRouteTable (RouteTable * table)
 {
 	RouteTableEntry *_entry = table->list;
-	printf ("Destino\t\t\t Gateway\t\t Máscara\t\t Interface\t TTL\n");
+	printf ("\nTarget\t\t Gateway\t  Netmask\t   Interface\t TTL\n");
 	while (_entry)
 	{
-		printf ("%s\t\t\t %s\t\t %s\t\t %d\t %d\n", format_address((DWORD)*(_entry->TARGET)), 
-											 format_address((DWORD)*(_entry->GATEWAY)),
-											 format_address((DWORD)*(_entry->MASK)), 
-											 (int)_entry->interface,
-											 _entry->TTL);
+		printf ("%-16s %-16s %-16s %-10d\t %d\n", 
+				format_address((DWORD)*(_entry->TARGET)), 
+				format_address((DWORD)*(_entry->GATEWAY)),
+				format_address((DWORD)*(_entry->MASK)), 
+				(int)_entry->interface,
+				_entry->TTL);
 		
 		_entry = _entry->next;
 	}

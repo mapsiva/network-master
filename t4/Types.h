@@ -168,18 +168,18 @@ typedef struct {
 
 /* */
 typedef struct {
-    BYTE	interface;		/* Interface number		*/
-    BYTE	mac[6];			/* MAC address			*/
-    SWORD	mtu;			/* MTU value			*/
-    unsigned	ip;			/* IP address			*/
-    unsigned	mask;			/* IP network mask		*/
-    unsigned    ip_bcast;		/* IP broadcast address		*/
-    unsigned	pkt_tx;			/* Number of packets transmitted*/
-    unsigned	pkt_rx;			/* Number of packets received	*/
+    BYTE	interface;				/* Interface number		*/
+    BYTE	mac[6];					/* MAC address			*/
+    SWORD	mtu;					/* MTU value			*/
+    unsigned	ip;					/* IP address			*/
+    unsigned	mask;				/* IP network mask		*/
+    unsigned    ip_bcast;			/* IP broadcast address		*/
+    unsigned	pkt_tx;				/* Number of packets transmitted*/
+    unsigned	pkt_rx;				/* Number of packets received	*/
     NET_HOSTS	hosts[MAX_HOSTS];	/* Hosts in the same network	*/
-    BYTE	nhosts;			/* Number of hosts in the net	*/
-    BYTE	up;				/* Interface up or down		*/
-    BYTE	net;			/* Simul. network number	*/
+    BYTE	nhosts;					/* Number of hosts in the net	*/
+    BYTE	up;						/* Interface up or down		*/
+    BYTE	net;					/* Simul. network number	*/
 } INTERFACE;
 
 /* Definitions for XNOOP */

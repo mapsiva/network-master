@@ -103,8 +103,6 @@ int sub_arp_res( void* );
 
 int sub_arp_add( void* );
 
-int sub_route_show( void* );
-
 int sub_route_add( void* );
 
 int sub_route_del( void* );
@@ -122,5 +120,7 @@ int sub_send_trace(char* b);
 void control_xnoop();
 
 void buildArpHeader (DWORD *, WORD , WORD );
+
+BYTE Route2Interface(CHAR_T*, CHAR_T*);
 
 #endif 

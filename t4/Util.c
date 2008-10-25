@@ -203,4 +203,77 @@ format_mac_address(DWORD  address)
     return e_mac;
 }
 
+/* Descobre endereço de broadcast baseado no endereço IP e Mascara passados à função
+ * @param ip End. IP no formato decimal
+ * @param mask Netmask no formato decimal
+ * 
+ * @since           2.0
+ */
+unsigned getBroadcast(unsigned ip, unsigned mask)
+{
+	unsigned broad;
+	
+    broad = ip | (~mask);
+    //printf("\nMask->%d\n",mask);
+    //printf("\nNot Mask->%d\n",n_mask);
+    //printf("\nIP->%d\n",ip);
+    //printf("\nBroad->%d\n",broad);
+    return broad;
+}
+
+/* Checa se um endereço ip pode ser uma máscara de subrede
+ * @param ip End. IP no formato decimal com pontos
+ * @param mask Netmask no formato decimal
+ * 
+ * @since           2.0
+ */
+int is_netmask(char *ip)
+{
+	int aux, mask = 1;
+    char *p;
+    
+	p = strtok(ip, ".");
+	while (p && mask)
+	{
+		aux = atoi(p);
+		if (aux != 255 && aux != 254 && aux != 252 && aux != 248 && aux != 240 && aux != 224 && aux != 192 && aux != 128 && aux != 0)
+			mask = 0;
+		p = strtok(NULL, ".");
+	}
+	
+    return mask;
+}
+
+/* Converte um endereço MAC no formato de string em um numero hexadecimal que representa o end. MAC
+ * @param s End. MAC no formato de string
+ * @param addr End. MAC no formato hexadecimal convertido
+ * 
+ * @since           2.0
+ */
+void str2eth(char *s, BYTE addr[])
+{
+    int i;
+    char *p;
+    
+    p = strtok(s, ":");
+    for (i = 0; i < 5; i++) {
+		addr[i] = strtol(p, NULL, 16);
+		p = strtok(NULL, ":");
+    }
+    addr[i] = strtol(p, NULL, 16);
+}
+
+/* Converte um endereço IP no formato decimal em um End. IP no formato de string
+ * @param buf End. IP no formato de string convertido
+ * @param addr End. IP no formato decimal
+ * 
+ * @since           2.0
+ */
+char *ip2str(char *buf, unsigned ip)
+{
+    BYTE *pb = (BYTE*)&ip;
+    sprintf(buf, "%d.%d.%d.%d", pb[0], pb[1], pb[2], pb[3]);
+    return buf;
+}
+
 #endif 

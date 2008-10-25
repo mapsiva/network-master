@@ -29,7 +29,39 @@
 #include "Udp.h"
 #include "Icmp.h"
 
-ArpTable *arpTable;
+ArpTable   *arpTable;
+RouteTable *routeTable;
+
+/* Verifica para qual interface deve ser direcionado
+ * @param _t Target Address no formato decimal com pontos
+ * @param _g Gateway Address no formato decimal com pontos
+ * @param _t Netmask Address no formato decimal com pontos
+ * 
+ * @since           2.0
+ */
+BYTE Route2Interface(CHAR_T* _g, CHAR_T* _n)
+{
+	int i, achou = 0;
+	DWORD *_gw = to_ip_byte(_g);
+	DWORD *_nm = to_ip_byte(_n);
+	
+	unsigned subrede = (unsigned)(*_nm) & (unsigned)(*_gw);
+	unsigned aux;
+	
+	for (i=0; i<nifaces && !achou;i++)
+	{
+		aux = ifaces[i].ip & ifaces[i].mask;
+		if (aux == subrede)
+			achou = 1;
+	}
+	
+	i--;
+	
+	if (achou)
+		return (BYTE) i;
+	else
+		return -1;
+}
 
 /*
  * Envia pacotes ARP do tipo type_op e com endereço MAC _dmac e endereço IP _dip 
@@ -180,38 +212,6 @@ void *subnet_send(void *ptr)
     }
 }
 
-/* Converte um endereço MAC no formato de string em um numero hexadecimal que representa o end. MAC
- * @param s End. MAC no formato de string
- * @param addr End. MAC no formato hexadecimal convertido
- * 
- * @since           2.0
- */
-void str2eth(char *s, BYTE addr[])
-{
-    int i;
-    char *p;
-    
-    p = strtok(s, ":");
-    for (i = 0; i < 5; i++) {
-		addr[i] = strtol(p, NULL, 16);
-		p = strtok(NULL, ":");
-    }
-    addr[i] = strtol(p, NULL, 16);
-}
-
-/* Converte um endereço IP no formato decimal em um End. IP no formato de string
- * @param buf End. IP no formato de string convertido
- * @param addr End. IP no formato decimal
- * 
- * @since           2.0
- */
-char *ip2str(char *buf, unsigned ip)
-{
-    BYTE *pb = (BYTE*)&ip;
-    sprintf(buf, "%d.%d.%d.%d", pb[0], pb[1], pb[2], pb[3]);
-    return buf;
-}
-
 /* Lê dados de um arquivo (CFG) que representa a configuração da rede virtual
  * @param fname Nome do arquivo (CFG) de entrada
  * @param port
@@ -228,7 +228,7 @@ void read_net_cfg(char *fname, u_short port, u_short iface)
     
     cfg_file = fopen(fname, "r");
     if (!cfg_file)
-	error_exit("Could not open configuration file: %s\n", fname);
+		error_exit("Could not open configuration file: %s\n", fname);
     p = ifaces[iface].hosts;
     first = 1;
     while (fgets(line, 100, cfg_file)) 
@@ -254,6 +254,17 @@ void read_net_cfg(char *fname, u_short port, u_short iface)
 					ifaces[iface].mtu = atoi(s);
 					s = strtok(NULL, ",");
 					str2eth(s, ifaces[iface].mac);
+					s = strtok(NULL, ",");
+					if (s)
+					{
+						printf("\n%s\n",s);
+						ifaces[iface].ip = inet_addr(s);
+					}
+					s = strtok(NULL, ",");
+					if (s)
+						ifaces[iface].mask = inet_addr(s);
+					
+					ifaces[iface].ip_bcast = getBroadcast(ifaces[iface].ip, ifaces[iface].mask);
 				}
 				ifaces[iface].nhosts++;
 				p++;
@@ -308,7 +319,7 @@ int sub_ifconfig(char *b)
 		{
 			printf("Interface not found.");
 			return 0;
-		}		
+		}
 		
 		/*Capturando o end IP da interface*/
 		if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)	
@@ -317,7 +328,7 @@ int sub_ifconfig(char *b)
 			
 			if (!end_ip)
 			{
-				printf("Incorrect address ip.");
+				printf("Incorrect IP Address.");
 				return 0;
 			}
 			
@@ -326,24 +337,29 @@ int sub_ifconfig(char *b)
 			{
 				end_mask = to_ip_byte((CHAR_T *)aux2);
 				
-				if (!end_mask)
+				if (!end_mask || !is_netmask((char *)aux2))
 				{
-					printf("Incorrect address mask network.");
+					printf("Incorrect Netmask Address.");
 					return 0;
-				}				
+				}
+								
 				ifaces[i].mask = (unsigned) (*end_mask);				
 			}
 			ifaces[i].ip = (unsigned) (*end_ip);
 			
+			//Descobrindo o Endereço de Broadcast
+			ifaces[i].ip_bcast = getBroadcast(ifaces[i].ip, ifaces[i].mask);
+			
+			printf ("\nInterface  IP Address\t    Netmask\t     Broadcast\t      MAC Address\t  MTU\t  UP\n");
 			print_if_info(i);	//Exibir informacoes de apenas uma interface
 		}
 		else
-			printf("Usage:  ifconfig <interface> <IPaddres> <MASKaddress>");
+			printf("Usage: ifconfig <interface> <IP_Addres> <Netmask_Address>");
 	}
 	else
 	{
-		printf("Usage:  ifconfig <interface> <IPaddres> <MASKaddress>");
-		printf("\n\tifconfig [show]");
+		printf("Usage:  ifconfig <interface> <IP_Addres> <Netmask_Address>");
+		printf("\n\tifconfig show");
 	}
 		
 	return 1;
@@ -406,17 +422,21 @@ int sub_if( char* b)
 			}
 			else
 			{
-				printf("Sintaxe Correct is: if <interface> [down|up]");
+				printf("Usage: if <interface> [down|up]");
 				return 0;
 			}
-			
+			printf ("\nInterface  IP Address\t    Netmask\t     Broadcast\t      MAC Address\t  MTU\t  UP\n");
 			print_if_info(i);
 		}
 		else
-			printf("Usage:  if <interface> [down|up]");	
+			printf("Usage: if <interface> [down|up]");	
 	}
 	else
+	{
 		printf("Usage:  if <interface> [down|up]");
+		printf("\n\tifconfig <interface> <IP_Addres> <Netmask_Address>");
+		printf("\n\tifconfig show");
+	}
 	
 	return 1;
 }
@@ -428,21 +448,21 @@ int sub_if( char* b)
  */
 void print_if_info(int id_iface)
 {
-    char ip_s[16], bcast_s[16], mask_s[16];    
-    
-	BYTE *pb;
-	printf("\nif%d\tHWaddr %02X:%02X:%02X:%02X:%02X:%02X\n",
-		   id_iface, ifaces[id_iface].mac[0], ifaces[id_iface].mac[1], ifaces[id_iface].mac[2],
-		   ifaces[id_iface].mac[3], ifaces[id_iface].mac[4], ifaces[id_iface].mac[5]);
-	pb = (BYTE *)&ifaces[id_iface].ip;
-	printf("\tinet addr: %s Bcast: %s Mask: %s\n",
-		   ip2str(ip_s, ifaces[id_iface].ip),
-		   ip2str(bcast_s, ifaces[id_iface].ip_bcast),
-		   ip2str(mask_s, ifaces[id_iface].mask));
-	printf("\t%s MTU: %d\n", ifaces[id_iface].up ? "UP" : "DOWN",
-		   ifaces[id_iface].mtu);
-	printf("\tRX packets: %d TX packet: %d\n",
-		   ifaces[id_iface].pkt_rx, ifaces[id_iface].pkt_tx);
+    char ip_s[16], mask_s[16], broad_s[16];
+	
+	printf ("%-10d %-16s %-16s %-16s %02X:%02X:%02X:%02X:%02X:%02X   %-7d %d\n", 
+			id_iface, 
+			ip2str(ip_s, ifaces[id_iface].ip), 
+			ip2str(mask_s, ifaces[id_iface].mask), 
+			ip2str(broad_s, ifaces[id_iface].ip_bcast), 
+			ifaces[id_iface].mac[0],
+			ifaces[id_iface].mac[1],
+			ifaces[id_iface].mac[2],
+			ifaces[id_iface].mac[3],
+			ifaces[id_iface].mac[4],
+			ifaces[id_iface].mac[5],
+			ifaces[id_iface].mtu, 
+			ifaces[id_iface].up );
 }
 
 /* Responsável por capturar os pacotes transmitidos na rede e 
@@ -834,7 +854,7 @@ int sub_arp_del( void *arg )
 		sem_post(&allow_entry);
 	}
 	else				
-		printf("Sintaxe Correct is: arp [show|ttl|res|add|del] [EndIP] [EndEth] [ttl]");
+		printf("Usage: arp del [EndIP]");
 	return 1;
 }
 
@@ -846,7 +866,7 @@ int sub_arp_add( void * arg )
 	int tam;
 	ArpTableEntry *entry;
 	char *aux1 = NULL, *aux2 = NULL;
-	char * _mac, *_ip;	
+	char * _mac, *_ip;
 	int ttl;
 	char * b = (char *)arg;
 	
@@ -893,13 +913,13 @@ int sub_arp_add( void * arg )
 				return 1;
 			}
 			else				
-			printf("Sintaxe Correct is: arp [show|ttl|res|add|del] [EndIP] [EndEth] [ttl]");
+				printf("Usage: arp add [EndIP] [EndEth] [ttl]");
 		}
 		else				
-		printf("Sintaxe Correct is: arp [show|ttl|res|add|del] [EndIP] [EndEth] [ttl]");
+			printf("Usage: arp add [EndIP] [EndEth] [ttl]");
 	}
 	else				
-		printf("Sintaxe Correct is: arp [show|ttl|res|add|del] [EndIP] [EndEth] [ttl]");
+		printf("Usage: arp add [EndIP] [EndEth] [ttl]");
 	return 0;
 }
 
@@ -921,16 +941,22 @@ int sub_arp( char *b )
 		
 		if (ttl < -1)
 		{
-			printf("Incorret ttl. Just ttl more than -1.");
+			printf("Incorret TTL. Just TTL more than -1.");
 			return 0;
 		}
 		
 		ARP_TTL_DEF = ttl;
 		
-		printf ("ttl updated.");
+		printf ("TTL updated.");
 	}
-	else				
-		printf("Sintaxe Correct is: arp [show|ttl|res|add|del] [EndIP] [EndEth] [ttl]");
+	else
+	{				
+		printf("Usage:  arp add [EndIP] [EndEth] [ttl]");
+		printf("\n\tarp del [EndIP]");
+		printf("\n\tarp res [EndIP]");
+		printf("\n\tarp show");
+		printf("\n\tarp [ttl]");
+	}
 	
 	return 0;
 }
@@ -1006,7 +1032,7 @@ int sub_arp_res( void *arg )
 		
 	}
 	else				
-		printf("Sintaxe Correct is: arp [show|ttl|res|add|del] [EndIP] [EndEth] [ttl]");
+		printf("Usage: arp red [EndIP]");
 	return 1;
 }
 
@@ -1103,26 +1129,17 @@ void * update_table(void *p)
 	}
 	return NULL;
 }
-/* */
-int sub_route_show( void *arg )
-{
-		
-	return 0;
-}
 
 /* */
 int sub_route_add( void *arg )
 {
+	int tam;
+	BYTE _interface;	
+	char *aux1 = NULL, *aux2 = NULL, *_target = NULL, *_gateway = NULL, *_netmask = NULL;
+	RouteTableEntry *entry;
+	
 	if (!arg)
 		return 0;
-	int tam;
-	
-	char *aux1 = NULL;
-	char *aux2 = NULL;
-	DWORD *end_ip;
-	DWORD *mask;
-	DWORD *gateway;
-	
 	char *b = (char *)arg;
 	
 	//Capturando os parâmetros passados juntamente com o route add
@@ -1131,67 +1148,64 @@ int sub_route_add( void *arg )
 	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o route*/
 	aux2 = strtok_r(NULL," ", &aux1);	/*Desconsidera o add*/
 	/*Capturando o end. IP de destino*/
-	if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+	if ((_target = strtok_r(NULL, " ", &aux1)) != NULL)
 	{
-		if (!is_ip ((CHAR_T *)aux2))
+		if (!is_ip ((CHAR_T *)_target))
 		{
 			printf("Incorret Target IP Address.");
 			return 0;
 		}
 		
-		end_ip = to_ip_byte((CHAR_T *)aux2);
-		
 		/*Capturando a mascara de subrede*/
-		if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+		if ((_netmask = strtok_r(NULL, " ", &aux1)) != NULL)
 		{
-			if (!is_ip ((CHAR_T *)aux2))
+			if (!is_ip ((CHAR_T *)_netmask))
 			{
 				printf("Incorret MASK Address.");
 				return 0;
 			}
 			
-			mask = to_ip_byte((CHAR_T *)aux2);
-			
 			/*Capturando o end. IP do Gateway*/
-			if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+			if ((_gateway = strtok_r(NULL, " ", &aux1)) != NULL)
 			{
-				if (!is_ip ((CHAR_T *)aux2))
+				if (!is_ip ((CHAR_T *)_gateway))
 				{
 					printf("Incorret Gateway IP Address.");
 					return 0;
 				}
 				
-				gateway = to_ip_byte((CHAR_T *)aux2);
+				//TODO falta chamar a função responsável por verificar para qual interface tem que ser enviada, por enquanto está como 0 (zero)
 				
-				//TODO falta chamar a função responsável por adicionar uma entrada na tabela de roteamento
-				
+				/* Código para inserção na tabela */
+				//sem_wait(&allow_entry);
+				_interface = Route2Interface((CHAR_T*)_gateway, (CHAR_T*)_netmask);
+				entry = BuildRouteTableEntry((CHAR_T*)_target, (CHAR_T*)_gateway, (CHAR_T*)_netmask, _interface, ARP_TTL_DEF);
+				AddRouteTableEntry (routeTable, entry);
+				//sem_post(&allow_entry);
 				return 1;
 			}
 			else				
-				printf("Sintaxe Correct is: route add [Target] [Netmask] [Gateway]");
+				printf("Usage: route add [Target] [Netmask] [Gateway]");
 		}
 		else				
-			printf("Sintaxe Correct is: route add [Target] [Netmask] [Gateway]");
+			printf("Usage: route add [Target] [Netmask] [Gateway]");
 	}
 	else				
-		printf("Sintaxe Correct is: route add [Target] [Netmask] [Gateway]");
+		printf("Usage: route add [Target] [Netmask] [Gateway]");
 	
 	return 0;
 }
 
 /* */
 int sub_route_del( void *arg )
-{
+{	
+	int tam;
+	BYTE _interface;
+	char *aux1 = NULL, *aux2 = NULL, *_target = NULL, *_gateway = NULL, *_netmask = NULL;
+	RouteTableEntry *entry;
+	
 	if (!arg)
 		return 0;
-	int tam;
-	
-	char *aux1 = NULL;
-	char *aux2 = NULL;
-	DWORD *end_ip;
-	DWORD *mask;
-	DWORD *gateway;
-	
 	char *b = (char *)arg;
 	
 	//Capturando os parâmetros passados juntamente com o route del
@@ -1200,18 +1214,16 @@ int sub_route_del( void *arg )
 	aux2 = strtok_r(b," ", &aux1);	/*Desconsidera o route*/
 	aux2 = strtok_r(NULL," ", &aux1);	/*Desconsidera o del*/
 	/*Capturando o end. IP de destino*/
-	if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+	if ((_target = strtok_r(NULL, " ", &aux1)) != NULL)
 	{
-		if (!is_ip ((CHAR_T *)aux2))
+		if (!is_ip ((CHAR_T *)_target))
 		{
 			printf("Incorret Target IP Address.");
 			return 0;
 		}
 		
-		end_ip = to_ip_byte((CHAR_T *)aux2);
-		
 		/*Capturando a mascara de subrede*/
-		if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+		if ((_netmask = strtok_r(NULL, " ", &aux1)) != NULL)
 		{
 			if (!is_ip ((CHAR_T *)aux2))
 			{
@@ -1219,31 +1231,38 @@ int sub_route_del( void *arg )
 				return 0;
 			}
 			
-			mask = to_ip_byte((CHAR_T *)aux2);
-			
 			/*Capturando o end. IP do Gateway*/
-			if ((aux2 = strtok_r(NULL, " ", &aux1)) != NULL)
+			if ((_gateway = strtok_r(NULL, " ", &aux1)) != NULL)
 			{
-				if (!is_ip ((CHAR_T *)aux2))
+				if (!is_ip ((CHAR_T *)_gateway))
 				{
 					printf("Incorret Gateway IP Address.");
 					return 0;
 				}
 				
-				gateway = to_ip_byte((CHAR_T *)aux2);
+				//TODO falta chamar a função responsável por verificar qual interface tem que ser usada para a remoção por enquanto está sendo usado 0 (zero)
 				
-				//TODO falta chamar a função responsável por remover uma entrada na tabela de roteamento
-				
+				/* Código para remoção na tabela */
+				//sem_wait(&allow_entry);
+				_interface = Route2Interface((CHAR_T*)_gateway, (CHAR_T*)_netmask);
+				entry = BuildRouteTableEntry((CHAR_T*)_target, (CHAR_T*)_gateway, (CHAR_T*)_netmask, _interface, 0);
+				entry = RemoveRouteTableEntry (routeTable, entry);
+				if(entry)
+				{
+					free(entry);
+					DisplayRouteTable(routeTable);
+				}
+				//sem_post(&allow_entry);
 				return 1;
 			}
 			else				
-				printf("Sintaxe Correct is: route del [Target] [Netmask] [Gateway]");
+				printf("Usage: route del [Target] [Netmask] [Gateway]");
 		}
 		else				
-			printf("Sintaxe Correct is: route del [Target] [Netmask] [Gateway]");
+			printf("Usage: route del [Target] [Netmask] [Gateway]");
 	}
 	else				
-		printf("Sintaxe Correct is: route del [Target] [Netmask] [Gateway]");
+		printf("Usage: route del [Target] [Netmask] [Gateway]");
 	
 	return 0;
 
@@ -1282,7 +1301,7 @@ int sub_traceroute( void *arg )
 		return 1;
 	}
 	else
-		printf("Sintaxe Correct is: traceroute [Target]");
+		printf("Usage: traceroute [Target]");
 	return 0;
 }
 
@@ -1319,7 +1338,7 @@ int sub_ping( void *arg )
 		return 1;
 	}
 	else
-		printf("Sintaxe Correct is: ping [Target]");
+		printf("Usage: ping [Target]");
 	return 0;
 }
 
@@ -1330,9 +1349,9 @@ int main(int argc, char *argv[])
 	char buf[MAX_PARAMETERS];
 	int i;
 	
-	/* Construcao da tebala ARP */
-	
-	arpTable = BuildArpTable();
+	/* Construcao das tabelas ARP e ROUTE */	
+	arpTable   = BuildArpTable();
+	routeTable = BuildRouteTable();
 
 	//Ajustando as opções padrões do XNOOP	
 	_xnoop.npkgs = 0;
@@ -1346,7 +1365,7 @@ int main(int argc, char *argv[])
 		parameters[i] = malloc (MAX_SIZE_PARAMETER);
 	
 	if (argc < 3)
-	error_exit("\nUsage: subnet port cfg_file [cfg_files ...]\n");
+		error_exit("\nUsage: subnet <port> <cfg_file> [cfg_files ...]\n");
 	my_port = htons(atoi(argv[1]));
 	nifaces = 0;
 	for (i = 2; i < argc; i++) {
@@ -1391,6 +1410,7 @@ int main(int argc, char *argv[])
 			sub_arp((char *)buf);
 		}
 		else if (!strncasecmp(buf, "IFCONFIG SHOW", 13)) {
+			printf ("\nInterface  IP Address\t    Netmask\t     Broadcast\t      MAC Address\t  MTU\t  UP\n");
 			for (i=0; i<nifaces;i++)
 				print_if_info(i);
 		}
@@ -1403,11 +1423,17 @@ int main(int argc, char *argv[])
 		else if (!strncasecmp(buf, "SEND", 4))
 			sub_send_trace(buf);
 		else if (!strncasecmp(buf, "ROUTE SHOW", 10))
-			sub_route_show(buf);
+			DisplayRouteTable(routeTable);
 		else if (!strncasecmp(buf, "ROUTE ADD", 9))
 			sub_route_add(buf);
 		else if (!strncasecmp(buf, "ROUTE DEL", 9))
 			sub_route_add(buf);
+		else if (!strncasecmp(buf, "ROUTE", 5))
+		{
+			printf("Usage:  route add [Target] [Netmask] [Gateway]");
+			printf("\n\troute del [Target] [Netmask] [Gateway]");
+			printf("\n\troute show");
+		}
 		else if (!strncasecmp(buf, "PING", 4))
 			sub_ping(buf);
 		else if (!strncasecmp(buf, "TRACEROUTE", 10))
@@ -1420,6 +1446,9 @@ int main(int argc, char *argv[])
 	//#######
 	FlushArpTable(arpTable);
 	free(arpTable);
+	
+	FlushRouteTable(routeTable);
+	free(routeTable);
 	//#######
 	
 	return 0;
