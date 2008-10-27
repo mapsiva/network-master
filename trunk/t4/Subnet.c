@@ -223,6 +223,7 @@ void read_net_cfg(char *fname, u_short port, u_short iface)
 {
     FILE *cfg_file;
     char line[100];
+    char aux[100];
     NET_HOSTS *p; 
     int first;
     
@@ -243,26 +244,25 @@ void read_net_cfg(char *fname, u_short port, u_short iface)
 			}
 			else 
 			{
-				s = strtok(line, ",");
+				s = strtok(line, ",");						//Port Number
 				p->port = ntohs(atoi(s));
-				s = strtok(NULL, ",");
+				s = strtok(NULL, ",");						//Real IP Address
 				p->ip   = inet_addr(s);
 				if (p->port == port) {
 					my_ip  = p->ip;
 					ifaces[iface].ip = p->ip;
-					s = strtok(NULL, ",");
+					s = strtok(NULL, ",");					//MTU
 					ifaces[iface].mtu = atoi(s);
-					s = strtok(NULL, ",");
-					str2eth(s, ifaces[iface].mac);
-					s = strtok(NULL, ",");
-					if (s)
-					{
-						printf("\n%s\n",s);
+					s = strtok(NULL, ",");					//MAC Address
+					strcpy(aux, s);
+					if ((s = strtok(NULL, ",")))			//Virtual IP Address
 						ifaces[iface].ip = inet_addr(s);
-					}
-					s = strtok(NULL, ",");
-					if (s)
+					if ((s = strtok(NULL, ",")))			//Virtual Netmask Address
 						ifaces[iface].mask = inet_addr(s);
+					if ((s = strtok(NULL, ",")))			//UP (1) or DOWN (0)
+						ifaces[iface].up = (BYTE)atoi(s);
+					
+					str2eth(aux, ifaces[iface].mac);
 					
 					ifaces[iface].ip_bcast = getBroadcast(ifaces[iface].ip, ifaces[iface].mask);
 				}
