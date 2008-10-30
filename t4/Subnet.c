@@ -1225,7 +1225,7 @@ int sub_route_del( void *arg )
 		/*Capturando a mascara de subrede*/
 		if ((_netmask = strtok_r(NULL, " ", &aux1)) != NULL)
 		{
-			if (!is_ip ((CHAR_T *)aux2))
+			if (!is_ip ((CHAR_T *)_netmask))
 			{
 				printf("Incorret MASK Address.");
 				return 0;
@@ -1427,7 +1427,7 @@ int main(int argc, char *argv[])
 		else if (!strncasecmp(buf, "ROUTE ADD", 9))
 			sub_route_add(buf);
 		else if (!strncasecmp(buf, "ROUTE DEL", 9))
-			sub_route_add(buf);
+			sub_route_del(buf);
 		else if (!strncasecmp(buf, "ROUTE", 5))
 		{
 			printf("Usage:  route add [Target] [Netmask] [Gateway]");
