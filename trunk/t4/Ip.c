@@ -267,6 +267,7 @@ void DisplayRouteTable (RouteTable * table)
 				format_address((DWORD)*(_entry->MASK)), 
 				(int)_entry->interface,
 				_entry->TTL);
+
 		
 		_entry = _entry->next;
 	}
@@ -291,14 +292,18 @@ FindRouteTableEntry( RouteTable * table, RouteTableEntry * entry, int current )
 	
 	while ( _entry )
 	{
-		
-		if(current && *(_entry->TARGET) == *(entry->TARGET))
+		printf("Aqui!\n");
+		if(current && *(_entry->TARGET) == *(entry->TARGET) &&
+				*(_entry->GATEWAY) == *(entry->GATEWAY) && *(_entry->MASK) == *(entry->MASK))
 			break;
-		else if(!current && _entry->next && *(_entry->next->TARGET) == *(entry->TARGET))
+		else if(!current && _entry->next && *(_entry->next->TARGET) == *(entry->TARGET) &&
+				*(_entry->next->GATEWAY) == *(entry->GATEWAY) && *(_entry->next->MASK) == *(entry->MASK))
 			break;
-		else if(!current && *(table->list->TARGET) == *(entry->TARGET))	
+		else if(!current && *(table->list->TARGET) == *(entry->TARGET) &&
+				*(table->list->GATEWAY) == *(entry->GATEWAY) && *(table->list->MASK) == *(entry->MASK))	
 			break;
 		_entry = _entry->next;
+		printf("Aqui2!\n");
 	}
 	return _entry;
 	
