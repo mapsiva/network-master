@@ -355,10 +355,19 @@ RemoveRouteTableEntry( RouteTable * table, RouteTableEntry * entry )
 	
 	if( (_entry = FindRouteTableEntry (table, entry, 0 )))
 	{
-		if(_entry == table->list)
+		if(_entry == table->list
+			&& *(entry->TARGET) == *(_entry->TARGET) 
+			&& *(entry->GATEWAY) == *(_entry->GATEWAY) 
+			&& *(entry->MASK) == *(_entry->MASK) 
+		)	//Remover o primeiro elemento da lista
 		{
 			_remove = table->list; 
-			table->list = table->list->next;
+			table->list = (table->list)->next;
+		}
+		else if (_entry == table->list)	//Remover segundo elemento da lista
+		{
+			_remove = _entry->next; 
+			(table->list)->next = _remove->next;
 		}
 		else
 		{	
