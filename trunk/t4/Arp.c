@@ -276,10 +276,15 @@ RemoveArpTableEntry( ArpTable * table, ArpTableEntry * entry )
 	
 	if( (_entry = FindArpTableEntry (table, entry, 0 )))
 	{
-		if(_entry == table->list)
+		if(_entry == table->list && *(entry->IP) == *(_entry->IP))  //Remover o primeiro elemento da lista
 		{
 			_remove = table->list; 
-			table->list = table->list->next;
+			table->list = (table->list)->next;
+		}
+		else if (_entry == table->list)	//Remover segundo elemento da lista
+		{
+			_remove = _entry->next; 
+			(table->list)->next = _remove->next;
 		}
 		else
 		{	

@@ -41,26 +41,22 @@ RouteTable *routeTable;
  */
 BYTE Route2Interface(CHAR_T* _g, CHAR_T* _n)
 {
-	int i, achou = 0;
+	int i;
 	DWORD *_gw = to_ip_byte(_g);
 	DWORD *_nm = to_ip_byte(_n);
 	
 	unsigned subrede = (unsigned)(*_nm) & (unsigned)(*_gw);
 	unsigned aux;
-	
-	for (i=0; i<nifaces && !achou;i++)
+
+	for (i=0; i<nifaces;i++)
 	{
 		aux = ifaces[i].ip & ifaces[i].mask;
+		printf("INTERFACE: \n%u\n",aux);
+		printf("NOVO: \n%u\n",subrede);
 		if (aux == subrede)
-			achou = 1;
+			return i;
 	}
-	
-	i--;
-	
-	if (achou)
-		return (BYTE) i;
-	else
-		return -1;
+	return -1;
 }
 
 /*
