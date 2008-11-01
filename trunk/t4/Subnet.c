@@ -51,8 +51,7 @@ BYTE Route2Interface(CHAR_T* _g, CHAR_T* _n)
 	for (i=0; i<nifaces;i++)
 	{
 		aux = ifaces[i].ip & ifaces[i].mask;
-		printf("INTERFACE: \n%u\n",aux);
-		printf("NOVO: \n%u\n",subrede);
+		
 		if (aux == subrede)
 			return i;
 	}
@@ -73,24 +72,28 @@ void send_arp_pkt (DWORD *_dmac, WORD _dip, WORD type_op )
 	ETHERNET_HEADER * eth;
 	
 	eth =  malloc(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER));
-	
-	eth->net = ifaces[0].net;
-	memcpy(&eth->sender[0], ifaces[0].mac, MAC_ADDR_LEN);
-	memcpy(&eth->receiver[0], _dmac, MAC_ADDR_LEN);
-	eth->type = htons(ARP);
-	
-	arp = ( ARP_HEADER * )(eth + 1);
-	
-	arp->protocol_type = htons(IP);
-	arp->hardware_len = MAC_ADDR_LEN;
-	arp->protocol_len = IP_ADDR_LEN;
-	arp->operation = htons(type_op);
-	memcpy(&arp->sender_hardware_addr[0], ifaces[0].mac, MAC_ADDR_LEN);
-	arp->sender_ip_addr = ifaces[0].ip;
-	memcpy(&arp->target_hardware_addr[0], _dmac, MAC_ADDR_LEN);
-	arp->target_ip_addr = _dip;
-	
-	send_pkt(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER), 0, &arp->target_hardware_addr[0], ARP, (BYTE*)eth);	
+	int k ;
+	for (k = 0; k < nifaces && ifaces[k].up; k++)
+	{
+		
+		eth->net = ifaces[k].net;
+		memcpy(&eth->sender[0], ifaces[k].mac, MAC_ADDR_LEN);
+		memcpy(&eth->receiver[0], _dmac, MAC_ADDR_LEN);
+		eth->type = htons(ARP);
+		
+		arp = ( ARP_HEADER * )(eth + 1);
+		
+		arp->protocol_type = htons(IP);
+		arp->hardware_len = MAC_ADDR_LEN;
+		arp->protocol_len = IP_ADDR_LEN;
+		arp->operation = htons(type_op);
+		memcpy(&arp->sender_hardware_addr[0], ifaces[k].mac, MAC_ADDR_LEN);
+		arp->sender_ip_addr = ifaces[k].ip;
+		memcpy(&arp->target_hardware_addr[0], _dmac, MAC_ADDR_LEN);
+		arp->target_ip_addr = _dip;
+		
+		send_pkt(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER), 0, &arp->target_hardware_addr[0], ARP, (BYTE*)eth);	
+	}
 }
 
 /*
@@ -492,57 +495,68 @@ void *subnet_rcv(void *ptr)
 		if (rv < 0) 
 			error_exit("error - recvfrom: %s\n", strerror(errno));
 		riface = net2iface[eth_h->net];
+		
+		
 		if (riface < 0) 
 			error_exit("Packet received from unknown interface\n");
 		else 
 		{
 			qtd_pkgs++;
-			if (!memcmp(eth_h->receiver, broad_eth,6) || !memcmp(eth_h->receiver, ifaces[0].mac, 6))
-			{
-				ifaces[riface].pkt_rx++; /* The packet must be processed */
-				if (ntohs(eth_h->type) == ARP)
+			
+				if (!memcmp(eth_h->receiver, broad_eth,6) || !memcmp(eth_h->receiver, ifaces[riface].mac, 6))
 				{
-					arp_h = (ARP_HEADER *) (eth_h + 1);
-					if (ntohs(arp_h->operation) == ARP_REPLY)
+					ifaces[riface].pkt_rx++; /* The packet must be processed */
+					if (ntohs(eth_h->type) == ARP)
 					{
-						CHAR_T * _ip = format_address(arp_h->sender_ip_addr);
-						CHAR_T * _mac = malloc(17);
-						sprintf(
-							(char*)_mac,
-							"%02X:%02X:%02X:%02X:%02X:%02X",
-							arp_h->sender_hardware_addr[0], 
-							arp_h->sender_hardware_addr[1], 
-							arp_h->sender_hardware_addr[2], 
-							arp_h->sender_hardware_addr[3], 
-							arp_h->sender_hardware_addr[4], 
-							arp_h->sender_hardware_addr[5]
-						);						
-							
-						char *cmd_arp_add = malloc(45);
-						sprintf(
-							cmd_arp_add, 
-							"arp add %s %s %d\n",
-							(char*)_ip,
-							(char*)_mac,
-							ARP_TTL_DEF
-						);
-						
-						sub_arp_add((void *)cmd_arp_add);
-						
-						if (arp_resolving)
+						arp_h = (ARP_HEADER *) (eth_h + 1);
+						if (ntohs(arp_h->operation) == ARP_REPLY)
 						{
-							printf("(%s, %s, %d)\n", (char*)_ip, (char*)_mac, ARP_TTL_DEF);
-							sem_post(&sem_arp_res);
+							CHAR_T * _ip = format_address(arp_h->sender_ip_addr);
+							CHAR_T * _mac = malloc(17);
+							sprintf(
+								(char*)_mac,
+								"%02X:%02X:%02X:%02X:%02X:%02X",
+								arp_h->sender_hardware_addr[0], 
+								arp_h->sender_hardware_addr[1], 
+								arp_h->sender_hardware_addr[2], 
+								arp_h->sender_hardware_addr[3], 
+								arp_h->sender_hardware_addr[4], 
+								arp_h->sender_hardware_addr[5]
+							);						
+								
+							char *cmd_arp_add = malloc(45);
+							sprintf(
+								cmd_arp_add, 
+								"arp add %s %s %d\n",
+								(char*)_ip,
+								(char*)_mac,
+								ARP_TTL_DEF
+							);
 							
-						}						
+							sub_arp_add((void *)cmd_arp_add);
+							
+							if (arp_resolving)
+							{
+								printf("(%s, %s, %d)\n", (char*)_ip, (char*)_mac, ARP_TTL_DEF);
+								sem_post(&sem_arp_res);
+								
+							}						
+						}
+						else if (ntohs(arp_h->operation) == ARP_REQUEST)
+						{
+							if (arp_h->target_ip_addr == ifaces[riface].ip)
+								send_arp_pkt((DWORD*)&arp_h->sender_hardware_addr[0], arp_h->sender_ip_addr, ARP_REPLY);
+						}
 					}
-					else if (ntohs(arp_h->operation) == ARP_REQUEST)
+					else if (ntohs(eth_h->type) == IP)
 					{
-						if (arp_h->target_ip_addr == ifaces[0].ip)
-							send_arp_pkt((DWORD*)&arp_h->sender_hardware_addr[0], arp_h->sender_ip_addr, ARP_REPLY);
+						//TODO
 					}
-				}
-			}				
+					
+		
+			}
+			//Fim da busca
+			
 			
 			_xnoop.npkgs = qtd_pkgs;
     			   
@@ -1002,6 +1016,7 @@ int sub_arp_res( void *arg )
 			AddArpTableEntry(arpTable,entry);
 			printf ("\n(%s, %s, %d)\n", aux2, (char*)_mac, entry->TTL);
 			sem_post(&allow_entry);
+			return 1;
 		}			
 		else
 		{
@@ -1022,13 +1037,20 @@ int sub_arp_res( void *arg )
 
 			arp_resolving = 0;
 			
-			if (rv == -1 && errno == ETIMEDOUT) //the semaphore returned
+			if (rv == -1 && errno == ETIMEDOUT) 
+			{
+				//the semaphore returned
 	 			printf("Ip address not found!\n");
+	 			return 0;
+			}
 		}
 		
 	}
-	else				
-		printf("Usage: arp red [EndIP]");
+	else
+	{				
+		printf("Usage: arp res [EndIP]");
+		return 0;
+	}
 	return 1;
 }
 
@@ -1328,7 +1350,17 @@ int sub_ping( void *arg )
 		}
 		
 		end_ip = to_ip_byte((CHAR_T *)aux2);
-		
+		char resolve_arp[100];
+		sprintf(resolve_arp, "arp res %s\n", format_address (*end_ip));
+		printf ("Buscando... %s\n", resolve_arp);
+		if(sub_arp_res (resolve_arp))
+		{
+			printf ("encontrou %s\n", resolve_arp);
+		}
+		else
+		{
+			printf ("Não encontrou %s\n", resolve_arp);
+		}
 		//TODO falta chamar a função responsável pelo ping
 		
 		return 1;
@@ -1338,7 +1370,51 @@ int sub_ping( void *arg )
 	return 0;
 }
 
-/* */
+void send_icmp_pkt ( BYTE _icmp_code,BYTE _icmp_type, WORD source, WORD destiny, BYTE hopnum )
+{
+	ICMP_HEADER *icmp_pkt;
+	ETHERNET_HEADER * eth;
+	
+	eth =  malloc(sizeof(ETHERNET_HEADER) + sizeof(IP_HEADER) + sizeof (ICMP_HEADER));
+	
+	eth->net = ifaces[0].net;
+	memcpy(&eth->sender[0], ifaces[0].mac, MAC_ADDR_LEN);
+	//memcpy(&eth->receiver[0], 0, MAC_ADDR_LEN);
+	eth->type = htons(IP);
+	
+	/*construção do pacote ICMP*/
+	int i = sizeof(ICMP_HEADER);
+	
+	IP_HEADER * ip_pkt = (IP_HEADER *)(eth + 1);
+	icmp_pkt = (ICMP_HEADER *)(ip_pkt + 1);
+	
+	icmp_pkt = malloc (i);
+	icmp_pkt->type = _icmp_type;
+	icmp_pkt->code = _icmp_code;
+	icmp_pkt->checksum = 0;
+	
+	//TODO cálculo do checksum do ICMP
+	
+	
+	
+	
+	int j = i + sizeof (IP_HEADER);
+	ip_pkt = malloc (j);
+	ip_pkt->version = 0x45;
+	ip_pkt->type_service = 0;
+	ip_pkt->total_length = htons(j/4);
+	ip_pkt->identification = 0;
+	ip_pkt->fragment = 0;
+	ip_pkt->time_alive = hopnum;
+	ip_pkt->protocol = ICMP;
+	ip_pkt->source_address = source; // ip da interface de saída
+	ip_pkt->destination_address = destiny; //ip do host a receber o echo
+	ip_pkt->checksum = 0;
+	
+	//send_pkt(sizeof(ETHERNET_HEADER) + sizeof(IP_HEADER) + sizeof (ICMP_HEADER), 0, &arp->target_hardware_addr[0], ARP, (BYTE*)eth);
+	//TODO cálculo do checksum do ICMP
+}
+
 int main(int argc, char *argv[])
 {
 	pthread_t tid;

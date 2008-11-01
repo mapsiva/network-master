@@ -292,7 +292,7 @@ FindRouteTableEntry( RouteTable * table, RouteTableEntry * entry, int current )
 	
 	while ( _entry )
 	{
-		printf("Aqui!\n");
+		
 		if(current && *(_entry->TARGET) == *(entry->TARGET) &&
 				*(_entry->GATEWAY) == *(entry->GATEWAY) && *(_entry->MASK) == *(entry->MASK))
 			break;
@@ -303,7 +303,7 @@ FindRouteTableEntry( RouteTable * table, RouteTableEntry * entry, int current )
 				*(table->list->GATEWAY) == *(entry->GATEWAY) && *(table->list->MASK) == *(entry->MASK))	
 			break;
 		_entry = _entry->next;
-		printf("Aqui2!\n");
+		
 	}
 	return _entry;
 	
