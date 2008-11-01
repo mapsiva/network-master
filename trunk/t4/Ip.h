@@ -78,6 +78,9 @@ typedef struct
 RouteTableEntry * 
 FindRouteTableEntry( RouteTable * table, RouteTableEntry * entry, int current);
 
+RouteTableEntry *
+FindProxNo( RouteTable * table, WORD _ip);
+
 /*
 *constrói uma entrada para a tabela de Roteamento
 */

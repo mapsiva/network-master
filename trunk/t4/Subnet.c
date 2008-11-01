@@ -58,6 +58,7 @@ BYTE Route2Interface(CHAR_T* _g, CHAR_T* _n)
 	return -1;
 }
 
+
 /*
  * Envia pacotes ARP do tipo type_op e com endereço MAC _dmac e endereço IP _dip 
 * @param _dmac ponteiro para o endereço MAC de destino do pacote ARP
@@ -637,7 +638,7 @@ void xnoop_send_pkt(u_short len, u_short type_ether, BYTE *data)
     /* Esses dois campos não existem em ETHER_HEADER, por isso eles vão com 0 (zero) no ETHERNET_PKT*/
     pkt->iface = 0;
     pkt->net   = 0;
-        
+    
     memcpy(&pkt->sa[0], ether_2->sender, MAC_ADDR_LEN);
     memcpy(&pkt->da[0], ether_2->receiver, MAC_ADDR_LEN);
     pkt->type = htons(type_ether);
@@ -1192,12 +1193,17 @@ int sub_route_add( void *arg )
 					return 0;
 				}
 				
-				//TODO falta chamar a função responsável por verificar para qual interface tem que ser enviada, por enquanto está como 0 (zero)
-				
 				/* Código para inserção na tabela */
 				//sem_wait(&allow_entry);
 				_interface = Route2Interface((CHAR_T*)_gateway, (CHAR_T*)_netmask);
-				entry = BuildRouteTableEntry((CHAR_T*)_target, (CHAR_T*)_gateway, (CHAR_T*)_netmask, _interface, ARP_TTL_DEF);
+				/*
+				if ((_interface = Route2Interface((CHAR_T*)_gateway, (CHAR_T*)_netmask)) == (BYTE) -1)
+				{
+					printf("Incorret Route.");
+					return 0;
+				}
+				*/
+				entry = BuildRouteTableEntry((CHAR_T*)_target, (CHAR_T*)_gateway, (CHAR_T*)_netmask, _interface, -1);
 				AddRouteTableEntry (routeTable, entry);
 				//sem_post(&allow_entry);
 				return 1;
@@ -1333,6 +1339,7 @@ int sub_ping( void *arg )
 	char *aux1 = NULL;
 	char *aux2 = NULL;
 	DWORD *end_ip;
+	RouteTableEntry *entry;
 	
 	char *b = (char *)arg;
 	
@@ -1350,6 +1357,9 @@ int sub_ping( void *arg )
 		}
 		
 		end_ip = to_ip_byte((CHAR_T *)aux2);
+		
+		entry = FindProxNo(routeTable, (WORD)*end_ip);
+		
 		char resolve_arp[100];
 		sprintf(resolve_arp, "arp res %s\n", format_address (*end_ip));
 		printf ("Buscando... %s\n", resolve_arp);
@@ -1361,6 +1371,7 @@ int sub_ping( void *arg )
 		{
 			printf ("Não encontrou %s\n", resolve_arp);
 		}
+		
 		//TODO falta chamar a função responsável pelo ping
 		
 		return 1;
