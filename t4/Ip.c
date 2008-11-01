@@ -290,9 +290,8 @@ FindRouteTableEntry( RouteTable * table, RouteTableEntry * entry, int current )
 {
 	RouteTableEntry *_entry = table->list;
 	
-	while ( _entry )
-	{
-		
+	while ( _entry)
+	{		
 		if(current && *(_entry->TARGET) == *(entry->TARGET) &&
 				*(_entry->GATEWAY) == *(entry->GATEWAY) && *(_entry->MASK) == *(entry->MASK))
 			break;
@@ -310,6 +309,29 @@ FindRouteTableEntry( RouteTable * table, RouteTableEntry * entry, int current )
 }
 
 /*
+* Busca a rota para o endereço ip
+* @param table ponteiro para a tabela de Roteamento
+* @param _ip endereço ip da subrede de destino
+*
+* @return NULL ou uma entrada valida na tabela de Roteamento
+*
+* @since           2.0
+*/
+RouteTableEntry *
+FindProxNo( RouteTable * table, WORD _ip)
+{
+	RouteTableEntry *_entry = table->list;
+	
+	while ( _entry )
+	{	
+		if ((_ip & *(_entry->MASK)) == *(_entry->TARGET))
+			return _entry;	
+		_entry = _entry->next;	
+	}
+	return NULL;	
+}
+
+/*
 * @param table ponteiro para a tabela de Roteamento
 * @param entry uma entrada da tabela de roteamento que se deseja adicionar
 *
@@ -318,20 +340,33 @@ FindRouteTableEntry( RouteTable * table, RouteTableEntry * entry, int current )
 * @since           2.0
 */
 
-void AddRouteTableEntry( RouteTable * table, RouteTableEntry * entry)
+void AddRouteTableEntry( RouteTable * table, RouteTableEntry * newer)
 {
-	RouteTableEntry *_entry;
+	RouteTableEntry *_entry = table->list;
+	RouteTableEntry *_prev = NULL;
 	
-	if( !(_entry = FindRouteTableEntry (table, entry ,1)))
+	while (_entry && *(newer->MASK) <= *(_entry->MASK))
 	{
-		entry->next = table->list;
-		
-		table->list = entry;
-		
-		table->length ++;
+		if (*(_entry->TARGET) == *(newer->TARGET) && *(_entry->GATEWAY) == *(newer->GATEWAY) && *(_entry->MASK) == *(newer->MASK))
+		{
+			_entry->TTL = newer->TTL;
+			return;
+		}
+		_prev = _entry;
+		_entry = _entry->next;
+	}
+	
+	if (_prev)
+	{
+		newer->next = _prev->next;
+		_prev->next = newer;
 	}
 	else
-		_entry->TTL = entry->TTL;
+	{
+		newer->next = table->list;
+		table->list = newer;	
+	}
+	table->length++;
 }
 
 /*
