@@ -219,13 +219,14 @@ void *subnet_send(void *ptr)
  * 
  * @since           2.0
  */
-void read_net_cfg(char *fname, u_short port, u_short iface)
+int read_net_cfg(char *fname, u_short port, u_short iface)
 {
     FILE *cfg_file;
     char line[100];
     char aux[100];
     NET_HOSTS *p; 
     int first;
+    int find = 0;
     
     cfg_file = fopen(fname, "r");
     if (!cfg_file)
@@ -249,6 +250,7 @@ void read_net_cfg(char *fname, u_short port, u_short iface)
 				s = strtok(NULL, ",");						//Real IP Address
 				p->ip   = inet_addr(s);
 				if (p->port == port) {
+					find = 1;
 					my_ip  = p->ip;
 					ifaces[iface].ip = p->ip;
 					s = strtok(NULL, ",");					//MTU
@@ -271,6 +273,7 @@ void read_net_cfg(char *fname, u_short port, u_short iface)
 			}
 		}
     }
+    return find;
 }
 
 /* Tratamento do comando ifconfig <interface> <EndIP> <EndMAC>
@@ -1452,8 +1455,8 @@ int main(int argc, char *argv[])
 	my_port = htons(atoi(argv[1]));
 	nifaces = 0;
 	for (i = 2; i < argc; i++) {
-		read_net_cfg(argv[i], my_port, nifaces);
-		nifaces++;
+		if (read_net_cfg(argv[i], my_port, nifaces))
+			nifaces++;
 	}
 	queue_head = NULL;
 	/* Initialize semaphore */
