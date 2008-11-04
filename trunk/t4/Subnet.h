@@ -123,6 +123,6 @@ void control_xnoop();
 
 void buildArpHeader (DWORD *, WORD , WORD );
 
-BYTE Route2Interface(CHAR_T*, CHAR_T*);
+BYTE Route2Interface(WORD _g, WORD _n);
 
 #endif 
