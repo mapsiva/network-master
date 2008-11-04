@@ -87,7 +87,7 @@ void str2eth(char *, BYTE[]);
 
 char *ip2str(char *, unsigned);
 
-void read_net_cfg(char *, u_short, u_short);
+int read_net_cfg(char *, u_short, u_short);
 
 void print_if_info(int);
 
