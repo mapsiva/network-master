@@ -39,13 +39,11 @@ RouteTable *routeTable;
  * 
  * @since           2.0
  */
-BYTE Route2Interface(CHAR_T* _g, CHAR_T* _n)
+BYTE Route2Interface(WORD _g, WORD _n)
 {
 	int i;
-	DWORD *_gw = to_ip_byte(_g);
-	DWORD *_nm = to_ip_byte(_n);
 	
-	unsigned subrede = (unsigned)(*_nm) & (unsigned)(*_gw);
+	unsigned subrede = (unsigned)(_g) & (unsigned)(_n);
 	unsigned aux;
 
 	for (i=0; i<nifaces;i++)
@@ -224,7 +222,7 @@ int read_net_cfg(char *fname, u_short port, u_short iface)
     FILE *cfg_file;
     char line[100];
     char aux[100];
-    NET_HOSTS *p; 
+    NET_HOSTS *p;
     int first;
     int find = 0;
     
@@ -1198,7 +1196,9 @@ int sub_route_add( void *arg )
 				
 				/* Código para inserção na tabela */
 				//sem_wait(&allow_entry);
-				_interface = Route2Interface((CHAR_T*)_gateway, (CHAR_T*)_netmask);
+				DWORD *_gw = to_ip_byte((CHAR_T*)_gateway);
+				DWORD *_nm = to_ip_byte((CHAR_T*)_netmask);
+				_interface = Route2Interface((WORD)*_gw, (WORD)*_nm);
 				/*
 				if ((_interface = Route2Interface((CHAR_T*)_gateway, (CHAR_T*)_netmask)) == (BYTE) -1)
 				{
@@ -1271,7 +1271,9 @@ int sub_route_del( void *arg )
 				
 				/* Código para remoção na tabela */
 				//sem_wait(&allow_entry);
-				_interface = Route2Interface((CHAR_T*)_gateway, (CHAR_T*)_netmask);
+				DWORD *_gw = to_ip_byte((CHAR_T*)_gateway);
+				DWORD *_nm = to_ip_byte((CHAR_T*)_netmask);
+				_interface = Route2Interface((WORD)*_gw, (WORD)*_nm);
 				entry = BuildRouteTableEntry((CHAR_T*)_target, (CHAR_T*)_gateway, (CHAR_T*)_netmask, _interface, 0);
 				entry = RemoveRouteTableEntry (routeTable, entry);
 				if(entry)
