@@ -1089,6 +1089,7 @@ void * update_table(void *p)
 		
 		_entry = arpTable->list;
 		_previous  = NULL;
+		
 		if(arpTable->length == 0)
 		{
 			sem_post(&allow_entry);
@@ -1149,6 +1150,75 @@ void * update_table(void *p)
 		}
 		
 		sem_post(&allow_entry);
+		sleep(1);
+	}
+	return NULL;
+}
+
+void * update_route_table(void *p)
+{	
+	RouteTableEntry *_previous, *_entry;
+	while(1)
+	{
+		sem_wait(&allow_route_entry);
+		
+		_entry = routeTable->list;
+		_previous  = NULL;
+		
+		if(routeTable->length == 0)
+		{
+			sem_post(&allow_entry);
+			continue;
+		}
+
+		if(routeTable->length == 1 && _entry->TTL == 1)
+		{
+			free(_entry);
+			routeTable->length--;
+			routeTable->list = NULL;			
+		}
+		else
+		{			
+			while (_entry)
+			{
+				if (_entry->TTL == -1)
+				{
+					_entry = _entry->next;	
+					continue;
+				}
+				
+				_entry->TTL--;
+						
+				if(_entry->TTL == 0)
+				{
+					if(routeTable->list == _entry)
+					{
+						routeTable->list = _entry->next;	
+						
+						free(_entry);
+						
+						_entry = routeTable->list;
+					}
+					else
+					{
+						_previous->next = _entry->next;
+						
+						free(_entry);
+						
+						_entry = _previous;		
+					}
+					
+					routeTable->length--;
+				}
+				else
+				{
+					_previous = _entry;
+					_entry = _entry->next;	
+				}
+			}
+		}
+		
+		sem_post(&allow_route_entry);
 		sleep(1);
 	}
 	return NULL;
@@ -1472,7 +1542,8 @@ int main(int argc, char *argv[])
 	sem_init(&sem_data_ready, 0, 0);
 	sem_init(&sem_queue, 0, 1);
 	sem_init(&sem_xnoop, 0, 1);
-	sem_init (&allow_entry, 0, 1);
+	sem_init(&allow_entry, 0, 1);
+	sem_init(&allow_route_entry, 0, 1);
 	sem_init(&sem_main, 0, 0);
 	sem_init(&sem_arp_res, 0, 0);
 	

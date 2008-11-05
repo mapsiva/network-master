@@ -12,6 +12,14 @@
 #define IP_H_
 #include "Types.h"
 #include <arpa/inet.h> 
+#include <pthread.h>
+#include <semaphore.h>
+
+/*
+ * acesso ao semaforo,
+ * */
+sem_t allow_route_entry;
+
 typedef struct
 {
     BYTE version;
@@ -48,7 +56,6 @@ ip_view_flags ( IP_HEADER * );
 
 int 
 ip_is_broadcast(WORD *) ;
-
 
 /*
 * Entrada da tabela de Roteamnto com seus respectivos campos
