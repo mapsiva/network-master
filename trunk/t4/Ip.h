@@ -20,6 +20,11 @@
  * */
 sem_t allow_route_entry;
 
+/*
+ * ping running
+ * */
+ 
+
 typedef struct
 {
     BYTE version;

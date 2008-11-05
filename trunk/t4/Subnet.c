@@ -31,7 +31,7 @@
 
 ArpTable   *arpTable;
 RouteTable *routeTable;
-
+ int ping_running = 0;
 /* Verifica para qual interface deve ser direcionado
  * @param _t Target Address no formato decimal com pontos
  * @param _g Gateway Address no formato decimal com pontos
@@ -1046,7 +1046,8 @@ int sub_arp_res( void *arg )
 			if (rv == -1 && errno == ETIMEDOUT) 
 			{
 				//the semaphore returned
-	 			printf("Ip address not found!\n");
+				if(!ping_running)
+	 				printf("Ip address not found!\n");
 	 			return 0;
 			}
 		}
@@ -1063,10 +1064,12 @@ int sub_arp_res( void *arg )
 /* */
 void control_xnoop()
 {
-	if (run_xnoop || sending_packets)
+	if (run_xnoop || sending_packets || ping_running)
 	{
 		if (run_xnoop)
 			run_xnoop = 0;
+		else if (ping_running)
+			ping_running = 0;
 		else
 			sending_packets = 0;	
 	}
@@ -1414,7 +1417,7 @@ int sub_ping( void *arg )
 	if (!arg)
 		return 0;
 	int tam;
-	
+	ping_running = 1;
 	char *aux1 = NULL;
 	char *aux2 = NULL;
 	DWORD *end_ip;
@@ -1441,19 +1444,24 @@ int sub_ping( void *arg )
 		
 		char resolve_arp[100];
 		
-		sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
 		
-		printf ("Buscando... %s\n", resolve_arp);
 		
-		if(sub_arp_res (resolve_arp))
+		
+		while (ping_running)
 		{
-			printf ("encontrou %s\n", resolve_arp);
-		}
-		else
-		{
-			printf ("Não encontrou %s\n", resolve_arp);
-		}
-		
+			sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
+			if(sub_arp_res (resolve_arp))
+			{
+				send_icmp_pkt (0, ECHO_REQUEST, entry, 10);
+				
+				printf ("encontrou %s\n", resolve_arp);
+			}
+			else
+			{
+				printf ("Host is unreachable %s\n", (char *)aux2);
+			}
+			sleep (1);
+		}		
 		//TODO falta chamar a função responsável pelo ping
 		
 		return 1;
@@ -1463,16 +1471,32 @@ int sub_ping( void *arg )
 	return 0;
 }
 
-void send_icmp_pkt ( BYTE _icmp_code,BYTE _icmp_type, WORD source, WORD destiny, BYTE hopnum )
+void send_icmp_pkt ( BYTE _icmp_code,BYTE _icmp_type, RouteTableEntry *entry, BYTE hopnum )
 {
 	ICMP_HEADER *icmp_pkt;
 	ETHERNET_HEADER * eth;
+	ArpTableEntry * _entry;
 	
 	eth =  malloc(sizeof(ETHERNET_HEADER) + sizeof(IP_HEADER) + sizeof (ICMP_HEADER));
 	
-	eth->net = ifaces[0].net;
-	memcpy(&eth->sender[0], ifaces[0].mac, MAC_ADDR_LEN);
-	//memcpy(&eth->receiver[0], 0, MAC_ADDR_LEN);
+	eth->net = ifaces[entry->interface].net;
+	
+	memcpy(&eth->sender[0], ifaces[entry->interface].mac, MAC_ADDR_LEN);
+	
+	_entry = BuildArpTableEntry((CHAR_T *)format_address (*entry->GATEWAY), NULL, 0);
+	
+	_entry = FindArpTableEntry (arpTable, _entry, 1);	
+		
+	if (_entry)
+	{	
+		memcpy(&eth->receiver[0], (_entry->MAC) , MAC_ADDR_LEN);
+	}
+	else
+	{
+		printf ("unknow error!\n");
+		return;
+	}
+	
 	eth->type = htons(IP);
 	
 	/*construção do pacote ICMP*/
@@ -1499,12 +1523,12 @@ void send_icmp_pkt ( BYTE _icmp_code,BYTE _icmp_type, WORD source, WORD destiny,
 	ip_pkt->identification = 0;
 	ip_pkt->fragment = 0;
 	ip_pkt->time_alive = hopnum;
-	ip_pkt->protocol = ICMP;
-	ip_pkt->source_address = source; // ip da interface de saída
-	ip_pkt->destination_address = destiny; //ip do host a receber o echo
+	ip_pkt->protocol = htons(ICMP);
+	ip_pkt->source_address = ifaces[entry->interface].ip; // ip da interface de saída
+	ip_pkt->destination_address = *entry->GATEWAY; //ip do host a receber o echo
 	ip_pkt->checksum = 0;
 	
-	//send_pkt(sizeof(ETHERNET_HEADER) + sizeof(IP_HEADER) + sizeof (ICMP_HEADER), 0, &arp->target_hardware_addr[0], ARP, (BYTE*)eth);
+	send_pkt(sizeof(ETHERNET_HEADER) + sizeof(IP_HEADER) + sizeof (ICMP_HEADER), 0, (BYTE *)_entry->MAC, ARP, (BYTE*)eth);
 	//TODO cálculo do checksum do ICMP
 }
 
