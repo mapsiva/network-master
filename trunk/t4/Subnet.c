@@ -1079,7 +1079,7 @@ void control_xnoop()
 	sem_post(&sem_main);
 }
 
-void * update_table(void *p)
+void * update_arp_table(void *p)
 {
 	
 	ArpTableEntry *_previous, *_entry;
@@ -1555,7 +1555,8 @@ int main(int argc, char *argv[])
 	//pthread_create(&tid, NULL,(void *) RemoveArpTableEntry, (void *)NULL);
 	//pthread_create(&tid, NULL, (void *)AddArpTableEntry, (void *)NULL);
 	pthread_create(&tid, NULL, (void *)sub_arp_add, NULL);
-	pthread_create(&tid, NULL, (void *)update_table, NULL);
+	pthread_create(&tid, NULL, (void *)update_arp_table, NULL);
+	pthread_create(&tid, NULL, (void *)update_route_table, NULL);
 	
 	while (1) 
 	{
