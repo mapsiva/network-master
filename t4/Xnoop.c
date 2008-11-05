@@ -120,6 +120,7 @@ int xnoop(int argc, char *argv[], ETHERNET_HEADER * pkg_ethernet, _XNOOP *_x, IN
 						(*_x).count[T_UDP]++;
 		                break;
 		            case ICMP:
+		            	printf("\nAQUIIiii\n");
 		                trace_icmp ((ICMP_HEADER *)(pkg_ip + 1), (*_x).translation , (*_x).modo);
 						(*_x).count[T_ICMP]++;
 		                break;

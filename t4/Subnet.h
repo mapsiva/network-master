@@ -14,6 +14,7 @@
 #include "Ethernet.h"
 #include "Types.h"
 #include "Arp.h"
+#include "Ip.h"
 #include <stdlib.h>
 #include <stdio.h>
 /* */
@@ -24,7 +25,7 @@
 #define MAX_NETWORKS	20
 #define MAX_PARAMETERS	256
 #define MAX_SIZE_PARAMETER	20
-#define TIMEOUT				10
+#define TIMEOUT				1
 
 /* */
 BYTE net2iface[MAX_NETWORKS];
@@ -111,7 +112,7 @@ int sub_traceroute( void* );
 
 int sub_ping( void* );
 
-void send_icmp_pkt ( BYTE ,BYTE, WORD, WORD, BYTE );
+void send_icmp_pkt ( BYTE ,BYTE , RouteTableEntry *, BYTE );
 
 int sub_arp( char* );
 
