@@ -39,7 +39,7 @@ RouteTable *routeTable;
  * 
  * @since           2.0
  */
-BYTE Route2Interface(WORD _g, WORD _n)
+int Route2Interface(WORD _g, WORD _n)
 {
 	int i;
 	
@@ -71,8 +71,12 @@ void send_arp_pkt (DWORD *_dmac, WORD _dip, WORD type_op )
 	ETHERNET_HEADER * eth;
 	
 	eth =  malloc(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER));
-	int k ;
-	for (k = 0; k < nifaces && ifaces[k].up; k++)
+	int k;
+	/*
+	 * Procura a interface que deve ser mandado o arp para descobrir
+	 * o enederćo mac a ser descoberto
+	 * */
+	for (k = 0; k < nifaces && ifaces[k].up && (Route2Interface (_dip, ifaces[k].mask) != -1); k++)
 	{
 		
 		eth->net = ifaces[k].net;
@@ -1366,8 +1370,11 @@ int sub_ping( void *arg )
 		entry = FindProxNo(routeTable, (WORD)*end_ip);
 		
 		char resolve_arp[100];
-		sprintf(resolve_arp, "arp res %s\n", format_address (*end_ip));
+		
+		sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
+		
 		printf ("Buscando... %s\n", resolve_arp);
+		
 		if(sub_arp_res (resolve_arp))
 		{
 			printf ("encontrou %s\n", resolve_arp);
