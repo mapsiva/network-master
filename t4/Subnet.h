@@ -121,6 +121,10 @@ int sub_send_trace(char* b);
 
 void control_xnoop();
 
+void * update_arp_table(void *p);
+
+void * update_route_table(void *p);
+
 void buildArpHeader (DWORD *, WORD , WORD );
 
 int Route2Interface(WORD _g, WORD _n);
