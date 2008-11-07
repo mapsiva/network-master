@@ -1505,7 +1505,7 @@ void send_icmp_pkt ( BYTE _icmp_code,BYTE _icmp_type, RouteTableEntry *entry, BY
 	IP_HEADER * ip_pkt = (IP_HEADER *)(eth + 1);
 	icmp_pkt = (ICMP_HEADER *)(ip_pkt + 1);
 	
-	icmp_pkt = malloc (i);
+	//icmp_pkt = malloc (i);
 	icmp_pkt->type = _icmp_type;
 	icmp_pkt->code = _icmp_code;
 	icmp_pkt->checksum = 0;
@@ -1516,19 +1516,20 @@ void send_icmp_pkt ( BYTE _icmp_code,BYTE _icmp_type, RouteTableEntry *entry, BY
 	
 	
 	int j = i + sizeof (IP_HEADER);
-	ip_pkt = malloc (j);
+	//ip_pkt = malloc (j);
 	ip_pkt->version = 0x45;
-	ip_pkt->type_service = 0;
+	ip_pkt->type_service = 5;
 	ip_pkt->total_length = htons(j/4);
-	ip_pkt->identification = 0;
-	ip_pkt->fragment = 0;
+	
+	ip_pkt->identification = htons(10);
+	ip_pkt->fragment = htons(4);
 	ip_pkt->time_alive = hopnum;
-	ip_pkt->protocol = htons(ICMP);
+	ip_pkt->protocol = ICMP;
 	ip_pkt->source_address = ifaces[entry->interface].ip; // ip da interface de saída
 	ip_pkt->destination_address = *entry->GATEWAY; //ip do host a receber o echo
-	ip_pkt->checksum = 0;
+	ip_pkt->checksum = (20);
 	
-	send_pkt(sizeof(ETHERNET_HEADER) + sizeof(IP_HEADER) + sizeof (ICMP_HEADER), 0, (BYTE *)_entry->MAC, ARP, (BYTE*)eth);
+	send_pkt(sizeof(ETHERNET_HEADER) + sizeof(IP_HEADER) + sizeof (ICMP_HEADER), entry->interface, (BYTE *)_entry->MAC, IP, (BYTE*)eth);
 	//TODO cálculo do checksum do ICMP
 }
 
