@@ -79,7 +79,6 @@ void send_arp_pkt (DWORD *_dmac, WORD _dip, WORD type_op )
 	 * */
 	for (k = 0; k < nifaces && ifaces[k].up && (Route2Interface (_dip, ifaces[k].mask) != -1); k++)
 	{
-		
 		eth->net = ifaces[k].net;
 		memcpy(&eth->sender[0], ifaces[k].mac, MAC_ADDR_LEN);
 		memcpy(&eth->receiver[0], _dmac, MAC_ADDR_LEN);
@@ -96,7 +95,7 @@ void send_arp_pkt (DWORD *_dmac, WORD _dip, WORD type_op )
 		memcpy(&arp->target_hardware_addr[0], _dmac, MAC_ADDR_LEN);
 		arp->target_ip_addr = _dip;
 		
-		send_pkt(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER), 0, &arp->target_hardware_addr[0], ARP, (BYTE*)eth);	
+		send_pkt(sizeof(ETHERNET_HEADER) + sizeof(ARP_HEADER), k, &arp->target_hardware_addr[0], ARP, (BYTE*)eth);	
 	}
 }
 
@@ -592,8 +591,7 @@ void *subnet_rcv(void *ptr)
 															
 										if(sub_arp_res (resolve_arp))
 										{
-											send_icmp_pkt (0, ECHO_REPLAY, riface, *entry->GATEWAY, ip_h->source_address, 10);
-											
+											send_icmp_pkt (0, ECHO_REPLAY, riface, next_ip, ip_h->source_address, ip_h->destination_address, 10);											
 										}
 										else
 										{
@@ -642,15 +640,16 @@ void *subnet_rcv(void *ptr)
 						{
 							icmp_h = (ICMP_HEADER *)(ip_h + 1);
 							WORD next_ip;
+							printf("diferente\n");	
 							switch(icmp_h->type)
 							{
 								case ECHO_REQUEST:
 									//criar pacote (pois chegou em um gateway) alterar os MACs e decrementar o TTL
-									printf("diferente\n");	
 									entry = FindProxNo(routeTable, (WORD) ip_h->destination_address);
 										
 									if (entry)
 									{
+										printf("REQUEST: %d\n",entry->interface);
 										if (*entry->GATEWAY == *entry->TARGET)
 										{
 											printf("na minha rede\n");
@@ -666,7 +665,7 @@ void *subnet_rcv(void *ptr)
 															
 										if(sub_arp_res (resolve_arp))
 										{	
-											send_icmp_pkt (0, ECHO_REQUEST, riface, next_ip, ip_h->destination_address, 10);
+											send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, ip_h->destination_address, ip_h->source_address, 10);
 										}
 										else
 										{
@@ -681,11 +680,11 @@ void *subnet_rcv(void *ptr)
 								
 								case ECHO_REPLAY:
 									//criar pacote (pois chegou em um gateway) alterar os MACs e decrementar o TTL
-									printf("diferente\n");	
 									entry = FindProxNo(routeTable, (WORD) ip_h->destination_address);
 										
 									if (entry)
 									{
+										printf("REPLAY: %d\n",entry->interface);
 										if (*entry->GATEWAY == *entry->TARGET)
 										{
 											sprintf(resolve_arp, "arp res %s\n", format_address (ip_h->destination_address));
@@ -699,7 +698,7 @@ void *subnet_rcv(void *ptr)
 															
 										if(sub_arp_res (resolve_arp))
 										{	
-											send_icmp_pkt (0, ECHO_REPLAY, riface, next_ip, ip_h->destination_address, 10);
+											send_icmp_pkt (0, ECHO_REPLAY, entry->interface, next_ip, ip_h->destination_address, ip_h->source_address, 10);
 										}
 										else
 										{
@@ -1204,7 +1203,7 @@ int sub_arp_res( void *arg )
 			if (rv == -1 && errno == ETIMEDOUT) 
 			{
 				//the semaphore returned
-				if(!ping_running || arp_resolving)
+				if(!ping_running && arp_resolving)
 	 				printf("Ip address not found!\n");
 	 			return 0;
 			}
@@ -1616,7 +1615,7 @@ int sub_ping( void *arg )
 				
 				if(sub_arp_res (resolve_arp))
 				{
-					send_icmp_pkt (0, ECHO_REQUEST, entry->interface, *entry->GATEWAY, *end_ip, 10);
+					send_icmp_pkt (0, ECHO_REQUEST, entry->interface, *entry->GATEWAY, *end_ip, ifaces[entry->interface].ip, 10);
 					
 					struct timespec ts;
 			
@@ -1653,7 +1652,7 @@ int sub_ping( void *arg )
 	return 0;
 }
 
-void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gateway, WORD destination, BYTE hopnum )
+void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gateway, WORD destination, WORD source, BYTE hopnum )
 {
 	ICMP_HEADER *icmp_pkt;
 	ETHERNET_HEADER * eth;
@@ -1708,7 +1707,7 @@ void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gate
 	ip_pkt->fragment = htons(4);
 	ip_pkt->time_alive = hopnum;
 	ip_pkt->protocol = ICMP;
-	ip_pkt->source_address = ifaces[interface].ip; // ip da interface de saída
+	ip_pkt->source_address = source; // ip da interface de saída
 	ip_pkt->destination_address = destination; //ip do host a receber o echo
 	//printf("%s\n", format_address(destination));
 	ip_pkt->checksum = htons(20);
