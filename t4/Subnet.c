@@ -543,9 +543,10 @@ void *subnet_rcv(void *ptr)
 						
 						sub_arp_add((void *)cmd_arp_add);
 						
-						if (arp_resolving && !ping_running)
+						if (arp_resolving)
 						{
-							printf("(%s, %s, %d)\n", (char*)_ip, (char*)_mac, ARP_TTL_DEF);
+							if(!ping_running)
+								printf("(%s, %s, %d)\n", (char*)_ip, (char*)_mac, ARP_TTL_DEF);
 							sem_post(&sem_arp_res);
 							
 						}						
@@ -590,8 +591,7 @@ void *subnet_rcv(void *ptr)
 										if(sub_arp_res (resolve_arp))
 										{
 											send_icmp_pkt (0, ECHO_REPLAY, riface, next_ip, 10);
-											//send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD destination, BYTE hopnum )
-											printf ("encontrou %s\n", resolve_arp);
+											
 										}
 										else
 										{
@@ -623,12 +623,13 @@ void *subnet_rcv(void *ptr)
 								break;								
 							}
 							
-							if (ping_running)
+							
+						}	
+						if (ping_running)
 							{
 								sem_post(&sem_ping);
 								
-							}
-						}						
+							}					
 					}	
 					else
 					{
@@ -1096,7 +1097,8 @@ int sub_arp_res( void *arg )
 			_mac = format_mac_address(*(entry->MAC));
 			entry->TTL = ARP_TTL_DEF;
 			AddArpTableEntry(arpTable,entry);
-			printf ("\n(%s, %s, %d)\n", aux2, (char*)_mac, entry->TTL);
+			if(!ping_running)
+				printf ("\n(%s, %s, %d)\n", aux2, (char*)_mac, entry->TTL);
 			sem_post(&allow_entry);
 			return 1;
 		}			
