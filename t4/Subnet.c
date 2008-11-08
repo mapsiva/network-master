@@ -487,6 +487,10 @@ void *subnet_rcv(void *ptr)
     struct sockaddr_in fsin;	/* address of a client		*/
     ETHERNET_HEADER *eth_h;
     ARP_HEADER *arp_h;
+    IP_HEADER *ip_h;
+    TCP_HEADER *tcp_h;
+    UDP_HEADER *udp_h;
+    ICMP_HEADER *icmp_h;
     ETHERNET_PKT *ppkt;
     
     sockd = passive_UDP_socket(port);
@@ -500,6 +504,7 @@ void *subnet_rcv(void *ptr)
 		rv = recvfrom(sockd, in_buf, MAX_PKT_SZ, 0, (struct sockaddr *)&fsin, &alen);	
 		if (rv < 0) 
 			error_exit("error - recvfrom: %s\n", strerror(errno));
+		
 		riface = net2iface[eth_h->net];
 		
 		
@@ -509,57 +514,73 @@ void *subnet_rcv(void *ptr)
 		{
 			qtd_pkgs++;
 			
-				if (!memcmp(eth_h->receiver, broad_eth,6) || !memcmp(eth_h->receiver, ifaces[riface].mac, 6))
+			if (!memcmp(eth_h->receiver, broad_eth,6) || !memcmp(eth_h->receiver, ifaces[riface].mac, 6))
+			{
+				ifaces[riface].pkt_rx++; /* The packet must be processed */
+				if (ntohs(eth_h->type) == ARP)
 				{
-					ifaces[riface].pkt_rx++; /* The packet must be processed */
-					if (ntohs(eth_h->type) == ARP)
+					arp_h = (ARP_HEADER *) (eth_h + 1);
+					if (ntohs(arp_h->operation) == ARP_REPLY)
 					{
-						arp_h = (ARP_HEADER *) (eth_h + 1);
-						if (ntohs(arp_h->operation) == ARP_REPLY)
-						{
-							CHAR_T * _ip = format_address(arp_h->sender_ip_addr);
-							CHAR_T * _mac = malloc(17);
-							sprintf(
-								(char*)_mac,
-								"%02X:%02X:%02X:%02X:%02X:%02X",
-								arp_h->sender_hardware_addr[0], 
-								arp_h->sender_hardware_addr[1], 
-								arp_h->sender_hardware_addr[2], 
-								arp_h->sender_hardware_addr[3], 
-								arp_h->sender_hardware_addr[4], 
-								arp_h->sender_hardware_addr[5]
-							);						
-								
-							char *cmd_arp_add = malloc(45);
-							sprintf(
-								cmd_arp_add, 
-								"arp add %s %s %d\n",
-								(char*)_ip,
-								(char*)_mac,
-								ARP_TTL_DEF
-							);
+						CHAR_T * _ip = format_address(arp_h->sender_ip_addr);
+						CHAR_T * _mac = malloc(17);
+						sprintf(
+							(char*)_mac,
+							"%02X:%02X:%02X:%02X:%02X:%02X",
+							arp_h->sender_hardware_addr[0], 
+							arp_h->sender_hardware_addr[1], 
+							arp_h->sender_hardware_addr[2], 
+							arp_h->sender_hardware_addr[3], 
+							arp_h->sender_hardware_addr[4], 
+							arp_h->sender_hardware_addr[5]
+						);						
 							
-							sub_arp_add((void *)cmd_arp_add);
-							
-							if (arp_resolving)
-							{
-								printf("(%s, %s, %d)\n", (char*)_ip, (char*)_mac, ARP_TTL_DEF);
-								sem_post(&sem_arp_res);
-								
-							}						
-						}
-						else if (ntohs(arp_h->operation) == ARP_REQUEST)
+						char *cmd_arp_add = malloc(45);
+						sprintf(
+							cmd_arp_add, 
+							"arp add %s %s %d\n",
+							(char*)_ip,
+							(char*)_mac,
+							ARP_TTL_DEF
+						);
+						
+						sub_arp_add((void *)cmd_arp_add);
+						
+						if (arp_resolving)
 						{
-							if (arp_h->target_ip_addr == ifaces[riface].ip)
-								send_arp_pkt((DWORD*)&arp_h->sender_hardware_addr[0], arp_h->sender_ip_addr, ARP_REPLY);
-						}
+							printf("(%s, %s, %d)\n", (char*)_ip, (char*)_mac, ARP_TTL_DEF);
+							sem_post(&sem_arp_res);
+							
+						}						
 					}
-					else if (ntohs(eth_h->type) == IP)
+					else if (ntohs(arp_h->operation) == ARP_REQUEST)
 					{
-						//TODO
+						if (arp_h->target_ip_addr == ifaces[riface].ip)
+							send_arp_pkt((DWORD*)&arp_h->sender_hardware_addr[0], arp_h->sender_ip_addr, ARP_REPLY);
 					}
+				}
+				else if (ntohs(eth_h->type) == IP)
+				{
+					ip_h = (IP_HEADER *) (eth_h + 1);
 					
-		
+					switch (ip_h->protocol)
+			        {
+			            case TCP:
+			            	tcp_h = (TCP_HEADER *)(ip_h + 1);
+			            	
+			            break;
+			            case ICMP:
+			            	icmp_h = (ICMP_HEADER *)(ip_h + 1);
+			            	
+			            break;
+			            case UDP:
+			           		udp_h = (UDP_HEADER *)(ip_h + 1);
+			           		
+			           	break;
+			        }
+			        
+					//TODO
+				}
 			}
 			//Fim da busca
 			
