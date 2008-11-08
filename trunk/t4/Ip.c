@@ -327,7 +327,9 @@ FindProxNo( RouteTable * table, WORD _ip)
 	while ( _entry )
 	{	
 		if ((_ip & *(_entry->MASK)) == *(_entry->TARGET))
+		{
 			return _entry;	
+		}
 		_entry = _entry->next;	
 	}
 	return NULL;	

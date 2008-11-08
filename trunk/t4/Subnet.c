@@ -579,7 +579,7 @@ void *subnet_rcv(void *ptr)
 										sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
 										if(sub_arp_res (resolve_arp))
 										{
-											send_icmp_pkt (0, ECHO_REPLAY, entry, 10);
+											//send_icmp_pkt (0, ECHO_REPLAY, entry, 10);
 											
 											printf ("encontrou %s\n", resolve_arp);
 										}
@@ -1505,10 +1505,19 @@ int sub_ping( void *arg )
 		{
 			if(entry)
 			{
-				sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
+				if(*entry->GATEWAY == 0)
+					sprintf(resolve_arp, "arp res %s\n", format_address (*end_ip));
+				else	
+				{
+					sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
+					end_ip = (DWORD *)entry->GATEWAY;
+				}
+				printf("Resolvendo %s\n",resolve_arp);
+				
+				printf( "pingando %s\n", format_address (*end_ip));
 				
 				if(sub_arp_res (resolve_arp))
-					send_icmp_pkt (0, ECHO_REQUEST, entry, 10);
+					send_icmp_pkt (0, ECHO_REQUEST, entry->interface, *end_ip, 10);
 				else
 					printf ("Host is unreachable\n");
 			}
@@ -1526,7 +1535,7 @@ int sub_ping( void *arg )
 	return 0;
 }
 
-void send_icmp_pkt ( BYTE _icmp_code,BYTE _icmp_type, RouteTableEntry *entry, BYTE hopnum )
+void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD destination, BYTE hopnum )
 {
 	ICMP_HEADER *icmp_pkt;
 	ETHERNET_HEADER * eth;
@@ -1534,11 +1543,11 @@ void send_icmp_pkt ( BYTE _icmp_code,BYTE _icmp_type, RouteTableEntry *entry, BY
 	
 	eth =  malloc(sizeof(ETHERNET_HEADER) + sizeof(IP_HEADER) + sizeof (ICMP_HEADER));
 	
-	eth->net = ifaces[entry->interface].net;
+	eth->net = ifaces[interface].net;
 	
-	memcpy(&eth->sender[0], ifaces[entry->interface].mac, MAC_ADDR_LEN);
+	memcpy(&eth->sender[0], ifaces[interface].mac, MAC_ADDR_LEN);
 	
-	_entry = BuildArpTableEntry((CHAR_T *)format_address (*entry->GATEWAY), NULL, 0);
+	_entry = BuildArpTableEntry((CHAR_T *)format_address (destination), NULL, 0);
 	
 	_entry = FindArpTableEntry (arpTable, _entry, 1);	
 		
@@ -1580,11 +1589,11 @@ void send_icmp_pkt ( BYTE _icmp_code,BYTE _icmp_type, RouteTableEntry *entry, BY
 	ip_pkt->fragment = htons(4);
 	ip_pkt->time_alive = hopnum;
 	ip_pkt->protocol = ICMP;
-	ip_pkt->source_address = ifaces[entry->interface].ip; // ip da interface de saída
-	ip_pkt->destination_address = *entry->GATEWAY; //ip do host a receber o echo
+	ip_pkt->source_address = ifaces[interface].ip; // ip da interface de saída
+	ip_pkt->destination_address = destination; //ip do host a receber o echo
 	ip_pkt->checksum = htons(20);
 	
-	send_pkt(sizeof(ETHERNET_HEADER) + sizeof(IP_HEADER) + sizeof (ICMP_HEADER), entry->interface, (BYTE *)_entry->MAC, IP, (BYTE*)eth);
+	send_pkt(sizeof(ETHERNET_HEADER) + sizeof(IP_HEADER) + sizeof (ICMP_HEADER), interface, (BYTE *)_entry->MAC, IP, (BYTE*)eth);
 	//TODO cálculo do checksum do ICMP
 }
 
