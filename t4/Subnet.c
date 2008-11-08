@@ -543,7 +543,7 @@ void *subnet_rcv(void *ptr)
 						
 						sub_arp_add((void *)cmd_arp_add);
 						
-						if (arp_resolving)
+						if (arp_resolving && !ping_running)
 						{
 							printf("(%s, %s, %d)\n", (char*)_ip, (char*)_mac, ARP_TTL_DEF);
 							sem_post(&sem_arp_res);
@@ -574,13 +574,23 @@ void *subnet_rcv(void *ptr)
 									//criar pacote de REPLAY
 									entry = FindProxNo(routeTable, (WORD) ip_h->source_address);
 									
+									WORD next_ip;
 									if (entry)
 									{
-										sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
+										if (*entry->GATEWAY == *entry->TARGET)
+										{
+											sprintf(resolve_arp, "arp res %s\n", format_address (ip_h->source_address));
+											next_ip =ip_h->source_address;
+										}
+										else
+										{
+											sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
+											next_ip = *entry->GATEWAY;
+										}										
 										if(sub_arp_res (resolve_arp))
 										{
-											//send_icmp_pkt (0, ECHO_REPLAY, entry, 10);
-											
+											send_icmp_pkt (0, ECHO_REPLAY, riface, next_ip, 10);
+											//send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD destination, BYTE hopnum )
 											printf ("encontrou %s\n", resolve_arp);
 										}
 										else
@@ -596,6 +606,7 @@ void *subnet_rcv(void *ptr)
 								break;
 								
 								case ECHO_REPLAY:
+									
 									printf("%u bytes from %s: icmp_seq=%u ttl=%u Time=%f ms\n", 
 										ntohs(ip_h->total_length), 
 										format_address(ip_h->source_address), 
@@ -603,11 +614,19 @@ void *subnet_rcv(void *ptr)
 										ip_h->time_alive,
 										0.0
 									);	
+									
+									
 								break;
 								
 								case REDIRECT:
 								
 								break;								
+							}
+							
+							if (ping_running)
+							{
+								sem_post(&sem_ping);
+								
 							}
 						}						
 					}	
@@ -1474,7 +1493,7 @@ int sub_ping( void *arg )
 	if (!arg)
 		return 0;
 	int tam;
-	ping_running = 1;
+	
 	char *aux1 = NULL;
 	char *aux2 = NULL;
 	DWORD *end_ip;
@@ -1500,32 +1519,53 @@ int sub_ping( void *arg )
 		entry = FindProxNo(routeTable, (WORD)*end_ip);
 		
 		char resolve_arp[100];
-		
+		ping_running = 1;
 		while (ping_running)
 		{
+			
 			if(entry)
 			{
-				if(*entry->GATEWAY == 0)
+				if(*entry->GATEWAY == *entry->TARGET)
 					sprintf(resolve_arp, "arp res %s\n", format_address (*end_ip));
 				else	
 				{
 					sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
 					end_ip = (DWORD *)entry->GATEWAY;
 				}
-				printf("Resolvendo %s\n",resolve_arp);
-				
-				printf( "pingando %s\n", format_address (*end_ip));
 				
 				if(sub_arp_res (resolve_arp))
+				{
 					send_icmp_pkt (0, ECHO_REQUEST, entry->interface, *end_ip, 10);
+					
+					struct timespec ts;
+			
+					ts.tv_sec = time(NULL) + TIMEOUT;
+					ts.tv_nsec = 0;
+					int rv;
+					
+					
+					while ((rv = sem_timedwait(&sem_ping, &ts) ) == -1 && errno == EINTR)
+		               continue;
+		
+					
+					
+					if (rv == -1 && errno == ETIMEDOUT) 
+					{
+						//the semaphore returned
+						if(ping_running)
+			 				printf ("Host is unreachable1\n");
+			 			
+					}
+				}
 				else
-					printf ("Host is unreachable\n");
+					printf ("Host is unreachable2\n");
 			}
 			else
-				printf ("Host is unreachable\n");
+				printf ("Host is unreachabl3\n");
 			
 			sleep (1);
 		}		
+		ping_running = 0;
 		//TODO falta chamar a função responsável pelo ping
 		
 		return 1;
@@ -1635,6 +1675,7 @@ int main(int argc, char *argv[])
 	sem_init(&allow_route_entry, 0, 1);
 	sem_init(&sem_main, 0, 0);
 	sem_init(&sem_arp_res, 0, 0);
+	sem_init(&sem_ping, 0, 0);
 	
 	/* Create sender and receiver threads */
 	printf("Listening on port: %d\n", ntohs(my_port));

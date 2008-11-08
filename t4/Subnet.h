@@ -25,7 +25,7 @@
 #define MAX_NETWORKS	20
 #define MAX_PARAMETERS	256
 #define MAX_SIZE_PARAMETER	20
-#define TIMEOUT				1
+#define TIMEOUT				2
 
 /* */
 BYTE net2iface[MAX_NETWORKS];
@@ -46,6 +46,7 @@ sem_t sem_queue;
 sem_t sem_xnoop;
 sem_t sem_main;
 sem_t sem_arp_res;
+sem_t sem_ping;
 
 /* */
 INTERFACE ifaces[MAX_IFACES];	/* Interfaces of the host/router */
