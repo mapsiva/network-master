@@ -32,6 +32,7 @@
 ArpTable   *arpTable;
 RouteTable *routeTable;
  int ping_running = 0;
+ int ident = 0;
 /* Verifica para qual interface deve ser direcionado
  * @param _t Target Address no formato decimal com pontos
  * @param _g Gateway Address no formato decimal com pontos
@@ -565,6 +566,7 @@ void *subnet_rcv(void *ptr)
 					
 					if (ip_h->destination_address == ifaces[riface].ip)
 					{
+						
 						if (ip_h->protocol == ICMP)
 						{
 							icmp_h = (ICMP_HEADER *)(ip_h + 1);
@@ -587,7 +589,8 @@ void *subnet_rcv(void *ptr)
 										{
 											sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
 											next_ip = *entry->GATEWAY;
-										}										
+										}
+															
 										if(sub_arp_res (resolve_arp))
 										{
 											send_icmp_pkt (0, ECHO_REPLAY, riface, next_ip, 10);
@@ -595,12 +598,13 @@ void *subnet_rcv(void *ptr)
 										}
 										else
 										{
-											printf ("Nao Conseguiu Resolver \n");
+											send_icmp_pkt (0, DESTINATION_UN, riface, next_ip, 10);
 										}
+											
 									}
 									else
 									{
-										printf ("Sem rota padrao\n");		
+										send_icmp_pkt (0, DESTINATION_UN, riface, next_ip, 10);
 									}
 										
 								break;
@@ -618,6 +622,8 @@ void *subnet_rcv(void *ptr)
 									
 								break;
 								
+								case DESTINATION_UN:
+									printf("Destination unreachable\n");
 								case REDIRECT:
 								
 								break;								
@@ -626,10 +632,10 @@ void *subnet_rcv(void *ptr)
 							
 						}	
 						if (ping_running)
-							{
-								sem_post(&sem_ping);
-								
-							}					
+						{
+							sem_post(&sem_ping);
+							
+						}					
 					}	
 					else
 					{
@@ -1522,6 +1528,7 @@ int sub_ping( void *arg )
 		
 		char resolve_arp[100];
 		ping_running = 1;
+		ident = 1;
 		while (ping_running)
 		{
 			
@@ -1627,7 +1634,7 @@ void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD dest
 	ip_pkt->type_service = 5;
 	ip_pkt->total_length = htons(j/4);
 	
-	ip_pkt->identification = htons(10);
+	ip_pkt->identification = htons(ident++);
 	ip_pkt->fragment = htons(4);
 	ip_pkt->time_alive = hopnum;
 	ip_pkt->protocol = ICMP;
