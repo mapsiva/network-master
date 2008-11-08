@@ -546,7 +546,7 @@ void *subnet_rcv(void *ptr)
 						
 						if (arp_resolving)
 						{
-							if(!ping_running)
+							if(!ping_running && !sending_packets && !run_xnoop)
 								printf("(%s, %s, %d)\n", (char*)_ip, (char*)_mac, ARP_TTL_DEF);
 							sem_post(&sem_arp_res);
 							
@@ -565,8 +565,7 @@ void *subnet_rcv(void *ptr)
 					char resolve_arp[100];
 					
 					if (ip_h->destination_address == ifaces[riface].ip)
-					{
-						
+					{	printf("igual\n");	
 						if (ip_h->protocol == ICMP)
 						{
 							icmp_h = (ICMP_HEADER *)(ip_h + 1);
@@ -593,18 +592,18 @@ void *subnet_rcv(void *ptr)
 															
 										if(sub_arp_res (resolve_arp))
 										{
-											send_icmp_pkt (0, ECHO_REPLAY, riface, next_ip, 10);
+											send_icmp_pkt (0, ECHO_REPLAY, riface, *entry->GATEWAY, ip_h->source_address, 10);
 											
 										}
 										else
 										{
-											send_icmp_pkt (0, DESTINATION_UN, riface, next_ip, 10);
+											//send_icmp_pkt (0, DESTINATION_UN, riface, next_ip, 10);
 										}
 											
 									}
 									else
 									{
-										send_icmp_pkt (0, DESTINATION_UN, riface, next_ip, 10);
+										//send_icmp_pkt (0, DESTINATION_UN, riface, next_ip, 10);
 									}
 										
 								break;
@@ -639,13 +638,88 @@ void *subnet_rcv(void *ptr)
 					}	
 					else
 					{
-						//criar pacote (pois chegou em um gateway) alterar os MACs e decrementar o TTL
+						if (ip_h->protocol == ICMP)
+						{
+							icmp_h = (ICMP_HEADER *)(ip_h + 1);
+							WORD next_ip;
+							switch(icmp_h->type)
+							{
+								case ECHO_REQUEST:
+									//criar pacote (pois chegou em um gateway) alterar os MACs e decrementar o TTL
+									printf("diferente\n");	
+									entry = FindProxNo(routeTable, (WORD) ip_h->destination_address);
+										
+									if (entry)
+									{
+										if (*entry->GATEWAY == *entry->TARGET)
+										{
+											printf("na minha rede\n");
+											sprintf(resolve_arp, "arp res %s\n", format_address (ip_h->destination_address));
+											next_ip = ip_h->destination_address;
+										}
+										else
+										{
+											printf("fora da minha rede\n");
+											sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
+											next_ip = *entry->GATEWAY;
+										}
+															
+										if(sub_arp_res (resolve_arp))
+										{	
+											send_icmp_pkt (0, ECHO_REQUEST, riface, next_ip, ip_h->destination_address, 10);
+										}
+										else
+										{
+											//send_icmp_pkt (0, DESTINATION_UN, riface, next_ip, 10);
+										}	
+									}
+									else
+									{
+										//send_icmp_pkt (0, DESTINATION_UN, riface, next_ip, 10);
+									}
+								break;
+								
+								case ECHO_REPLAY:
+									//criar pacote (pois chegou em um gateway) alterar os MACs e decrementar o TTL
+									printf("diferente\n");	
+									entry = FindProxNo(routeTable, (WORD) ip_h->destination_address);
+										
+									if (entry)
+									{
+										if (*entry->GATEWAY == *entry->TARGET)
+										{
+											sprintf(resolve_arp, "arp res %s\n", format_address (ip_h->destination_address));
+											next_ip = ip_h->destination_address;
+										}
+										else
+										{
+											sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
+											next_ip = *entry->GATEWAY;
+										}
+															
+										if(sub_arp_res (resolve_arp))
+										{	
+											send_icmp_pkt (0, ECHO_REPLAY, riface, next_ip, ip_h->destination_address, 10);
+										}
+										else
+										{
+											//send_icmp_pkt (0, DESTINATION_UN, riface, next_ip, 10);
+										}	
+									}
+									else
+									{
+										//send_icmp_pkt (0, DESTINATION_UN, riface, next_ip, 10);
+									}
+								break;
+								
+							}
+						}
+						
 					}		        
 					//TODO
 				}
 			}
 			//Fim da busca
-			
 			
 			_xnoop.npkgs = qtd_pkgs;
     			   
@@ -1219,7 +1293,7 @@ void * update_arp_table(void *p)
 					{
 						_previous->next = _entry->next;
 						
-						send_arp_pkt(_entry->MAC, *(_entry->IP), ARP_REQUEST);	
+						send_arp_pkt(_entry->MAC, *(_entry->IP), ARP_REQUEST);
 						
 						free(_entry);
 						
@@ -1531,20 +1605,18 @@ int sub_ping( void *arg )
 		ident = 1;
 		while (ping_running)
 		{
-			
 			if(entry)
 			{
 				if(*entry->GATEWAY == *entry->TARGET)
 					sprintf(resolve_arp, "arp res %s\n", format_address (*end_ip));
-				else	
+				else
 				{
 					sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
-					end_ip = (DWORD *)entry->GATEWAY;
 				}
 				
 				if(sub_arp_res (resolve_arp))
 				{
-					send_icmp_pkt (0, ECHO_REQUEST, entry->interface, *end_ip, 10);
+					send_icmp_pkt (0, ECHO_REQUEST, entry->interface, *entry->GATEWAY, *end_ip, 10);
 					
 					struct timespec ts;
 			
@@ -1552,11 +1624,8 @@ int sub_ping( void *arg )
 					ts.tv_nsec = 0;
 					int rv;
 					
-					
 					while ((rv = sem_timedwait(&sem_ping, &ts) ) == -1 && errno == EINTR)
 		               continue;
-		
-					
 					
 					if (rv == -1 && errno == ETIMEDOUT) 
 					{
@@ -1584,7 +1653,7 @@ int sub_ping( void *arg )
 	return 0;
 }
 
-void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD destination, BYTE hopnum )
+void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gateway, WORD destination, BYTE hopnum )
 {
 	ICMP_HEADER *icmp_pkt;
 	ETHERNET_HEADER * eth;
@@ -1596,7 +1665,8 @@ void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD dest
 	
 	memcpy(&eth->sender[0], ifaces[interface].mac, MAC_ADDR_LEN);
 	
-	_entry = BuildArpTableEntry((CHAR_T *)format_address (destination), NULL, 0);
+	_entry = BuildArpTableEntry((CHAR_T *)format_address (gateway), NULL, 0);
+	//printf("%s\n", format_address(gateway));
 	
 	_entry = FindArpTableEntry (arpTable, _entry, 1);	
 		
@@ -1640,6 +1710,7 @@ void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD dest
 	ip_pkt->protocol = ICMP;
 	ip_pkt->source_address = ifaces[interface].ip; // ip da interface de saída
 	ip_pkt->destination_address = destination; //ip do host a receber o echo
+	//printf("%s\n", format_address(destination));
 	ip_pkt->checksum = htons(20);
 	
 	send_pkt(sizeof(ETHERNET_HEADER) + sizeof(IP_HEADER) + sizeof (ICMP_HEADER), interface, (BYTE *)_entry->MAC, IP, (BYTE*)eth);
