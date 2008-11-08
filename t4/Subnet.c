@@ -1470,17 +1470,18 @@ int sub_ping( void *arg )
 		
 		while (ping_running)
 		{
-			sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
-			if(sub_arp_res (resolve_arp))
+			if(entry)
 			{
-				send_icmp_pkt (0, ECHO_REQUEST, entry, 10);
+				sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
 				
-				printf ("encontrou %s\n", resolve_arp);
+				if(sub_arp_res (resolve_arp))
+					send_icmp_pkt (0, ECHO_REQUEST, entry, 10);
+				else
+					printf ("Host is unreachable\n");
 			}
 			else
-			{
-				printf ("Host is unreachable %s\n", (char *)aux2);
-			}
+				printf ("Host is unreachable\n");
+			
 			sleep (1);
 		}		
 		//TODO falta chamar a função responsável pelo ping
@@ -1548,7 +1549,7 @@ void send_icmp_pkt ( BYTE _icmp_code,BYTE _icmp_type, RouteTableEntry *entry, BY
 	ip_pkt->protocol = ICMP;
 	ip_pkt->source_address = ifaces[entry->interface].ip; // ip da interface de saída
 	ip_pkt->destination_address = *entry->GATEWAY; //ip do host a receber o echo
-	ip_pkt->checksum = (20);
+	ip_pkt->checksum = htons(20);
 	
 	send_pkt(sizeof(ETHERNET_HEADER) + sizeof(IP_HEADER) + sizeof (ICMP_HEADER), entry->interface, (BYTE *)_entry->MAC, IP, (BYTE*)eth);
 	//TODO cálculo do checksum do ICMP
