@@ -488,8 +488,6 @@ void *subnet_rcv(void *ptr)
     ETHERNET_HEADER *eth_h;
     ARP_HEADER *arp_h;
     IP_HEADER *ip_h;
-    TCP_HEADER *tcp_h;
-    UDP_HEADER *udp_h;
     ICMP_HEADER *icmp_h;
     ETHERNET_PKT *ppkt;
     
@@ -505,8 +503,7 @@ void *subnet_rcv(void *ptr)
 		if (rv < 0) 
 			error_exit("error - recvfrom: %s\n", strerror(errno));
 		
-		riface = net2iface[eth_h->net];
-		
+		riface = net2iface[eth_h->net];		
 		
 		if (riface < 0) 
 			error_exit("Packet received from unknown interface\n");
@@ -533,7 +530,7 @@ void *subnet_rcv(void *ptr)
 							arp_h->sender_hardware_addr[3], 
 							arp_h->sender_hardware_addr[4], 
 							arp_h->sender_hardware_addr[5]
-						);						
+						);
 							
 						char *cmd_arp_add = malloc(45);
 						sprintf(
@@ -561,24 +558,63 @@ void *subnet_rcv(void *ptr)
 				}
 				else if (ntohs(eth_h->type) == IP)
 				{
-					ip_h = (IP_HEADER *) (eth_h + 1);
+					ip_h = (IP_HEADER *) (eth_h + 1);					
+					RouteTableEntry * entry;
+					char resolve_arp[100];
 					
-					switch (ip_h->protocol)
-			        {
-			            case TCP:
-			            	tcp_h = (TCP_HEADER *)(ip_h + 1);
-			            	
-			            break;
-			            case ICMP:
-			            	icmp_h = (ICMP_HEADER *)(ip_h + 1);
-			            	
-			            break;
-			            case UDP:
-			           		udp_h = (UDP_HEADER *)(ip_h + 1);
-			           		
-			           	break;
-			        }
-			        
+					if (ip_h->destination_address == ifaces[riface].ip)
+					{
+						if (ip_h->protocol == ICMP)
+						{
+							icmp_h = (ICMP_HEADER *)(ip_h + 1);
+							
+							switch(icmp_h->type)
+							{
+								case ECHO_REQUEST:
+									//criar pacote de REPLAY
+									entry = FindProxNo(routeTable, (WORD) ip_h->source_address);
+									
+									if (entry)
+									{
+										sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
+										if(sub_arp_res (resolve_arp))
+										{
+											send_icmp_pkt (0, ECHO_REPLAY, entry, 10);
+											
+											printf ("encontrou %s\n", resolve_arp);
+										}
+										else
+										{
+											printf ("Nao Conseguiu Resolver \n");
+										}
+									}
+									else
+									{
+										printf ("Sem rota padrao\n");		
+									}
+										
+								break;
+								
+								case ECHO_REPLAY:
+									printf("%u bytes from %s: icmp_seq=%u ttl=%u Time=%f ms\n", 
+										ntohs(ip_h->total_length), 
+										format_address(ip_h->source_address), 
+										ntohs(ip_h->identification), 
+										ip_h->time_alive,
+										0.0
+									);	
+								break;
+								
+								case REDIRECT:
+								
+								break;								
+							}
+						}						
+					}	
+					else
+					{
+						//criar pacote (pois chegou em um gateway) alterar os MACs e decrementar o TTL
+					}		        
 					//TODO
 				}
 			}
@@ -1067,7 +1103,7 @@ int sub_arp_res( void *arg )
 			if (rv == -1 && errno == ETIMEDOUT) 
 			{
 				//the semaphore returned
-				if(!ping_running)
+				if(!ping_running || arp_resolving)
 	 				printf("Ip address not found!\n");
 	 			return 0;
 			}
@@ -1464,9 +1500,6 @@ int sub_ping( void *arg )
 		entry = FindProxNo(routeTable, (WORD)*end_ip);
 		
 		char resolve_arp[100];
-		
-		
-		
 		
 		while (ping_running)
 		{
