@@ -19,6 +19,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <time.h>
+#include <sys/time.h>
 #include "Subnet.h"
 #include "Xnoop.h"
 #include "Analyzer.h"
@@ -35,8 +36,10 @@ RouteTable *routeTable;
  int ping_running = 0;
  int ident = 0;
  
- time_t start,end;
- 
+
+struct timeval start_time;
+struct timeval stop_time;
+
 /* Verifica para qual interface deve ser direcionado
  * @param _t Target Address no formato decimal com pontos
  * @param _g Gateway Address no formato decimal com pontos
@@ -628,9 +631,10 @@ void *subnet_rcv(void *ptr)
 								break;
 								
 								case ECHO_REPLAY:
-									time (&end);
+									gettimeofday( &stop_time, NULL );
 									float dif;
-									dif = difftime (end,start);
+									dif = (float)(stop_time.tv_sec - start_time.tv_sec);
+									dif += (stop_time.tv_usec - start_time.tv_usec)/(float)1000000;
 									
 									printf("%u bytes from %s: icmp_seq=%u ttl=%u Time=%.10f ms\n", 
 										ntohs(ip_h->total_length), 
@@ -1631,7 +1635,7 @@ int sub_ping( void *arg )
 
 		while (ping_running)
 		{
-			time (&start);
+			
 			
 			if(entry)
 			{
@@ -1652,7 +1656,7 @@ int sub_ping( void *arg )
 				
 				if(sub_arp_res (resolve_arp))
 				{
-					
+					gettimeofday( &start_time, NULL ); 
 					send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, *end_ip, ifaces[entry->interface].ip, 10);
 					ident++;
 					
