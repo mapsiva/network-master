@@ -35,7 +35,6 @@ ArpTable   *arpTable;
 RouteTable *routeTable;
  int ping_running = 0;
  int print_resolving = 0;
- 
 
 struct timeval start_time;
 struct timeval stop_time;
@@ -51,13 +50,13 @@ int Route2Interface(WORD _g, WORD _n)
 {
 	int i;
 	
-	unsigned subrede = (unsigned)(_g) & (unsigned)(_n);
+	unsigned subrede;
 	unsigned aux;
 
 	for (i=0; i<nifaces;i++)
 	{
 		aux = ifaces[i].ip & ifaces[i].mask;
-		
+		subrede = _g & ifaces[i].mask;
 		if (aux == subrede)
 			return i;
 	}
@@ -1655,25 +1654,18 @@ int sub_ping( void *arg )
 
 		while (ping_running)
 		{
-			
-			
 			if(entry)
 			{
-				
 				if(*entry->GATEWAY == *entry->TARGET)
 				{
 					sprintf(resolve_arp, "arp res %s\n", format_address (*end_ip));
 					next_ip = (WORD)*end_ip;
 				}
-
 				else
 				{
 					sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
-
 					next_ip = *entry->GATEWAY;
-
 				}
-				
 				if(sub_arp_res (resolve_arp, 0))
 				{
 					gettimeofday( &start_time, NULL ); 
@@ -1704,9 +1696,7 @@ int sub_ping( void *arg )
 			
 			sleep (1);
 		}		
-		ping_running = 0;
-		//TODO falta chamar a função responsável pelo ping
-		
+		ping_running = 0;		
 		return 1;
 	}
 	else
@@ -1732,9 +1722,7 @@ void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gate
 	_entry = FindArpTableEntry (arpTable, _entry, 1);	
 		
 	if (_entry)
-	{	
 		memcpy(&eth->receiver[0], (_entry->MAC) , MAC_ADDR_LEN);
-	}
 	else
 	{
 		printf ("unknow error!\n");
@@ -1807,6 +1795,7 @@ int main(int argc, char *argv[])
 	pthread_t tid;
 	char buf[MAX_PARAMETERS];
 	int i;
+	char resolve_arp[100];
 	
 	/* Construcao das tabelas ARP e ROUTE */	
 	arpTable   = BuildArpTable();
@@ -1831,6 +1820,13 @@ int main(int argc, char *argv[])
 		if (read_net_cfg(argv[i], my_port, nifaces))
 			nifaces++;
 	}
+	
+	//Realiza um arp res para cada end das interfaces para popular a tabela arp inicialmente
+	for (i = 0; i < nifaces; i++) {
+		sprintf(resolve_arp, "arp res %s\n", format_address (ifaces[i].ip));
+		//sub_arp_res (resolve_arp, 0);
+	}
+	
 	queue_head = NULL;
 	/* Initialize semaphore */
 	sem_init(&sem_data_ready, 0, 0);
