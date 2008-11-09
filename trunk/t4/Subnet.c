@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
+#include <time.h>
 #include "Subnet.h"
 #include "Xnoop.h"
 #include "Analyzer.h"
@@ -33,6 +34,9 @@ ArpTable   *arpTable;
 RouteTable *routeTable;
  int ping_running = 0;
  int ident = 0;
+ 
+ time_t start,end;
+ 
 /* Verifica para qual interface deve ser direcionado
  * @param _t Target Address no formato decimal com pontos
  * @param _g Gateway Address no formato decimal com pontos
@@ -624,13 +628,16 @@ void *subnet_rcv(void *ptr)
 								break;
 								
 								case ECHO_REPLAY:
+									time (&end);
+									float dif;
+									dif = difftime (end,start);
 									
-									printf("%u bytes from %s: icmp_seq=%u ttl=%u Time=%f ms\n", 
+									printf("%u bytes from %s: icmp_seq=%u ttl=%u Time=%.10f ms\n", 
 										ntohs(ip_h->total_length), 
 										format_address(ip_h->source_address), 
 										ntohs(ip_h->identification), 
 										ip_h->time_alive,
-										0.0
+										(dif*1000)
 									);	
 									
 									
@@ -643,13 +650,13 @@ void *subnet_rcv(void *ptr)
 								break;								
 							}
 							
-							
+							if (ping_running)
+								{
+									sem_post(&sem_ping);
+									
+								}
 						}	
-						if (ping_running)
-						{
-							sem_post(&sem_ping);
-							
-						}					
+											
 					}	
 					else
 					{
@@ -1624,8 +1631,11 @@ int sub_ping( void *arg )
 
 		while (ping_running)
 		{
+			time (&start);
+			
 			if(entry)
 			{
+				
 				if(*entry->GATEWAY == *entry->TARGET)
 				{
 					sprintf(resolve_arp, "arp res %s\n", format_address (*end_ip));
@@ -1642,9 +1652,9 @@ int sub_ping( void *arg )
 				
 				if(sub_arp_res (resolve_arp))
 				{
-
+					
 					send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, *end_ip, ifaces[entry->interface].ip, 10);
-
+					ident++;
 					
 					struct timespec ts;
 			
@@ -1731,8 +1741,8 @@ void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gate
 	ip_pkt->version = 0x45;
 	ip_pkt->type_service = 5;
 	ip_pkt->total_length = htons(j/4);
-	
-	ip_pkt->identification = htons(ident++);
+
+	ip_pkt->identification = htons(ident);
 	ip_pkt->fragment = htons(4);
 	ip_pkt->time_alive = hopnum;
 	ip_pkt->protocol = ICMP;
@@ -1815,7 +1825,7 @@ int main(int argc, char *argv[])
 	sem_init(&allow_route_entry, 0, 1);
 	sem_init(&sem_main, 0, 0);
 	sem_init(&sem_arp_res, 0, 0);
-	sem_init(&sem_ping, 0, 0);
+	sem_init(&sem_ping, 0, 1);
 	
 	/* Create sender and receiver threads */
 	printf("Listening on port: %d\n", ntohs(my_port));
