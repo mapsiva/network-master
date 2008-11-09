@@ -646,7 +646,7 @@ void *subnet_rcv(void *ptr)
 									dif += (stop_time.tv_usec - start_time.tv_usec)/(float)1000000;
 									
 									printf("%u bytes from %s: icmp_seq=%u ttl=%u Time=%.10f ms\n", 
-										ntohs(ip_h->total_length), 
+										(ntohs(ip_h->total_length) + sizeof(ETHERNET_HEADER)), 
 										format_address(ip_h->source_address), 
 										ntohs(ip_h->identification), 
 										ip_h->time_alive,
@@ -664,10 +664,10 @@ void *subnet_rcv(void *ptr)
 							}
 							
 							if (ping_running)
-								{
-									sem_post(&sem_ping);
-									
-								}
+							{
+								sem_post(&sem_ping);
+								
+							}
 						}	
 											
 					}	
@@ -1732,9 +1732,7 @@ void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gate
 	
 	eth->type = htons(IP);
 	
-	/*construção do pacote ICMP*/
-	int i = sizeof(ICMP_HEADER);
-	
+	/*construção do pacote ICMP*/	
 	IP_HEADER * ip_pkt = (IP_HEADER *)(eth + 1);
 	icmp_pkt = (ICMP_HEADER *)(ip_pkt + 1);	
 	icmp_pkt->type = _icmp_type;
@@ -1742,11 +1740,11 @@ void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gate
 	icmp_pkt->checksum = 0;
 	icmp_pkt->checksum = htons(calc_check_sum(icmp_pkt, ICMP));
 	//printf("CKSUM ICMP: %X \n",icmp_pkt->checksum);
-	
-	int j = i + sizeof (IP_HEADER);
+		
+	/*construção do pacote IP*/
 	ip_pkt->version = 0x45;
 	ip_pkt->type_service = 5;
-	ip_pkt->total_length = htons(j/4);
+	ip_pkt->total_length = htons(sizeof(ICMP_HEADER) + sizeof (IP_HEADER));
 
 	ip_pkt->identification = htons(id_pkg);
 	ip_pkt->fragment = htons(0);
