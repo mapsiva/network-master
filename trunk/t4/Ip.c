@@ -267,7 +267,7 @@ void DisplayRouteTable (RouteTable * table)
 				format_address((DWORD)*(_entry->GATEWAY)),
 				(int)_entry->interface);
 		if (_entry->TTL == -1)
-			printf ("INF\n ");
+			printf ("INF\n");
 		else
 			printf ("%d\n", _entry->TTL);
 		

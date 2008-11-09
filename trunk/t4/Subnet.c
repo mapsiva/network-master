@@ -205,7 +205,11 @@ void *subnet_send(void *ptr)
 			 (struct sockaddr *)&sin, sizeof(sin));
 						
 				if (aux < 0)
-					printf("Error sending pkt: %s\n", strerror(errno));
+				{
+					
+					//printf ("====Parametros====\n Len = %d", pkt->pkt->len);
+					//printf("Error sending pkt: %s\n", strerror(errno));
+				}
 			}
 			ifaces[pkt->pkt->iface].pkt_tx++;
 			free(pkt->pkt);
@@ -562,7 +566,7 @@ void *subnet_rcv(void *ptr)
 					ip_h = (IP_HEADER *) (eth_h + 1);					
 					RouteTableEntry * entry;
 					char resolve_arp[100];
-					
+					//printf ("Chegou pacote IP de [%s] para [%s]\n", format_address (ip_h->source_address), format_address (ip_h->destination_address));
 					if (ip_h->destination_address == ifaces[riface].ip)
 					{	printf("igual\n");	
 						if (ip_h->protocol == ICMP)
@@ -1190,7 +1194,7 @@ int sub_arp_res( void *arg )
 			//Falta eperar pelo REPLY e bloquear esta thread
 			struct timespec ts;
 			
-			ts.tv_sec = time(NULL) + TIMEOUT;
+			ts.tv_sec = time(NULL) + (TIMEOUT/2);
 			ts.tv_nsec = 0;
 			
 			arp_resolving = 1;
@@ -1602,7 +1606,9 @@ int sub_ping( void *arg )
 		char resolve_arp[100];
 		ping_running = 1;
 		ident = 1;
+
 		WORD next_ip;
+
 		while (ping_running)
 		{
 			if(entry)
@@ -1612,19 +1618,24 @@ int sub_ping( void *arg )
 					sprintf(resolve_arp, "arp res %s\n", format_address (*end_ip));
 					next_ip = (WORD)*end_ip;
 				}
+
 				else
 				{
 					sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
+
 					next_ip = *entry->GATEWAY;
+
 				}
 				
 				if(sub_arp_res (resolve_arp))
 				{
+
 					send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, *end_ip, ifaces[entry->interface].ip, 10);
+
 					
 					struct timespec ts;
 			
-					ts.tv_sec = time(NULL) + TIMEOUT;
+					ts.tv_sec = time(NULL) + TIMEOUT*2;
 					ts.tv_nsec = 0;
 					int rv;
 					
