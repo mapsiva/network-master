@@ -34,6 +34,7 @@
 ArpTable   *arpTable;
 RouteTable *routeTable;
  int ping_running = 0;
+ int print_resolving = 0;
  
 
 struct timeval start_time;
@@ -555,10 +556,9 @@ void *subnet_rcv(void *ptr)
 						
 						if (arp_resolving)
 						{
-							if(!ping_running && !sending_packets && !run_xnoop)
+							if(print_resolving)
 								printf("(%s, %s, %d)\n", (char*)_ip, (char*)_mac, ARP_TTL_DEF);
 							sem_post(&sem_arp_res);
-							
 						}						
 					}
 					else if (ntohs(arp_h->operation) == ARP_REQUEST)
@@ -623,7 +623,7 @@ void *subnet_rcv(void *ptr)
 											next_ip = *entry->GATEWAY;
 										}
 															
-										if(sub_arp_res (resolve_arp))
+										if(sub_arp_res (resolve_arp, 0))
 										{
 											send_icmp_pkt (0, ECHO_REPLAY, riface, next_ip, ip_h->source_address, ip_h->destination_address, (ip_h->time_alive - 1),ntohs(ip_h->identification));											
 										}
@@ -700,7 +700,7 @@ void *subnet_rcv(void *ptr)
 											next_ip = *entry->GATEWAY;
 										}
 										printf("ARP %s\n", resolve_arp);					
-										if(sub_arp_res (resolve_arp))
+										if(sub_arp_res (resolve_arp, 0))
 										{	
 
 											send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, ip_h->destination_address, ip_h->source_address, (ip_h->time_alive - 1),ntohs(ip_h->identification));
@@ -736,7 +736,7 @@ void *subnet_rcv(void *ptr)
 											next_ip = *entry->GATEWAY;
 										}
 															
-										if(sub_arp_res (resolve_arp))
+										if(sub_arp_res (resolve_arp, 0))
 										{	
 
 											send_icmp_pkt (0, ECHO_REPLAY, entry->interface, next_ip, ip_h->destination_address, ip_h->source_address, (ip_h->time_alive - 1),ntohs(ip_h->identification));
@@ -1178,7 +1178,7 @@ int sub_arp( char *b )
 }
 
 /* */
-int sub_arp_res( void *arg )
+int sub_arp_res( void *arg , int print)
 {
 	if (!arg)
 		return 0;
@@ -1220,7 +1220,7 @@ int sub_arp_res( void *arg )
 			_mac = format_mac_address(*(entry->MAC));
 			entry->TTL = ARP_TTL_DEF;
 			AddArpTableEntry(arpTable,entry);
-			if(!ping_running)
+			if(!ping_running && print)
 				printf ("\n(%s, %s, %d)\n", aux2, (char*)_mac, entry->TTL);
 			sem_post(&allow_entry);
 			return 1;
@@ -1239,15 +1239,19 @@ int sub_arp_res( void *arg )
 			
 			arp_resolving = 1;
 			
+			print_resolving = print;
+			
 			while ((rv = sem_timedwait(&sem_arp_res, &ts) ) == -1 && errno == EINTR)
                continue;
 
 			arp_resolving = 0;
 			
+			print_resolving = 0;
+			
 			if (rv == -1 && errno == ETIMEDOUT) 
 			{
 				//the semaphore returned
-				if(!ping_running && arp_resolving)
+				if(!ping_running && arp_resolving && print)
 	 				printf("Ip address not found!\n");
 	 			return 0;
 			}
@@ -1670,7 +1674,7 @@ int sub_ping( void *arg )
 
 				}
 				
-				if(sub_arp_res (resolve_arp))
+				if(sub_arp_res (resolve_arp, 0))
 				{
 					gettimeofday( &start_time, NULL ); 
 					send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, *end_ip, ifaces[entry->interface].ip, 64, ident);
@@ -1811,7 +1815,7 @@ int main(int argc, char *argv[])
 	//Ajustando as opções padrões do XNOOP	
 	_xnoop.npkgs = 0;
 	run_xnoop = 0;
-	sending_packets = 0;	
+	sending_packets = 0;
 	qtd_pkgs = 0;
 	
 	signal (SIGINT, control_xnoop);
@@ -1861,7 +1865,7 @@ int main(int argc, char *argv[])
 		else if (!strncasecmp(buf, "ARP ADD", 7)) 
 			sub_arp_add((void *)buf);
 		else if (!strncasecmp(buf, "ARP RES", 7)) 
-			sub_arp_res((void *)buf);
+			sub_arp_res((void *)buf, 1);
 		else if (!strncasecmp(buf, "ARP DEL", 7))
 			sub_arp_del((void *)buf);
 		else if (!strncasecmp(buf, "ARP", 3)) {
