@@ -34,7 +34,6 @@
 ArpTable   *arpTable;
 RouteTable *routeTable;
  int ping_running = 0;
- int ident = 0;
  
 
 struct timeval start_time;
@@ -573,25 +572,35 @@ void *subnet_rcv(void *ptr)
 					ip_h = (IP_HEADER *) (eth_h + 1);					
 					RouteTableEntry * entry;
 					char resolve_arp[100];
+					
 					//printf ("Chegou pacote IP de [%s] para [%s]\n", format_address (ip_h->source_address), format_address (ip_h->destination_address));
-					SWORD sum_ip_rcv = ntohs(ip_h->checksum);
+					SWORD sum_ip_rcv = ntohs(ip_h->checksum);	//Guardando o cksum do ip_header
 					ip_h->checksum = 0;
 					SWORD sum_ip_calc = calc_check_sum(ip_h, IP);
 					
-					printf("CKSUM RCV IP: %u \n",sum_ip_rcv);
-					printf("CKSUM CALC IP: %u \n",sum_ip_calc);
+					//printf("CKSUM RCV IP: %u \n",sum_ip_rcv);
+					//printf("CKSUM CALC IP: %u \n",sum_ip_calc);
 					
 					if (sum_ip_rcv != sum_ip_calc)	return 0;
+					
+					ip_h->checksum = htons(sum_ip_rcv);		//Retornando o cksum do ip_header
+					
 					if (ip_h->destination_address == ifaces[riface].ip)
-					{	//printf("igual\n");	
+					{	
 						if (ip_h->protocol == ICMP)
 						{
 							icmp_h = (ICMP_HEADER *)(ip_h + 1);
 							
-							SWORD sum_icmp = calc_check_sum(icmp_h, ICMP);
+							SWORD sum_icmp_rcv = ntohs(icmp_h->checksum);		//Guardando o cksum do icmp_header
+							icmp_h->checksum = 0;
+							SWORD sum_icmp_calc = calc_check_sum(icmp_h, ICMP);
 		
-							//printf("CKSUM RCV ICMP: %u \n",sum_icmp);
-							//printf("CKSUM PKG ICMP: %u \n",icmp_h->checksum);
+							//printf("CKSUM RCV ICMP: %u \n",sum_icmp_rcv);
+							//printf("CKSUM PKG ICMP: %u \n",sum_icmp_calc);
+							
+							if (sum_icmp_rcv != sum_icmp_calc)	return 0;
+							
+							icmp_h->checksum = htons(sum_icmp_rcv);		//Retornando o cksum do icmp_header
 					
 							switch(icmp_h->type)
 							{
@@ -615,7 +624,7 @@ void *subnet_rcv(void *ptr)
 															
 										if(sub_arp_res (resolve_arp))
 										{
-											send_icmp_pkt (0, ECHO_REPLAY, riface, next_ip, ip_h->source_address, ip_h->destination_address, 10);											
+											send_icmp_pkt (0, ECHO_REPLAY, riface, next_ip, ip_h->source_address, ip_h->destination_address, (ip_h->time_alive - 1),ntohs(ip_h->identification));											
 										}
 										else
 										{
@@ -693,7 +702,7 @@ void *subnet_rcv(void *ptr)
 															
 										if(sub_arp_res (resolve_arp))
 										{	
-											send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, ip_h->destination_address, ip_h->source_address, 10);
+											send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, ip_h->destination_address, ip_h->source_address, (ip_h->time_alive - 1),ntohs(ip_h->identification));
 										}
 										else
 										{
@@ -726,7 +735,7 @@ void *subnet_rcv(void *ptr)
 															
 										if(sub_arp_res (resolve_arp))
 										{	
-											send_icmp_pkt (0, ECHO_REPLAY, entry->interface, next_ip, ip_h->destination_address, ip_h->source_address, 10);
+											send_icmp_pkt (0, ECHO_REPLAY, entry->interface, next_ip, ip_h->destination_address, ip_h->source_address, (ip_h->time_alive - 1),ntohs(ip_h->identification));
 										}
 										else
 										{
@@ -1629,7 +1638,7 @@ int sub_ping( void *arg )
 		
 		char resolve_arp[100];
 		ping_running = 1;
-		ident = 1;
+		int ident = 1;
 
 		WORD next_ip;
 
@@ -1657,7 +1666,7 @@ int sub_ping( void *arg )
 				if(sub_arp_res (resolve_arp))
 				{
 					gettimeofday( &start_time, NULL ); 
-					send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, *end_ip, ifaces[entry->interface].ip, 10);
+					send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, *end_ip, ifaces[entry->interface].ip, 64, ident);
 					ident++;
 					
 					struct timespec ts;
@@ -1694,7 +1703,7 @@ int sub_ping( void *arg )
 	return 0;
 }
 
-void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gateway, WORD destination, WORD source, BYTE hopnum )
+void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gateway, WORD destination, WORD source, BYTE hopnum, WORD id_pkg)
 {
 	ICMP_HEADER *icmp_pkt;
 	ETHERNET_HEADER * eth;
@@ -1727,27 +1736,20 @@ void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gate
 	int i = sizeof(ICMP_HEADER);
 	
 	IP_HEADER * ip_pkt = (IP_HEADER *)(eth + 1);
-	icmp_pkt = (ICMP_HEADER *)(ip_pkt + 1);
-	
-	//icmp_pkt = malloc (i);
+	icmp_pkt = (ICMP_HEADER *)(ip_pkt + 1);	
 	icmp_pkt->type = _icmp_type;
 	icmp_pkt->code = _icmp_code;
 	icmp_pkt->checksum = 0;
 	icmp_pkt->checksum = htons(calc_check_sum(icmp_pkt, ICMP));
 	//printf("CKSUM ICMP: %X \n",icmp_pkt->checksum);
-	//TODO cálculo do checksum do ICMP
-	
-	
-	
 	
 	int j = i + sizeof (IP_HEADER);
-	//ip_pkt = malloc (j);
 	ip_pkt->version = 0x45;
 	ip_pkt->type_service = 5;
 	ip_pkt->total_length = htons(j/4);
 
-	ip_pkt->identification = htons(ident);
-	ip_pkt->fragment = htons(4);
+	ip_pkt->identification = htons(id_pkg);
+	ip_pkt->fragment = htons(0);
 	ip_pkt->time_alive = hopnum;
 	ip_pkt->protocol = ICMP;
 	ip_pkt->source_address = source; // ip da interface de saída
@@ -1755,9 +1757,9 @@ void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gate
 	//printf("%s\n", format_address(destination));
 	ip_pkt->checksum = 0;
 	ip_pkt->checksum = htons(calc_check_sum(ip_pkt, IP));
-	printf("CKSUM ENV IP: %u \n",icmp_pkt->checksum);
+	//printf("CKSUM ENV IP: %u \n",icmp_pkt->checksum);
+	
 	send_pkt(sizeof(ETHERNET_HEADER) + sizeof(IP_HEADER) + sizeof (ICMP_HEADER), interface, (BYTE *)_entry->MAC, IP, (BYTE*)eth);
-	//TODO cálculo do checksum do ICMP
 }
 
 SWORD calc_check_sum(void *pkg, int tipo)
