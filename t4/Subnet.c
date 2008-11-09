@@ -645,15 +645,13 @@ void *subnet_rcv(void *ptr)
 									dif = (float)(stop_time.tv_sec - start_time.tv_sec);
 									dif += (stop_time.tv_usec - start_time.tv_usec)/(float)1000000;
 									
-									printf("%u bytes from %s: icmp_seq=%u ttl=%u Time=%.10f ms\n", 
+									printf("%u bytes from %s: icmp_seq=%u ttl=%u Time=%.4f ms\n", 
 										(ntohs(ip_h->total_length) + sizeof(ETHERNET_HEADER)), 
 										format_address(ip_h->source_address), 
 										ntohs(ip_h->identification), 
 										ip_h->time_alive,
 										(dif*1000)
-									);	
-									
-									
+									);
 								break;
 								
 								case DESTINATION_UN:
