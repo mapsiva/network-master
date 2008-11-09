@@ -567,12 +567,25 @@ void *subnet_rcv(void *ptr)
 					RouteTableEntry * entry;
 					char resolve_arp[100];
 					//printf ("Chegou pacote IP de [%s] para [%s]\n", format_address (ip_h->source_address), format_address (ip_h->destination_address));
+					SWORD sum_ip_rcv = ntohs(ip_h->checksum);
+					ip_h->checksum = 0;
+					SWORD sum_ip_calc = calc_check_sum(ip_h, IP);
+					
+					printf("CKSUM RCV IP: %u \n",sum_ip_rcv);
+					printf("CKSUM CALC IP: %u \n",sum_ip_calc);
+					
+					if (sum_ip_rcv != sum_ip_calc)	return;
 					if (ip_h->destination_address == ifaces[riface].ip)
-					{	printf("igual\n");	
+					{	//printf("igual\n");	
 						if (ip_h->protocol == ICMP)
 						{
 							icmp_h = (ICMP_HEADER *)(ip_h + 1);
 							
+							SWORD sum_icmp = calc_check_sum(icmp_h, ICMP);
+		
+							//printf("CKSUM RCV ICMP: %u \n",sum_icmp);
+							//printf("CKSUM PKG ICMP: %u \n",icmp_h->checksum);
+					
 							switch(icmp_h->type)
 							{
 								case ECHO_REQUEST:
@@ -644,7 +657,7 @@ void *subnet_rcv(void *ptr)
 						{
 							icmp_h = (ICMP_HEADER *)(ip_h + 1);
 							WORD next_ip;
-							printf("diferente\n");	
+							//printf("diferente\n");	
 							switch(icmp_h->type)
 							{
 								case ECHO_REQUEST:
@@ -656,13 +669,13 @@ void *subnet_rcv(void *ptr)
 										printf("REQUEST: %d\n",entry->interface);
 										if (*entry->GATEWAY == *entry->TARGET)
 										{
-											printf("na minha rede\n");
+											//printf("na minha rede\n");
 											sprintf(resolve_arp, "arp res %s\n", format_address (ip_h->destination_address));
 											next_ip = ip_h->destination_address;
 										}
 										else
 										{
-											printf("fora da minha rede\n");
+											//printf("fora da minha rede\n");
 											sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
 											next_ip = *entry->GATEWAY;
 										}
@@ -1705,8 +1718,9 @@ void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gate
 	//icmp_pkt = malloc (i);
 	icmp_pkt->type = _icmp_type;
 	icmp_pkt->code = _icmp_code;
-	icmp_pkt->checksum = calc_check_sum(icmp_pkt, ICMP);
-	printf("CKSUM ICMP: %u \n",icmp_pkt->checksum);
+	icmp_pkt->checksum = 0;
+	icmp_pkt->checksum = htons(calc_check_sum(icmp_pkt, ICMP));
+	//printf("CKSUM ICMP: %X \n",icmp_pkt->checksum);
 	//TODO cálculo do checksum do ICMP
 	
 	
@@ -1725,8 +1739,9 @@ void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gate
 	ip_pkt->source_address = source; // ip da interface de saída
 	ip_pkt->destination_address = destination; //ip do host a receber o echo
 	//printf("%s\n", format_address(destination));
-	ip_pkt->checksum = calc_check_sum(ip_pkt, IP);
-	printf("CKSUM IP: %u \n",icmp_pkt->checksum);
+	ip_pkt->checksum = 0;
+	ip_pkt->checksum = htons(calc_check_sum(ip_pkt, IP));
+	printf("CKSUM ENV IP: %u \n",icmp_pkt->checksum);
 	send_pkt(sizeof(ETHERNET_HEADER) + sizeof(IP_HEADER) + sizeof (ICMP_HEADER), interface, (BYTE *)_entry->MAC, IP, (BYTE*)eth);
 	//TODO cálculo do checksum do ICMP
 }
@@ -1735,12 +1750,16 @@ SWORD calc_check_sum(void *pkg, int tipo)
 {
 	int tam;
 	SWORD *aux = (SWORD *) pkg;
-	register unsigned long sum = 0;  
+	register unsigned long sum = 0;
+	
+	sum = sum & 0x00000000;  
 	
 	if (tipo == IP)
 		tam = sizeof(IP_HEADER);
 	else if (tipo == ICMP)
 		tam = sizeof(ICMP_HEADER);
+		
+	//printf("TAM: %d\n",tam);
 	
 	tam = tam/2; 	//pois tam guarda a quantidade em bytes e nós queremos a quantidade de palavras de 16 bits, logo 2 bytes 
 	
@@ -1753,6 +1772,7 @@ SWORD calc_check_sum(void *pkg, int tipo)
 			sum &= 0xFFFF;
 			sum++;
 		}
+		//printf("SUM: %X\n", (unsigned int)sum);
 	}
 	return ~(sum & 0xFFFF);
 	
