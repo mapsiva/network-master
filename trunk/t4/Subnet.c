@@ -574,7 +574,7 @@ void *subnet_rcv(void *ptr)
 					printf("CKSUM RCV IP: %u \n",sum_ip_rcv);
 					printf("CKSUM CALC IP: %u \n",sum_ip_calc);
 					
-					if (sum_ip_rcv != sum_ip_calc)	return;
+					if (sum_ip_rcv != sum_ip_calc)	return 0;
 					if (ip_h->destination_address == ifaces[riface].ip)
 					{	//printf("igual\n");	
 						if (ip_h->protocol == ICMP)
@@ -1749,7 +1749,7 @@ void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gate
 SWORD calc_check_sum(void *pkg, int tipo)
 {
 	int tam;
-	SWORD *aux = (SWORD *) pkg;
+	unsigned short *aux = (unsigned short *) pkg;
 	register unsigned long sum = 0;
 	
 	sum = sum & 0x00000000;  
@@ -1773,9 +1773,8 @@ SWORD calc_check_sum(void *pkg, int tipo)
 			sum++;
 		}
 		//printf("SUM: %X\n", (unsigned int)sum);
-	}
-	return ~(sum & 0xFFFF);
-	
+	}	
+	return (SWORD) ~(sum & 0xFFFF);;
 }
 
 int main(int argc, char *argv[])
