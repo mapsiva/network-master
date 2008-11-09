@@ -131,4 +131,6 @@ void buildArpHeader (DWORD *, WORD , WORD );
 
 int Route2Interface(WORD _g, WORD _n);
 
+SWORD calc_check_sum(void *, int tipo);
+
 #endif 

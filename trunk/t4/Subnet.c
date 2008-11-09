@@ -1602,20 +1602,25 @@ int sub_ping( void *arg )
 		char resolve_arp[100];
 		ping_running = 1;
 		ident = 1;
+		WORD next_ip;
 		while (ping_running)
 		{
 			if(entry)
 			{
 				if(*entry->GATEWAY == *entry->TARGET)
+				{
 					sprintf(resolve_arp, "arp res %s\n", format_address (*end_ip));
+					next_ip = (WORD)*end_ip;
+				}
 				else
 				{
 					sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
+					next_ip = *entry->GATEWAY;
 				}
 				
 				if(sub_arp_res (resolve_arp))
 				{
-					send_icmp_pkt (0, ECHO_REQUEST, entry->interface, *entry->GATEWAY, *end_ip, ifaces[entry->interface].ip, 10);
+					send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, *end_ip, ifaces[entry->interface].ip, 10);
 					
 					struct timespec ts;
 			
@@ -1631,7 +1636,6 @@ int sub_ping( void *arg )
 						//the semaphore returned
 						if(ping_running)
 			 				printf ("Host is unreachable1\n");
-			 			
 					}
 				}
 				else
@@ -1690,8 +1694,8 @@ void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gate
 	//icmp_pkt = malloc (i);
 	icmp_pkt->type = _icmp_type;
 	icmp_pkt->code = _icmp_code;
-	icmp_pkt->checksum = 0;
-	
+	icmp_pkt->checksum = calc_check_sum(icmp_pkt, ICMP);
+	printf("CKSUM ICMP: %u \n",icmp_pkt->checksum);
 	//TODO cálculo do checksum do ICMP
 	
 	
@@ -1710,10 +1714,37 @@ void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gate
 	ip_pkt->source_address = source; // ip da interface de saída
 	ip_pkt->destination_address = destination; //ip do host a receber o echo
 	//printf("%s\n", format_address(destination));
-	ip_pkt->checksum = htons(20);
-	
+	ip_pkt->checksum = calc_check_sum(ip_pkt, IP);
+	printf("CKSUM IP: %u \n",icmp_pkt->checksum);
 	send_pkt(sizeof(ETHERNET_HEADER) + sizeof(IP_HEADER) + sizeof (ICMP_HEADER), interface, (BYTE *)_entry->MAC, IP, (BYTE*)eth);
 	//TODO cálculo do checksum do ICMP
+}
+
+SWORD calc_check_sum(void *pkg, int tipo)
+{
+	int tam;
+	SWORD *aux = (SWORD *) pkg;
+	register unsigned long sum = 0;  
+	
+	if (tipo == IP)
+		tam = sizeof(IP_HEADER);
+	else if (tipo == ICMP)
+		tam = sizeof(ICMP_HEADER);
+	
+	tam = tam/2; 	//pois tam guarda a quantidade em bytes e nós queremos a quantidade de palavras de 16 bits, logo 2 bytes 
+	
+	while(tam--)
+	{
+		sum += *aux;
+		aux++;
+		if (sum & 0xFFFF0000)	//se vai um
+		{
+			sum &= 0xFFFF;
+			sum++;
+		}
+	}
+	return ~(sum & 0xFFFF);
+	
 }
 
 int main(int argc, char *argv[])
