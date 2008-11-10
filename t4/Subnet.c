@@ -1824,7 +1824,7 @@ int main(int argc, char *argv[])
 	sem_init(&allow_route_entry, 0, 1);
 	sem_init(&sem_main, 0, 0);
 	sem_init(&sem_arp_res, 0, 0);
-	sem_init(&sem_ping, 0, 1);
+	sem_init(&sem_ping, 0, 0);
 	
 	/* Create sender and receiver threads */
 	printf("Listening on port: %d\n", ntohs(my_port));
