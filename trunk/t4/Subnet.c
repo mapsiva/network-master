@@ -1789,7 +1789,7 @@ int main(int argc, char *argv[])
 	pthread_t tid;
 	char buf[MAX_PARAMETERS];
 	int i;
-	char resolve_arp[100];
+	char add_arp[100], aux_mac[100];
 	
 	/* Construcao das tabelas ARP e ROUTE */	
 	arpTable   = BuildArpTable();
@@ -1815,12 +1815,6 @@ int main(int argc, char *argv[])
 			nifaces++;
 	}
 	
-	//Realiza um arp res para cada end das interfaces para popular a tabela arp inicialmente
-	for (i = 0; i < nifaces; i++) {
-		sprintf(resolve_arp, "arp res %s\n", format_address (ifaces[i].ip));
-		//sub_arp_res (resolve_arp, 0);
-	}
-	
 	queue_head = NULL;
 	/* Initialize semaphore */
 	sem_init(&sem_data_ready, 0, 0);
@@ -1842,6 +1836,13 @@ int main(int argc, char *argv[])
 	pthread_create(&tid, NULL, (void *)sub_arp_add, NULL);
 	pthread_create(&tid, NULL, (void *)update_arp_table, NULL);
 	pthread_create(&tid, NULL, (void *)update_route_table, NULL);
+	
+	//Realiza um arp add para cada uma das interfaces para popular a tabela arp inicialmente
+	for (i = 0; i < nifaces; i++) {
+		sprintf(aux_mac, "%s",(char *)format_mac_address((DWORD)(*(DWORD *)ifaces[i].mac)));
+		sprintf(add_arp, "arp add %s %s %d\n", format_address(ifaces[i].ip), aux_mac, -1);
+		sub_arp_add ((void *)add_arp);
+	}
 	
 	while (1) 
 	{
