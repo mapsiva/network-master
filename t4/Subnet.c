@@ -719,8 +719,7 @@ void *subnet_rcv(void *ptr)
 									entry = FindProxNo(routeTable, (WORD) ip_h->destination_address);
 									
 									if (entry)
-									{
-										printf("REPLAY: %d\n",entry->interface);
+									{	
 										if (*entry->GATEWAY == *entry->TARGET)
 										{
 											sprintf(resolve_arp, "arp res %s\n", format_address (ip_h->destination_address));
