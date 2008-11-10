@@ -47,6 +47,7 @@ sem_t sem_xnoop;
 sem_t sem_main;
 sem_t sem_arp_res;
 sem_t sem_ping;
+sem_t sem_trace;
 
 /* */
 INTERFACE ifaces[MAX_IFACES];	/* Interfaces of the host/router */
