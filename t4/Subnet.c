@@ -1432,6 +1432,7 @@ int sub_route_add( void *arg )
 	BYTE _interface;	
 	char *aux1 = NULL, *aux2 = NULL, *_target = NULL, *_gateway = NULL, *_netmask = NULL;
 	RouteTableEntry *entry;
+	char resolve_arp[100];
 	
 	if (!arg)
 		return 0;
@@ -1483,6 +1484,11 @@ int sub_route_add( void *arg )
 				*/
 				entry = BuildRouteTableEntry((CHAR_T*)_target, (CHAR_T*)_gateway, (CHAR_T*)_netmask, _interface, -1);
 				AddRouteTableEntry (routeTable, entry);
+				
+				sprintf(resolve_arp, "arp res %s\n", format_address ((WORD)*_gw));
+				sub_arp_res (resolve_arp, 0);
+				printf("resolving\n");
+				
 				//sem_post(&allow_entry);
 				return 1;
 			}
@@ -1645,7 +1651,7 @@ int sub_ping( void *arg )
 		int ident = 1;
 
 		WORD next_ip;
-
+		
 		while (ping_running)
 		{
 			if(entry)
