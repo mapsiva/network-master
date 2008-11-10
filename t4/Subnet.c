@@ -35,7 +35,7 @@ ArpTable   *arpTable;
 RouteTable *routeTable;
  int ping_running = 0;
  int print_resolving = 0;
-
+int tracert_running = 0;
 struct timeval start_time;
 struct timeval stop_time;
 
@@ -207,7 +207,6 @@ void *subnet_send(void *ptr)
 						
 				if (aux < 0)
 				{
-					
 					//printf ("====Parametros====\n Len = %d", pkt->pkt->len);
 					//printf("Error sending pkt: %s\n", strerror(errno));
 				}
@@ -569,20 +568,23 @@ void *subnet_rcv(void *ptr)
 					RouteTableEntry * entry;
 					char resolve_arp[100];
 					
-					//printf ("Chegou pacote IP de [%s] para [%s]\n", format_address (ip_h->source_address), format_address (ip_h->destination_address));
 					SWORD sum_ip_rcv = ntohs(ip_h->checksum);	//Guardando o cksum do ip_header
 					ip_h->checksum = 0;
 					SWORD sum_ip_calc = calc_check_sum(ip_h, IP);
 					
-					//printf("CKSUM RCV IP: %u \n",sum_ip_rcv);
-					//printf("CKSUM CALC IP: %u \n",sum_ip_calc);
+					riface = Route2Interface (ip_h->destination_address, 0);
+					
+					
 					
 					if (sum_ip_rcv != sum_ip_calc)	return 0;
 					
 					ip_h->checksum = htons(sum_ip_rcv);		//Retornando o cksum do ip_header
 					
-					if (ip_h->destination_address == ifaces[riface].ip)
+					
+						
+					if (riface >=0 && ip_h->destination_address == ifaces[riface].ip)
 					{
+						
 						if (ip_h->protocol == ICMP)
 						{
 							icmp_h = (ICMP_HEADER *)(ip_h + 1);
@@ -597,7 +599,8 @@ void *subnet_rcv(void *ptr)
 							if (sum_icmp_rcv != sum_icmp_calc)	return 0;
 							
 							icmp_h->checksum = htons(sum_icmp_rcv);		//Retornando o cksum do icmp_header
-					
+							
+								
 							switch(icmp_h->type)
 							{
 								case ECHO_REQUEST:
@@ -609,15 +612,18 @@ void *subnet_rcv(void *ptr)
 									{
 										if (*entry->GATEWAY == *entry->TARGET)
 										{
+
 											sprintf(resolve_arp, "arp res %s\n", format_address (ip_h->source_address));
 											next_ip =ip_h->source_address;
+
 										}
 										else
 										{
 											sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
 											next_ip = *entry->GATEWAY;
 										}
-															
+										
+										printf("ARP[BBB] -> %s", resolve_arp);					
 										if(sub_arp_res (resolve_arp, 0))
 										{
 											send_icmp_pkt (0, ECHO_REPLAY, entry->interface, next_ip, ip_h->source_address, ip_h->destination_address, (ip_h->time_alive - 1),ntohs(ip_h->identification));											
@@ -654,6 +660,14 @@ void *subnet_rcv(void *ptr)
 									printf("Destination unreachable\n");
 								case REDIRECT:
 								
+								case TTL:
+									if(tracert_running)
+									{
+										if (ip_h->time_alive == 0)
+											printf("Host [%s]\n", format_address (ip_h->source_address));
+										else
+											tracert_running = 0;
+									}
 								break;								
 							}
 							
@@ -689,7 +703,7 @@ void *subnet_rcv(void *ptr)
 											sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
 											next_ip = *entry->GATEWAY;
 										}
-										//printf("ARP %s\n", resolve_arp);					
+										printf("ARP[AAA] %s\n", resolve_arp);					
 										if(sub_arp_res (resolve_arp, 0))
 										{
 											send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, ip_h->destination_address, ip_h->source_address, (ip_h->time_alive - 1),ntohs(ip_h->identification));
@@ -728,6 +742,7 @@ void *subnet_rcv(void *ptr)
 										{
 											sprintf(resolve_arp, "arp res %s\n", format_address (ip_h->destination_address));
 											next_ip = ip_h->destination_address;
+											
 										}
 										else
 										{
@@ -1219,10 +1234,10 @@ int sub_arp_res( void *arg , int print)
 			
 			send_arp_pkt((DWORD *)&broad_eth[0], *(end_ip), ARP_REQUEST);
 			
-			//Falta eperar pelo REPLY e bloquear esta thread
+			
 			struct timespec ts;
 			
-			ts.tv_sec = time(NULL) + (TIMEOUT/2);
+			ts.tv_sec = time(NULL) + (TIMEOUT);
 			ts.tv_nsec = 0;
 			
 			arp_resolving = 1;
@@ -1599,8 +1614,62 @@ int sub_traceroute( void *arg )
 		}
 		
 		end_ip = to_ip_byte((CHAR_T *)aux2);
+		int ttl = 1;
 		
-		//TODO falta chamar a função responsável pelo traceroute
+		entry = FindProxNo(routeTable, (WORD)*end_ip);
+		
+		char resolve_arp[100];
+		tracert_running = 1;
+		int ident = 1;
+
+		WORD next_ip;
+
+		while (tracert_running)
+		{
+			if(entry)
+			{
+				if(*entry->GATEWAY == *entry->TARGET)
+				{
+					sprintf(resolve_arp, "arp res %s\n", format_address (*end_ip));
+					next_ip = (WORD)*end_ip;
+				}
+				else
+				{
+					sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
+					next_ip = *entry->GATEWAY;
+				}
+				if(sub_arp_res (resolve_arp, 0))
+				{
+					gettimeofday( &start_time, NULL ); 
+					send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, *end_ip, ifaces[entry->interface].ip, 0, ident);
+					ident++;
+					
+					struct timespec ts;
+			
+					ts.tv_sec = time(NULL) + TIMEOUT*2;
+					ts.tv_nsec = 0;
+					int rv;
+					
+					while ((rv = sem_timedwait(&sem_ping, &ts) ) == -1 && errno == EINTR)
+		               continue;
+					
+					if (rv == -1 && errno == ETIMEDOUT) 
+					{
+						//the semaphore returned
+						if(tracert_running)
+			 				printf ("Host is unreachable\n");
+					}
+				}
+				else
+					printf ("Host is unreachable\n");
+			}
+			else
+				printf ("Host is unreachable\n");
+			
+			sleep (1);
+		}		
+		tracert_running = 0;		
+		
 		
 		return 1;
 	}
