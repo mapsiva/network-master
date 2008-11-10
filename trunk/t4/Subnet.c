@@ -46,18 +46,13 @@ struct timeval stop_time;
  * 
  * @since           2.0
  */
-int Route2Interface(WORD _g, WORD _n)
+int Route2Interface(WORD _g)
 {
 	int i;
 	
-	unsigned subrede;
-	unsigned aux;
-
 	for (i=0; i<nifaces;i++)
 	{
-		aux = ifaces[i].ip & ifaces[i].mask;
-		subrede = _g & ifaces[i].mask;
-		if (aux == subrede)
+		if ((_g & ifaces[i].mask) == (ifaces[i].ip & ifaces[i].mask))
 			return i;
 	}
 	return -1;
@@ -83,7 +78,7 @@ void send_arp_pkt (DWORD *_dmac, WORD _dip, WORD type_op )
 	 * Procura a interface que deve ser mandado o arp para descobrir
 	 * o enederćo mac a ser descoberto
 	 * */
-	for (k = 0; k < nifaces && ifaces[k].up && (Route2Interface (_dip, ifaces[k].mask) != -1); k++)
+	for (k = 0; k < nifaces && ifaces[k].up && (Route2Interface (_dip) != -1); k++)
 	{
 		eth->net = ifaces[k].net;
 		memcpy(&eth->sender[0], ifaces[k].mac, MAC_ADDR_LEN);
@@ -1473,21 +1468,20 @@ int sub_route_add( void *arg )
 				/* Código para inserção na tabela */
 				//sem_wait(&allow_entry);
 				DWORD *_gw = to_ip_byte((CHAR_T*)_gateway);
-				DWORD *_nm = to_ip_byte((CHAR_T*)_netmask);
-				_interface = Route2Interface((WORD)*_gw, (WORD)*_nm);
-				/*
-				if ((_interface = Route2Interface((CHAR_T*)_gateway, (CHAR_T*)_netmask)) == (BYTE) -1)
+				//DWORD *_nm = to_ip_byte((CHAR_T*)_netmask);
+				_interface = Route2Interface((WORD)*_gw);
+				
+				if (_interface == (BYTE) -1)
 				{
 					printf("Incorret Route.");
 					return 0;
 				}
-				*/
+				
 				entry = BuildRouteTableEntry((CHAR_T*)_target, (CHAR_T*)_gateway, (CHAR_T*)_netmask, _interface, -1);
 				AddRouteTableEntry (routeTable, entry);
 				
 				sprintf(resolve_arp, "arp res %s\n", format_address ((WORD)*_gw));
 				sub_arp_res (resolve_arp, 0);
-				printf("resolving\n");
 				
 				//sem_post(&allow_entry);
 				return 1;
@@ -1553,8 +1547,8 @@ int sub_route_del( void *arg )
 				/* Código para remoção na tabela */
 				//sem_wait(&allow_entry);
 				DWORD *_gw = to_ip_byte((CHAR_T*)_gateway);
-				DWORD *_nm = to_ip_byte((CHAR_T*)_netmask);
-				_interface = Route2Interface((WORD)*_gw, (WORD)*_nm);
+				//DWORD *_nm = to_ip_byte((CHAR_T*)_netmask);
+				_interface = Route2Interface((WORD)*_gw);
 				entry = BuildRouteTableEntry((CHAR_T*)_target, (CHAR_T*)_gateway, (CHAR_T*)_netmask, _interface, 0);
 				entry = RemoveRouteTableEntry (routeTable, entry);
 				if(entry)

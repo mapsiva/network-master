@@ -129,7 +129,7 @@ void * update_route_table(void *p);
 
 void buildArpHeader (DWORD *, WORD , WORD );
 
-int Route2Interface(WORD _g, WORD _n);
+int Route2Interface(WORD);
 
 SWORD calc_check_sum(void *, int tipo);
 
