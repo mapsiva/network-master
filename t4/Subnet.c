@@ -665,7 +665,6 @@ void *subnet_rcv(void *ptr)
 							if (ping_running)
 							{
 								sem_post(&sem_ping);
-								
 							}
 						}	
 											
@@ -680,15 +679,13 @@ void *subnet_rcv(void *ptr)
 							switch(icmp_h->type)
 							{
 								case ECHO_REQUEST:
-									//criar pacote (pois chegou em um gateway) alterar os MACs e decrementar o TTL
+									//criar pacote REQUEST (pois chegou em um gateway) alterar os MACs e decrementar o TTL
 									entry = FindProxNo(routeTable, (WORD) ip_h->destination_address);
 									
 									if (entry)
-									{
-										//printf("REQUEST: %d\n",entry->interface);
+									{										
 										if (*entry->GATEWAY == *entry->TARGET)
 										{
-											//printf("na minha rede\n");
 											sprintf(resolve_arp, "arp res %s\n", format_address (ip_h->destination_address));
 											next_ip = ip_h->destination_address;
 										}
@@ -701,25 +698,37 @@ void *subnet_rcv(void *ptr)
 										if(sub_arp_res (resolve_arp, 0))
 										{
 											send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, ip_h->destination_address, ip_h->source_address, (ip_h->time_alive - 1),ntohs(ip_h->identification));
+											break;
 										}
-										else
-										{
-											//send_icmp_pkt (0, DESTINATION_UN, riface, next_ip, 10);
-										}	
+									}
+										
+									//criando pacote DESTINATION_UREACHABLE para o remetente
+									entry = FindProxNo(routeTable, (WORD) ip_h->source_address);
+									
+									if (*entry->GATEWAY == *entry->TARGET)
+									{	
+										sprintf(resolve_arp, "arp res %s\n", format_address (ip_h->source_address));
+										next_ip = ip_h->source_address;
 									}
 									else
-									{
-										//send_icmp_pkt (0, DESTINATION_UN, riface, next_ip, 10);
+									{								
+										sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
+										next_ip = *entry->GATEWAY;
 									}
-									
+									//printf("ARP %s\n", resolve_arp);
+									if(sub_arp_res (resolve_arp, 0))
+									{
+										send_icmp_pkt (0, DESTINATION_UN, entry->interface, next_ip, ip_h->source_address, ifaces[entry->interface].ip, (ip_h->time_alive - 1),ntohs(ip_h->identification));
+									}
+								
 								break;
 								
 								case ECHO_REPLAY:
-									//criar pacote (pois chegou em um gateway) alterar os MACs e decrementar o TTL
+									//criar pacote REPLAY (pois chegou em um gateway) alterar os MACs e decrementar o TTL
 									entry = FindProxNo(routeTable, (WORD) ip_h->destination_address);
 									
 									if (entry)
-									{	
+									{
 										if (*entry->GATEWAY == *entry->TARGET)
 										{
 											sprintf(resolve_arp, "arp res %s\n", format_address (ip_h->destination_address));
@@ -734,15 +743,7 @@ void *subnet_rcv(void *ptr)
 										if(sub_arp_res (resolve_arp, 0))
 										{
 											send_icmp_pkt (0, ECHO_REPLAY, entry->interface, next_ip, ip_h->destination_address, ip_h->source_address, (ip_h->time_alive - 1),ntohs(ip_h->identification));
-										}
-										else
-										{
-											//send_icmp_pkt (0, DESTINATION_UN, riface, next_ip, 10);
-										}	
-									}
-									else
-									{
-										//send_icmp_pkt (0, DESTINATION_UN, riface, next_ip, 10);
+										}										
 									}
 									
 								break;
