@@ -527,43 +527,45 @@ void *subnet_rcv(void *ptr)
 				if (ntohs(eth_h->type) == ARP)
 				{
 					arp_h = (ARP_HEADER *) (eth_h + 1);
-					if (ntohs(arp_h->operation) == ARP_REPLY)
+					if (arp_h->target_ip_addr == ifaces[riface].ip)
 					{
-						CHAR_T * _ip = format_address(arp_h->sender_ip_addr);
-						CHAR_T * _mac = malloc(17);
-						sprintf(
-							(char*)_mac,
-							"%02X:%02X:%02X:%02X:%02X:%02X",
-							arp_h->sender_hardware_addr[0], 
-							arp_h->sender_hardware_addr[1], 
-							arp_h->sender_hardware_addr[2], 
-							arp_h->sender_hardware_addr[3], 
-							arp_h->sender_hardware_addr[4], 
-							arp_h->sender_hardware_addr[5]
-						);
-							
-						char *cmd_arp_add = malloc(45);
-						sprintf(
-							cmd_arp_add, 
-							"arp add %s %s %d\n",
-							(char*)_ip,
-							(char*)_mac,
-							ARP_TTL_DEF
-						);
-						
-						sub_arp_add((void *)cmd_arp_add);
-						
-						if (arp_resolving)
+						if (ntohs(arp_h->operation) == ARP_REPLY)
 						{
-							if(print_resolving)
-								printf("(%s, %s, %d)\n", (char*)_ip, (char*)_mac, ARP_TTL_DEF);
-							sem_post(&sem_arp_res);
-						}						
-					}
-					else if (ntohs(arp_h->operation) == ARP_REQUEST)
-					{
-						if (arp_h->target_ip_addr == ifaces[riface].ip)
+							CHAR_T * _ip = format_address(arp_h->sender_ip_addr);
+							CHAR_T * _mac = malloc(17);
+							sprintf(
+								(char*)_mac,
+								"%02X:%02X:%02X:%02X:%02X:%02X",
+								arp_h->sender_hardware_addr[0], 
+								arp_h->sender_hardware_addr[1], 
+								arp_h->sender_hardware_addr[2], 
+								arp_h->sender_hardware_addr[3], 
+								arp_h->sender_hardware_addr[4], 
+								arp_h->sender_hardware_addr[5]
+							);
+								
+							char *cmd_arp_add = malloc(45);
+							sprintf(
+								cmd_arp_add, 
+								"arp add %s %s %d\n",
+								(char*)_ip,
+								(char*)_mac,
+								ARP_TTL_DEF
+							);
+							
+							sub_arp_add((void *)cmd_arp_add);
+							
+							if (arp_resolving)
+							{
+								if(print_resolving)
+									printf("(%s, %s, %d)\n", (char*)_ip, (char*)_mac, ARP_TTL_DEF);
+								sem_post(&sem_arp_res);
+							}						
+						}
+						else if (ntohs(arp_h->operation) == ARP_REQUEST)
+						{
 							send_arp_pkt((DWORD*)&arp_h->sender_hardware_addr[0], arp_h->sender_ip_addr, ARP_REPLY);
+						}
 					}
 				}
 				else if (ntohs(eth_h->type) == IP)
