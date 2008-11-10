@@ -585,8 +585,7 @@ void *subnet_rcv(void *ptr)
 					ip_h->checksum = htons(sum_ip_rcv);		//Retornando o cksum do ip_header
 					
 					if (ip_h->destination_address == ifaces[riface].ip)
-					{	
-
+					{
 						if (ip_h->protocol == ICMP)
 						{
 							icmp_h = (ICMP_HEADER *)(ip_h + 1);
@@ -615,24 +614,21 @@ void *subnet_rcv(void *ptr)
 										{
 											sprintf(resolve_arp, "arp res %s\n", format_address (ip_h->source_address));
 											next_ip =ip_h->source_address;
-											riface = Route2Interface (ip_h->source_address, 0);
 										}
 										else
 										{
 											sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
 											next_ip = *entry->GATEWAY;
-											riface = Route2Interface (ip_h->source_address, 0);
 										}
 															
 										if(sub_arp_res (resolve_arp, 0))
 										{
-											send_icmp_pkt (0, ECHO_REPLAY, riface, next_ip, ip_h->source_address, ip_h->destination_address, (ip_h->time_alive - 1),ntohs(ip_h->identification));											
+											send_icmp_pkt (0, ECHO_REPLAY, entry->interface, next_ip, ip_h->source_address, ip_h->destination_address, (ip_h->time_alive - 1),ntohs(ip_h->identification));											
 										}
 										else
 										{
 											//send_icmp_pkt (0, DESTINATION_UN, riface, next_ip, 10);
-										}
-											
+										}											
 									}
 									else
 									{
@@ -695,17 +691,14 @@ void *subnet_rcv(void *ptr)
 											next_ip = ip_h->destination_address;
 										}
 										else
-										{
-											
+										{											
 											sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
 											next_ip = *entry->GATEWAY;
 										}
 										//printf("ARP %s\n", resolve_arp);					
 										if(sub_arp_res (resolve_arp, 0))
-										{	
-
+										{
 											send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, ip_h->destination_address, ip_h->source_address, (ip_h->time_alive - 1),ntohs(ip_h->identification));
-											
 										}
 										else
 										{
@@ -738,11 +731,8 @@ void *subnet_rcv(void *ptr)
 										}
 															
 										if(sub_arp_res (resolve_arp, 0))
-										{	
-
+										{
 											send_icmp_pkt (0, ECHO_REPLAY, entry->interface, next_ip, ip_h->destination_address, ip_h->source_address, (ip_h->time_alive - 1),ntohs(ip_h->identification));
-
-											
 										}
 										else
 										{
