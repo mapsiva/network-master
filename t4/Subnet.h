@@ -25,7 +25,7 @@
 #define MAX_NETWORKS	20
 #define MAX_PARAMETERS	256
 #define MAX_SIZE_PARAMETER	20
-#define TIMEOUT				2
+#define TIMEOUT				1
 
 /* */
 BYTE net2iface[MAX_NETWORKS];
@@ -114,7 +114,7 @@ int sub_traceroute( void* );
 
 int sub_ping( void* );
 
-void send_icmp_pkt ( BYTE , BYTE , BYTE , WORD, WORD, WORD, BYTE, WORD);
+void send_icmp_pkt ( BYTE , BYTE , BYTE , WORD, WORD, WORD, BYTE, WORD, WORD);
 
 int sub_arp( char* );
 

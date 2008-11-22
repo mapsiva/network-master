@@ -207,8 +207,6 @@ void DisplayArpTable (ArpTable * table)
 ArpTableEntry *
 FindArpTableEntry( ArpTable * table, ArpTableEntry * entry, int current )
 {
-	
-	
 	ArpTableEntry *_entry = table->list;
 	
 	while ( _entry )

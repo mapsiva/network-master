@@ -23,6 +23,14 @@ typedef struct
 }ICMP_HEADER;
 
 /*
+* Estrutura que armazena os dados do pacote ICMP (usado somente no caso de ICMP_REDIRECT)
+*/
+typedef struct
+{
+	WORD prox_no;
+}ICMP_DATA;
+
+/*
 * Imprime o contedo de um cabealho ICMP
 */
 CHAR_T*
