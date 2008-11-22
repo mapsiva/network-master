@@ -206,15 +206,8 @@ void *subnet_send(void *ptr)
 				sin.sin_port = phost[i].port;
 				sin.sin_addr.s_addr = phost[i].ip;
 				
-			 aux = sendto(sockd, &pkt->pkt->len, pkt->pkt->len, 0,
-			 (struct sockaddr *)&sin, sizeof(sin));
-						
-				if (aux < 0)
-				{
-					
-					//printf ("====Parametros====\n Len = %d", pkt->pkt->len);
-					//printf("Error sending pkt: %s\n", strerror(errno));
-				}
+			 	aux = sendto(sockd, &pkt->pkt->len, pkt->pkt->len, 0,
+			 	(struct sockaddr *)&sin, sizeof(sin));
 			}
 			ifaces[pkt->pkt->iface].pkt_tx++;
 			free(pkt->pkt);
@@ -498,10 +491,16 @@ void *subnet_rcv(void *ptr)
     ARP_HEADER *arp_h;
     IP_HEADER *ip_h;
     ICMP_HEADER *icmp_h;
+    ICMP_DATA *icmp_data;
     ETHERNET_PKT *ppkt;
     
     sockd = passive_UDP_socket(port);
     ppkt = (ETHERNET_PKT*)&in_buf[0];
+    
+    RouteTableEntry * entry, *entry_aux;   
+    WORD next_ip, next_ip_aux; 
+    
+    char resolve_arp[100], resolve_arp_aux[100] ;
     
     eth_h = (ETHERNET_HEADER *) (ppkt + 1);
     while(1)
@@ -512,7 +511,7 @@ void *subnet_rcv(void *ptr)
 		if (rv < 0) 
 			error_exit("error - recvfrom: %s\n", strerror(errno));
 		
-		riface = net2iface[eth_h->net];		
+		riface = net2iface[eth_h->net];
 		
 		if (riface < 0) 
 			error_exit("Packet received from unknown interface\n");
@@ -523,9 +522,11 @@ void *subnet_rcv(void *ptr)
 			if (!memcmp(eth_h->receiver, broad_eth,6) || !memcmp(eth_h->receiver, ifaces[riface].mac, 6))
 			{
 				ifaces[riface].pkt_rx++; /* The packet must be processed */
+					
 				if (ntohs(eth_h->type) == ARP)
 				{
 					arp_h = (ARP_HEADER *) (eth_h + 1);
+					
 					if (arp_h->target_ip_addr == ifaces[riface].ip)
 					{
 						if (ntohs(arp_h->operation) == ARP_REPLY)
@@ -559,27 +560,46 @@ void *subnet_rcv(void *ptr)
 								if(print_resolving)
 									printf("(%s, %s, %d)\n", (char*)_ip, (char*)_mac, ARP_TTL_DEF);
 								sem_post(&sem_arp_res);
-							}						
+							}
 						}
 						else if (ntohs(arp_h->operation) == ARP_REQUEST)
 						{
+							CHAR_T * _ip = format_address(arp_h->sender_ip_addr);
+							CHAR_T * _mac = malloc(17);
+							sprintf(
+								(char*)_mac,
+								"%02X:%02X:%02X:%02X:%02X:%02X",
+								arp_h->sender_hardware_addr[0], 
+								arp_h->sender_hardware_addr[1], 
+								arp_h->sender_hardware_addr[2], 
+								arp_h->sender_hardware_addr[3], 
+								arp_h->sender_hardware_addr[4], 
+								arp_h->sender_hardware_addr[5]
+							);
+								
+							char *cmd_arp_add = malloc(45);
+							sprintf(
+								cmd_arp_add, 
+								"arp add %s %s %d\n",
+								(char*)_ip,
+								(char*)_mac,
+								ARP_TTL_DEF
+							);
+							
+							sub_arp_add((void *)cmd_arp_add);
+							
+							send_arp_pkt((DWORD*)&arp_h->sender_hardware_addr[0], arp_h->sender_ip_addr, ARP_REPLY);
 							send_arp_pkt((DWORD*)&arp_h->sender_hardware_addr[0], arp_h->sender_ip_addr, ARP_REPLY);
 						}
 					}
 				}
 				else if (ntohs(eth_h->type) == IP)
 				{
-					ip_h = (IP_HEADER *) (eth_h + 1);					
-					RouteTableEntry * entry;
-					char resolve_arp[100];
+					ip_h = (IP_HEADER *) (eth_h + 1);
 					
-					//printf ("Chegou pacote IP de [%s] para [%s]\n", format_address (ip_h->source_address), format_address (ip_h->destination_address));
 					SWORD sum_ip_rcv = ntohs(ip_h->checksum);	//Guardando o cksum do ip_header
 					ip_h->checksum = 0;
 					SWORD sum_ip_calc = calc_check_sum(ip_h, IP);
-					
-					//printf("CKSUM RCV IP: %u \n",sum_ip_rcv);
-					//printf("CKSUM CALC IP: %u \n",sum_ip_calc);
 					
 					if (sum_ip_rcv != sum_ip_calc)	return 0;
 					
@@ -594,9 +614,6 @@ void *subnet_rcv(void *ptr)
 							SWORD sum_icmp_rcv = ntohs(icmp_h->checksum);		//Guardando o cksum do icmp_header
 							icmp_h->checksum = 0;
 							SWORD sum_icmp_calc = calc_check_sum(icmp_h, ICMP);
-		
-							//printf("CKSUM RCV ICMP: %u \n",sum_icmp_rcv);
-							//printf("CKSUM PKG ICMP: %u \n",sum_icmp_calc);
 							
 							if (sum_icmp_rcv != sum_icmp_calc)	return 0;
 							
@@ -610,7 +627,6 @@ void *subnet_rcv(void *ptr)
 									
 									entry = FindProxNo(routeTable, (WORD) ip_h->source_address);
 									
-									WORD next_ip;
 									if (entry)
 									{
 										if (*entry->GATEWAY == *entry->TARGET)
@@ -626,12 +642,15 @@ void *subnet_rcv(void *ptr)
 										
 										if(sub_arp_res (resolve_arp, 0))
 										{
-											send_icmp_pkt (0, ECHO_REPLAY, entry->interface, next_ip, ip_h->source_address, ip_h->destination_address, (ip_h->time_alive - 1),ntohs(ip_h->identification));											
+											send_icmp_pkt (0, ECHO_REPLAY, entry->interface, next_ip, ip_h->source_address, ip_h->destination_address, (ip_h->time_alive - 1),ntohs(ip_h->identification),0);											
 										}
+										//else
+											//printf("\nNOT RESOLVE SOURCE ADDRESS %s\n", format_address(ip_h->source_address));
 									}
 								break;
 								
 								case ECHO_REPLAY:
+									sem_post(&allow_route_entry);
 									gettimeofday( &stop_time, NULL );
 									dif = (float)(stop_time.tv_sec - start_time.tv_sec);
 									dif += (stop_time.tv_usec - start_time.tv_usec)/(float)1000000;
@@ -648,7 +667,7 @@ void *subnet_rcv(void *ptr)
 									}
 									else if (trace_running)
 									{
-										printf("TRACE %d %s %.4f ms\n", ntohs(ip_h->identification), format_address(ip_h->source_address), (dif*1000));
+										printf("%s %.4f ms\n", format_address(ip_h->source_address), (dif*1000));
 										trace_running = 0;
 										sem_post(&sem_trace);
 									}
@@ -659,13 +678,7 @@ void *subnet_rcv(void *ptr)
 										printf("Destination unreachable\n");
 									else if (trace_running)
 									{
-										if (qtd_pkg_du == 0)
-											printf("%d * ", ntohs(ip_h->identification));
-										else if (qtd_pkg_du == 1)
-											printf("* ");
-										else if (qtd_pkg_du == 2)
-											printf("*\n");
-										qtd_pkg_du++;
+										printf("*\n");
 									}
 								break;
 								
@@ -677,13 +690,15 @@ void *subnet_rcv(void *ptr)
 									if (trace_running)
 									{
 										if (qtd_pkg_du == 0)
-											printf("TTL %d %s %.4f ms\n", ntohs(ip_h->identification), format_address(ip_h->source_address), (dif*1000));
+											printf("%s %.4f ms\n", format_address(ip_h->source_address), (dif*1000));
 										qtd_pkg_du++;
 									}
 								break;
 								
 								case REDIRECT:
-									printf("Redirect\n");
+									icmp_data = (ICMP_DATA *)(icmp_h + 1);															
+									entry = BuildRouteTableEntry((CHAR_T*)format_address(ip_h->source_address), (CHAR_T*)format_address(icmp_data->prox_no), (CHAR_T*)"255.255.255.255", (BYTE)Route2Interface(icmp_data->prox_no), (int)ARP_TTL_DEF);
+									AddRouteTableEntry (routeTable, entry);
 								break;
 							}
 							
@@ -698,13 +713,12 @@ void *subnet_rcv(void *ptr)
 						}	
 											
 					}	
-					else
+					else if (ip_h->source_address != ifaces[riface].ip)	//Processar apenas pacotes que foram enviados pelos outros hosts e não aqueles enviados por mim
 					{
 						if (ip_h->protocol == ICMP)
 						{
 							icmp_h = (ICMP_HEADER *)(ip_h + 1);
-							WORD next_ip;
-							//printf("diferente\n");	
+							
 							switch(icmp_h->type)
 							{
 								case ECHO_REQUEST:
@@ -712,7 +726,7 @@ void *subnet_rcv(void *ptr)
 									entry = FindProxNo(routeTable, (WORD) ip_h->destination_address);
 									
 									if (entry)
-									{										
+									{							
 										if (*entry->GATEWAY == *entry->TARGET)
 										{
 											sprintf(resolve_arp, "arp res %s\n", format_address (ip_h->destination_address));
@@ -722,7 +736,7 @@ void *subnet_rcv(void *ptr)
 										{											
 											sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
 											next_ip = *entry->GATEWAY;
-										}										
+										}
 										
 										if (ip_h->time_alive == 0)	//Criar pacote de TTL_EXCEEDED
 										{
@@ -740,17 +754,43 @@ void *subnet_rcv(void *ptr)
 											}
 											if(sub_arp_res (resolve_arp, 0))
 											{
-												send_icmp_pkt (0, TTL, entry->interface, next_ip, ip_h->source_address, ifaces[entry->interface].ip, ip_h->time_alive, ntohs(ip_h->identification));
+												send_icmp_pkt (0, TTL, entry->interface, next_ip, ip_h->source_address, ifaces[entry->interface].ip, ip_h->time_alive, ntohs(ip_h->identification),0);
 												break;
 											}											
 										}
 										else //criar pacote de REQUEST
-										{							
+										{	
 											if(sub_arp_res (resolve_arp, 0))
-											{
-												send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, ip_h->destination_address, ip_h->source_address, (ip_h->time_alive - 1),ntohs(ip_h->identification));
+											{	
+												send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, ip_h->destination_address, ip_h->source_address, (ip_h->time_alive - 1),ntohs(ip_h->identification),0);
+												
+												if (entry->interface == riface)
+												{
+													
+													entry_aux = FindProxNo(routeTable, (WORD) ip_h->source_address);
+									
+													if (*entry_aux->GATEWAY == *entry_aux->TARGET)
+													{	
+														sprintf(resolve_arp_aux, "arp res %s\n", format_address (ip_h->source_address));
+														next_ip_aux = ip_h->source_address;
+													}
+													else
+													{								
+														sprintf(resolve_arp_aux, "arp res %s\n", format_address (*entry_aux->GATEWAY));
+														next_ip_aux = *entry_aux->GATEWAY;
+													}
+													
+													if(sub_arp_res (resolve_arp_aux, 0))
+													{
+														send_icmp_pkt (0, REDIRECT, entry_aux->interface, next_ip_aux, ip_h->source_address, ip_h->destination_address, (ip_h->time_alive),ntohs(ip_h->identification), next_ip);
+													}
+													//else
+														//printf("\nNOT RESOLVE: GATEWAY: %s IP-SOURCE: %s IP-DEST %s PROX-IP: %s\n", format_address(next_ip_aux),format_address(ip_h->destination_address),format_address(ip_h->source_address),format_address(next_ip));
+												}
 												break;											
 											}
+											//else
+												//printf("\nNOT RESOLVE SOURCE ADDRESS %s\n", format_address(ip_h->source_address));
 										}
 									}
 										
@@ -767,10 +807,10 @@ void *subnet_rcv(void *ptr)
 										sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
 										next_ip = *entry->GATEWAY;
 									}
-									//printf("ARP %s\n", resolve_arp);
+									
 									if(sub_arp_res (resolve_arp, 0))
 									{
-										send_icmp_pkt (0, DESTINATION_UN, entry->interface, next_ip, ip_h->source_address, ifaces[entry->interface].ip, (ip_h->time_alive - 1),ntohs(ip_h->identification));
+										send_icmp_pkt (0, DESTINATION_UN, entry->interface, next_ip, ip_h->source_address, ifaces[entry->interface].ip, (ip_h->time_alive - 1),ntohs(ip_h->identification),0);
 									}
 								
 								break;
@@ -794,7 +834,7 @@ void *subnet_rcv(void *ptr)
 															
 										if(sub_arp_res (resolve_arp, 0))
 										{
-											send_icmp_pkt (0, ECHO_REPLAY, entry->interface, next_ip, ip_h->destination_address, ip_h->source_address, ip_h->time_alive, ntohs(ip_h->identification));
+											send_icmp_pkt (0, ECHO_REPLAY, entry->interface, next_ip, ip_h->destination_address, ip_h->source_address, ip_h->time_alive, ntohs(ip_h->identification),0);
 										}
 									}
 									
@@ -821,7 +861,7 @@ void *subnet_rcv(void *ptr)
 															
 										if(sub_arp_res (resolve_arp, 0))
 										{
-											send_icmp_pkt (0, icmp_h->type, entry->interface, next_ip, ip_h->destination_address, ip_h->source_address, ip_h->time_alive, ntohs(ip_h->identification));
+											send_icmp_pkt (0, icmp_h->type, entry->interface, next_ip, ip_h->destination_address, ip_h->source_address, ip_h->time_alive, ntohs(ip_h->identification),0);
 										}
 									}
 								break;
@@ -1049,9 +1089,7 @@ int sub_send_trace(char* b)
 		    		}
 		    	break;
 		    }
-		    
 		    sleep(interval);
-		    //printf("\r.");
 		}
 		sending_packets = 0;
 		
@@ -1301,10 +1339,9 @@ int sub_arp_res( void *arg , int print)
 			
 			send_arp_pkt((DWORD *)&broad_eth[0], *(end_ip), ARP_REQUEST);
 			
-			//Falta eperar pelo REPLY e bloquear esta thread
 			struct timespec ts;
 			
-			ts.tv_sec = time(NULL) + (TIMEOUT/2);
+			ts.tv_sec = time(NULL) + (TIMEOUT*2);
 			ts.tv_nsec = 0;
 			
 			arp_resolving = 1;
@@ -1326,6 +1363,7 @@ int sub_arp_res( void *arg , int print)
 	 			return 0;
 			}
 		}
+		return 1;
 		
 	}
 	else
@@ -1333,7 +1371,6 @@ int sub_arp_res( void *arg , int print)
 		printf("Usage: arp res [EndIP]");
 		return 0;
 	}
-	return 1;
 }
 
 /* */
@@ -1447,7 +1484,7 @@ void * update_route_table(void *p)
 		
 		if(routeTable->length == 0)
 		{
-			sem_post(&allow_entry);
+			sem_post(&allow_route_entry);
 			continue;
 		}
 
@@ -1550,7 +1587,6 @@ int sub_route_add( void *arg )
 				}
 				
 				/* Código para inserção na tabela */
-				//sem_wait(&allow_entry);
 				DWORD *_gw = to_ip_byte((CHAR_T*)_gateway);
 				DWORD *_tg = to_ip_byte((CHAR_T*)_target);
 				_interface = Route2Interface((WORD)*_gw);
@@ -1561,6 +1597,7 @@ int sub_route_add( void *arg )
 					return 0;
 				}
 				
+				sem_wait(&allow_route_entry);
 				entry = BuildRouteTableEntry((CHAR_T*)_target, (CHAR_T*)_gateway, (CHAR_T*)_netmask, _interface, -1);
 				AddRouteTableEntry (routeTable, entry);
 				
@@ -1570,7 +1607,7 @@ int sub_route_add( void *arg )
 					sub_arp_res (resolve_arp, 0);
 				}
 				
-				//sem_post(&allow_entry);
+				sem_post(&allow_route_entry);
 				return 1;
 			}
 			else				
@@ -1632,10 +1669,10 @@ int sub_route_del( void *arg )
 				//TODO falta chamar a função responsável por verificar qual interface tem que ser usada para a remoção por enquanto está sendo usado 0 (zero)
 				
 				/* Código para remoção na tabela */
-				//sem_wait(&allow_entry);
 				DWORD *_gw = to_ip_byte((CHAR_T*)_gateway);
 				//DWORD *_nm = to_ip_byte((CHAR_T*)_netmask);
 				_interface = Route2Interface((WORD)*_gw);
+				sem_wait(&allow_route_entry);
 				entry = BuildRouteTableEntry((CHAR_T*)_target, (CHAR_T*)_gateway, (CHAR_T*)_netmask, _interface, 0);
 				entry = RemoveRouteTableEntry (routeTable, entry);
 				if(entry)
@@ -1643,7 +1680,7 @@ int sub_route_del( void *arg )
 					free(entry);
 					DisplayRouteTable(routeTable);
 				}
-				//sem_post(&allow_entry);
+				sem_post(&allow_route_entry);
 				return 1;
 			}
 			else				
@@ -1690,16 +1727,21 @@ int sub_traceroute( void *arg )
 		
 		traceroute_ip = *end_ip;		//Armazena o endereço IP do Trace
 		
-		entry = FindProxNo(routeTable, (WORD)*end_ip);
-		
 		char resolve_arp[100];
 		trace_running = 1;
 		int ident = 0;
 		int i = 0;
 		WORD next_ip;
 		
+		printf("traceroute to %s, 16 hops max, 39 bytes packets\n", format_address(*end_ip));
+		
 		while (i < 16 && trace_running)
 		{
+			sem_wait(&allow_route_entry);
+			entry = FindProxNo(routeTable, (WORD)*end_ip);
+		
+			printf("%d ", ident);
+			
 			if(entry)
 			{
 				if(*entry->GATEWAY == *entry->TARGET)
@@ -1716,9 +1758,9 @@ int sub_traceroute( void *arg )
 				{
 					gettimeofday( &start_time, NULL ); 
 					
-					send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, *end_ip, ifaces[entry->interface].ip, ident, ident);
-					send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, *end_ip, ifaces[entry->interface].ip, ident, ident);
-					send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, *end_ip, ifaces[entry->interface].ip, ident, ident);					
+					send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, *end_ip, ifaces[entry->interface].ip, ident, ident,0);
+					//send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, *end_ip, ifaces[entry->interface].ip, ident, ident,0);
+					//send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, *end_ip, ifaces[entry->interface].ip, ident, ident,0);	
 					
 					ident++;
 					qtd_pkg_du = 0;
@@ -1736,14 +1778,17 @@ int sub_traceroute( void *arg )
 					{
 						//the semaphore returned
 						if(trace_running)
-			 				printf ("TIMEOUT *\n");
+			 				printf ("*\n");
 					}
 				}
 				else
-					printf ("ARP RESOLVE *\n");
+					printf ("*\n");
 			}
 			else
-				printf ("NOT ROUTE *\n");
+				printf ("*\n");
+			
+			sem_post(&allow_route_entry);
+			
 			i++;
 			sleep (1);
 		}		
@@ -1785,8 +1830,6 @@ int sub_ping( void *arg )
 		
 		end_ip = to_ip_byte((CHAR_T *)aux2);
 		
-		entry = FindProxNo(routeTable, (WORD)*end_ip);
-		
 		char resolve_arp[100];
 		ping_running = 1;
 		int ident = 0;
@@ -1795,6 +1838,9 @@ int sub_ping( void *arg )
 		
 		while (ping_running)
 		{
+			sem_wait(&allow_route_entry);
+			entry = FindProxNo(routeTable, (WORD)*end_ip);
+			
 			if(entry)
 			{
 				if(*entry->GATEWAY == *entry->TARGET)
@@ -1810,12 +1856,12 @@ int sub_ping( void *arg )
 				if(sub_arp_res (resolve_arp, 0))
 				{
 					gettimeofday( &start_time, NULL ); 
-					send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, *end_ip, ifaces[entry->interface].ip, 64, ident);
+					send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, *end_ip, ifaces[entry->interface].ip, 64, ident, 0);
 					ident++;
 					
 					struct timespec ts;
-			
-					ts.tv_sec = time(NULL) + TIMEOUT*2;
+					
+					ts.tv_sec = time(NULL) + TIMEOUT*10;
 					ts.tv_nsec = 0;
 					int rv;
 					
@@ -1835,6 +1881,7 @@ int sub_ping( void *arg )
 			else
 				printf ("Host is unreachabl3\n");
 			
+			sem_post(&allow_route_entry);
 			sleep (1);
 		}		
 		ping_running = 0;		
@@ -1845,30 +1892,27 @@ int sub_ping( void *arg )
 	return 0;
 }
 
-void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gateway, WORD destination, WORD source, BYTE hopnum, WORD id_pkg)
+void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gateway, WORD destination, WORD source, BYTE hopnum, WORD id_pkg, WORD prox_no)
 {
 	ICMP_HEADER *icmp_pkt;
+	ICMP_DATA *icmp_data;
 	ETHERNET_HEADER * eth;
 	ArpTableEntry * _entry;
 	
-	eth =  malloc(sizeof(ETHERNET_HEADER) + sizeof(IP_HEADER) + sizeof (ICMP_HEADER));
+	eth =  malloc(sizeof(ETHERNET_HEADER) + sizeof(IP_HEADER) + sizeof (ICMP_HEADER) + sizeof (ICMP_DATA));
 	
 	eth->net = ifaces[interface].net;
 	
 	memcpy(&eth->sender[0], ifaces[interface].mac, MAC_ADDR_LEN);
 	
 	_entry = BuildArpTableEntry((CHAR_T *)format_address (gateway), NULL, 0);
-	//printf("%s\n", format_address(gateway));
 	
-	_entry = FindArpTableEntry (arpTable, _entry, 1);	
+	_entry = FindArpTableEntry (arpTable, _entry, 1);
 		
-	if (_entry)
-		memcpy(&eth->receiver[0], (_entry->MAC) , MAC_ADDR_LEN);
-	else
-	{
-		printf ("unknow error!\n");
+	if (!_entry)
 		return;
-	}
+		
+	memcpy(&eth->receiver[0], (_entry->MAC) , MAC_ADDR_LEN);		
 	
 	eth->type = htons(IP);
 	
@@ -1879,12 +1923,17 @@ void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gate
 	icmp_pkt->code = _icmp_code;
 	icmp_pkt->checksum = 0;
 	icmp_pkt->checksum = htons(calc_check_sum(icmp_pkt, ICMP));
-	//printf("CKSUM ICMP: %X \n",icmp_pkt->checksum);
+	
+	icmp_data = (ICMP_DATA*)(icmp_pkt + 1);
+	icmp_data->prox_no = 0;
+	
+	if (_icmp_type == REDIRECT)		
+		icmp_data->prox_no = prox_no;
 		
 	/*construção do pacote IP*/
 	ip_pkt->version = 0x45;
 	ip_pkt->type_service = 5;
-	ip_pkt->total_length = htons(sizeof(ICMP_HEADER) + sizeof (IP_HEADER));
+	ip_pkt->total_length = htons(sizeof(ICMP_DATA) + sizeof(ICMP_HEADER) + sizeof (IP_HEADER));
 
 	ip_pkt->identification = htons(id_pkg);
 	ip_pkt->fragment = htons(0);
@@ -1892,12 +1941,10 @@ void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gate
 	ip_pkt->protocol = ICMP;
 	ip_pkt->source_address = source; // ip da interface de saída
 	ip_pkt->destination_address = destination; //ip do host a receber o echo
-	//printf("%s\n", format_address(destination));
 	ip_pkt->checksum = 0;
 	ip_pkt->checksum = htons(calc_check_sum(ip_pkt, IP));
-	//printf("CKSUM ENV IP: %u \n",icmp_pkt->checksum);
 	
-	send_pkt(sizeof(ETHERNET_HEADER) + sizeof(IP_HEADER) + sizeof (ICMP_HEADER), interface, (BYTE *)_entry->MAC, IP, (BYTE*)eth);
+	send_pkt(sizeof(ETHERNET_HEADER) + sizeof(IP_HEADER) + sizeof (ICMP_HEADER) + sizeof (ICMP_DATA), interface, (BYTE *)_entry->MAC, IP, (BYTE*)eth);
 }
 
 SWORD calc_check_sum(void *pkg, int tipo)
@@ -1912,8 +1959,6 @@ SWORD calc_check_sum(void *pkg, int tipo)
 		tam = sizeof(IP_HEADER);
 	else if (tipo == ICMP)
 		tam = sizeof(ICMP_HEADER);
-		
-	//printf("TAM: %d\n",tam);
 	
 	tam = tam/2; 	//pois tam guarda a quantidade em bytes e nós queremos a quantidade de palavras de 16 bits, logo 2 bytes 
 	
@@ -1926,7 +1971,6 @@ SWORD calc_check_sum(void *pkg, int tipo)
 			sum &= 0xFFFF;
 			sum++;
 		}
-		//printf("SUM: %X\n", (unsigned int)sum);
 	}	
 	return (SWORD) ~(sum & 0xFFFF);;
 }
