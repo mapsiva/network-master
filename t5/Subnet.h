@@ -114,6 +114,10 @@ int sub_traceroute( void* );
 
 int sub_ping( void* );
 
+int sub_rip_start( void * );
+
+int sub_rip_stop( void * );
+
 void send_icmp_pkt ( BYTE , BYTE , BYTE , WORD, WORD, WORD, BYTE, WORD, WORD);
 
 int sub_arp( char* );

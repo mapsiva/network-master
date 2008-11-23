@@ -239,7 +239,7 @@ int read_net_cfg(char *fname, u_short port, u_short iface)
     first = 1;
     while (fgets(line, 100, cfg_file)) 
     {
-        char *s;	
+        char *s;
 		if (line[0] != '#') {
 			if (first) { /* First line != # has the network number */
 				int net = atoi(line);
@@ -600,10 +600,9 @@ void *subnet_rcv(void *ptr)
 					SWORD sum_ip_rcv = ntohs(ip_h->checksum);	//Guardando o cksum do ip_header
 					ip_h->checksum = 0;
 					SWORD sum_ip_calc = calc_check_sum(ip_h, IP);
+					ip_h->checksum = htons(sum_ip_rcv);		//Retornando o cksum do ip_header
 					
 					if (sum_ip_rcv != sum_ip_calc)	return 0;
-					
-					ip_h->checksum = htons(sum_ip_rcv);		//Retornando o cksum do ip_header
 					
 					if (ip_h->destination_address == ifaces[riface].ip)
 					{
@@ -614,10 +613,9 @@ void *subnet_rcv(void *ptr)
 							SWORD sum_icmp_rcv = ntohs(icmp_h->checksum);		//Guardando o cksum do icmp_header
 							icmp_h->checksum = 0;
 							SWORD sum_icmp_calc = calc_check_sum(icmp_h, ICMP);
+							icmp_h->checksum = htons(sum_icmp_rcv);		//Retornando o cksum do icmp_header
 							
 							if (sum_icmp_rcv != sum_icmp_calc)	return 0;
-							
-							icmp_h->checksum = htons(sum_icmp_rcv);		//Retornando o cksum do icmp_header
 							
 							float dif;
 					
@@ -1892,6 +1890,16 @@ int sub_ping( void *arg )
 	return 0;
 }
 
+int sub_rip_start( void *arg )
+{
+	return 0;
+}
+
+int sub_rip_stop( void *arg )
+{
+	return 0;
+}
+
 void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gateway, WORD destination, WORD source, BYTE hopnum, WORD id_pkg, WORD prox_no)
 {
 	ICMP_HEADER *icmp_pkt;
@@ -1948,7 +1956,7 @@ void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gate
 }
 
 SWORD calc_check_sum(void *pkg, int tipo)
-{
+{	
 	int tam;
 	unsigned short *aux = (unsigned short *) pkg;
 	register unsigned long sum = 0;
@@ -2067,6 +2075,10 @@ int main(int argc, char *argv[])
 			exit(0);
 		else if (!strncasecmp(buf, "SEND", 4))
 			sub_send_trace(buf);
+		else if (!strncasecmp(buf, "RIP START", 9))
+			sub_rip_start(buf);
+		else if (!strncasecmp(buf, "RIP STOP", 8))
+			sub_rip_stop(buf);
 		else if (!strncasecmp(buf, "ROUTE SHOW", 10))
 			DisplayRouteTable(routeTable);
 		else if (!strncasecmp(buf, "ROUTE ADD", 9))
