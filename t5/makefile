@@ -15,9 +15,10 @@ ARP     	= Arp
 STACK   	= Stack
 AN   		= Analyzer
 FIL   		= Filter
+RIP         = Rip
 
-HEADERS =  $(PKG).h $(TYPES).h $(ETH).h $(TCP).h $(IP).h $(UTIL).h $(UDP).h $(ICMP).h $(ARP).h $(STACK).h $(AN).h $(FIL).h $(XNOOP).h 
-OBJECTS =  $(PKG).o $(TYPES).o $(ETH).o $(TCP).o $(IP).o $(UTIL).o $(UDP).o $(ICMP).o $(ARP).o $(STACK).o $(AN).o $(FIL).o $(XNOOP).o $(SUBNET).o
+HEADERS =  $(PKG).h $(TYPES).h $(ETH).h $(TCP).h $(IP).h $(UTIL).h $(UDP).h $(ICMP).h $(ARP).h $(STACK).h $(AN).h $(FIL).h $(RIP).h $(XNOOP).h 
+OBJECTS =  $(PKG).o $(TYPES).o $(ETH).o $(TCP).o $(IP).o $(UTIL).o $(UDP).o $(ICMP).o $(ARP).o $(STACK).o $(AN).o $(FIL).o $(RIP).o $(XNOOP).o $(SUBNET).o
 
 # ****************************************************
 
@@ -58,6 +59,9 @@ $(AN).o: $(AN).c $(AN).h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 $(FIL).o: $(FIL).c $(FIL).h
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+$(RIP).o: $(RIP).c $(RIP).h
 	$(CC) $(CFLAGS) -o $@ -c $<
 	
 $(XNOOP).o: $(XNOOP).c $(XNOOP).h

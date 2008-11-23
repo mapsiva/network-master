@@ -1,9 +1,15 @@
 #ifndef RIP_H_
 #define RIP_H_
 
-typedef struct tRipTableEntry
+#include "Types.h"
+#include "Util.h"
+#include "Ip.h"
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct
 {
-    BYTE cmd;
+	BYTE cmd;
     BYTE version;
     SWORD ZERO1;
     SWORD AFI;
@@ -11,7 +17,14 @@ typedef struct tRipTableEntry
     WORD IP;
     WORD ZERO3;
     WORD ZERO4;
-    WORD metric;    
+    WORD metric;
+}RIP_PKT;
+
+typedef struct tRipTableEntry
+{
+    WORD host;
+    WORD next_hop;
+    int num_hops;
     struct tRipTableEntry* next;
 }RipTableEntry;
 
@@ -29,14 +42,13 @@ typedef struct
 RipTableEntry * 
 FindRipTableEntry( RipTable * table, RipTableEntry * entry, int current);
 
-RipTableEntry *
-FindProxNo( RipTable * table, WORD _ip);
+
 
 /*
 *constrói uma entrada para a tabela RIP
 */
 RipTableEntry * 
-BuildRipTableEntry( CHAR_T*, CHAR_T* , CHAR_T*, BYTE,  int);
+BuildRipTableEntry( WORD, WORD, int);
 
 /*
 *Adiciona uma entrada na tabela RIP

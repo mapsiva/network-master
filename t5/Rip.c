@@ -15,18 +15,13 @@
 */
 
 
-RouteTableEntry * BuildRipTableEntry( BYTE cmd, WORD IP , WORD metric)
+RipTableEntry * BuildRipTableEntry( WORD host, WORD next_hop , int num_hops)
 {
 	 RipTableEntry * _entry =  (RipTableEntry *) malloc(sizeof(RipTableEntry));
 	 
-	 _entry->cmd =  	cmd;
-	 _entry->IP = 	(WORD *)to_ip_byte ( IP );
-	 _entry->metric = 	metric;
-	 _entry->ZERO1 = 0;
-	 _entry->ZERO2 = 0;
-	 _entry->ZERO3 = 0;
-	 _entry->ZERO4 = 0;
-	 _entry->next = NULL;
+	 _entry->host 		=  	host;
+	 _entry->next_hop 	= 	next_hop;
+	 _entry->num_hops	= 	num_hops;
 	 return _entry;
 }
 
@@ -46,7 +41,7 @@ BuildRipTable()
      
      return _table;
 }
-/* Funcao que imprime a tabela de Roteamento na tela
+/* Funcao que imprime a tabela RIP na tela
  * 
  * @param void
  * @return void
@@ -55,11 +50,12 @@ void DisplayRipTable (RipTable * table)
 {
 	RipTableEntry *_entry = table->list;
 	
-	printf ("\nIP\t\t Distancia\n");
+	printf ("\nIP\t\t prox no\t\tDistancia\n");
 	
 	while (_entry)
 	{
-		printf ("%-16s %-16s\t ", format_address((DWORD)*(&_entry->IP)),_entry->metric);
+		printf ("%-16s %-16s %-16d\t ", format_address((DWORD)*(&_entry->host)), format_address((DWORD)*(&_entry->next_hop)),
+		_entry->num_hops);
 		
 		_entry = _entry->next;
 	}
@@ -68,12 +64,12 @@ void DisplayRipTable (RipTable * table)
 
 
 /*
-* Busca um elemento na tabela de Roteamento baseado no valor do IP
-* @param table ponteiro para a tabela de Roteamento
-* @param entry uma entrada da tabela de roteamento que se deseja encontrar
+* Busca um elemento na tabela RIP baseado no valor do IP
+* @param table ponteiro para a tabela RIP
+* @param entry uma entrada da tabela RIP que se deseja encontrar
 * @param current flag que indica para funcao retornar o elemento corrente (1) na busca ou seu anterior(0)
 *
-* @return NULL ou uma entrada valida na tabela de Roteamento
+* @return NULL ou uma entrada valida na tabela RIP
 *
 * @since           2.0
 */
@@ -84,14 +80,11 @@ FindRipTableEntry( RipTable * table, RipTableEntry * entry, int current )
 	
 	while ( _entry)
 	{		
-		if(current && *(_entry->TARGET) == *(entry->TARGET) &&
-				*(_entry->GATEWAY) == *(entry->GATEWAY) && *(_entry->MASK) == *(entry->MASK))
+		if(current && (_entry->host) == (entry->host))
 			break;
-		else if(!current && _entry->next && *(_entry->next->TARGET) == *(entry->TARGET) &&
-				*(_entry->next->GATEWAY) == *(entry->GATEWAY) && *(_entry->next->MASK) == *(entry->MASK))
+		else if(!current && _entry->next && _entry->next->host == entry->host)
 			break;
-		else if(!current && *(table->list->TARGET) == *(entry->TARGET) &&
-				*(table->list->GATEWAY) == *(entry->GATEWAY) && *(table->list->MASK) == *(entry->MASK))	
+		else if(!current && table->list->host == entry->host)	
 			break;
 		_entry = _entry->next;
 		
@@ -100,34 +93,11 @@ FindRipTableEntry( RipTable * table, RipTableEntry * entry, int current )
 	
 }
 
-/*
-* Busca a rota para o endereço ip
-* @param table ponteiro para a tabela de Roteamento
-* @param _ip endereço ip da subrede de destino
-*
-* @return NULL ou uma entrada valida na tabela de Roteamento
-*
-* @since           2.0
-*/
-RipTableEntry *
-FindProxNo( RipTable * table, WORD _ip)
-{
-	RipTableEntry *_entry = table->list;
-	
-	while ( _entry )
-	{	
-		if ((_ip & *(_entry->MASK)) == *(_entry->TARGET))
-		{
-			return _entry;	
-		}
-		_entry = _entry->next;	
-	}
-	return NULL;	
-}
+
 
 /*
-* @param table ponteiro para a tabela de Roteamento
-* @param entry uma entrada da tabela de roteamento que se deseja adicionar
+* @param table ponteiro para a tabela RIP
+* @param entry uma entrada da tabela RIP que se deseja adicionar
 *
 * @return void
 *
@@ -139,13 +109,11 @@ void AddRipTableEntry( RipTable * table, RipTableEntry * newer)
 	RipTableEntry *_entry = table->list;
 	RipTableEntry *_prev = NULL;
 	
-	while (_entry && *(newer->MASK) <= *(_entry->MASK))
+	while ( _entry )
 	{
-		if (*(_entry->TARGET) == *(newer->TARGET) && *(_entry->GATEWAY) == *(newer->GATEWAY) && *(_entry->MASK) == *(newer->MASK))
-		{
-			_entry->TTL = newer->TTL;
+		if (_entry->host == newer->host)
 			return;
-		}
+		
 		_prev = _entry;
 		_entry = _entry->next;
 	}
@@ -164,12 +132,12 @@ void AddRipTableEntry( RipTable * table, RipTableEntry * newer)
 }
 
 /*
-* Remove um elemento da tabela de Roteamento
+* Remove um elemento da tabela RIP
 *
-* @param table ponteiro para a tabela de Roteamento
-* @param entry uma entrada da tabela de roteamento que se deseja remover
+* @param table ponteiro para a tabela RIP
+* @param entry uma entrada da tabela RIP que se deseja remover
 *
-* @return NULL ou uma entrada valida na tabela de Roteamento
+* @return NULL ou uma entrada valida na tabela RIP
 *
 * @since           2.0
 */
@@ -184,11 +152,7 @@ RemoveRipTableEntry( RipTable * table, RipTableEntry * entry )
 	
 	if( (_entry = FindRipTableEntry (table, entry, 0 )))
 	{
-		if(_entry == table->list
-			&& *(entry->TARGET) == *(_entry->TARGET) 
-			&& *(entry->GATEWAY) == *(_entry->GATEWAY) 
-			&& *(entry->MASK) == *(_entry->MASK) 
-		)	//Remover o primeiro elemento da lista
+		if(_entry == table->list && (entry->host) == (_entry->host))	//Remover o primeiro elemento da lista
 		{
 			_remove = table->list; 
 			table->list = (table->list)->next;
@@ -210,8 +174,8 @@ RemoveRipTableEntry( RipTable * table, RipTableEntry * entry )
 }
 
 /*
-* Destrói a tabela de Roteamento
-* @param table ponteiro para a tabela de Roteamento
+* Destrói a tabela RIP
+* @param table ponteiro para a tabela RIP
 *
 * @return void
 *
