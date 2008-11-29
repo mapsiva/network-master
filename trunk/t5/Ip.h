@@ -70,6 +70,7 @@ typedef struct tRouteTableEntry
     WORD *TARGET;
     WORD *GATEWAY;
     WORD *MASK;
+    int COST;
     BYTE interface;
     int TTL;    
     struct tRouteTableEntry* next;
@@ -91,13 +92,16 @@ RouteTableEntry *
 FindRouteTableEntry( RouteTable * table, RouteTableEntry * entry, int current);
 
 RouteTableEntry *
+FindRouteTableEntry2( RouteTable * table, RouteTableEntry * entry, int current );
+
+RouteTableEntry *
 FindProxNo( RouteTable * table, WORD _ip);
 
 /*
 *constrói uma entrada para a tabela de Roteamento
 */
 RouteTableEntry * 
-BuildRouteTableEntry( CHAR_T*, CHAR_T* , CHAR_T*, BYTE,  int);
+BuildRouteTableEntry( CHAR_T*, CHAR_T* , CHAR_T*, int, BYTE,  int);
 
 /*
 *Adiciona uma entrada na tabela de Roteamento

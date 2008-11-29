@@ -64,4 +64,7 @@ ip2str(char *, unsigned);
 int 
 is_netmask(char*);
 
+char*
+to_ip_mask_default(WORD ip);
+
 #endif 

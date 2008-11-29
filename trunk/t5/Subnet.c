@@ -30,13 +30,17 @@
 #include "Tcp.h"
 #include "Udp.h"
 #include "Icmp.h"
+#include "Rip.h"
 
 ArpTable   *arpTable;
 RouteTable *routeTable;
  int ping_running = 0;
  int trace_running = 0;
+ int rip_running = 0;
  int print_resolving = 0;
  int qtd_pkg_du = 0;
+ 
+ int RIP_PORT = 520;
  
  WORD traceroute_ip;
 
@@ -491,6 +495,7 @@ void *subnet_rcv(void *ptr)
     ARP_HEADER *arp_h;
     IP_HEADER *ip_h;
     ICMP_HEADER *icmp_h;
+    UDP_HEADER *udp_h;
     ICMP_DATA *icmp_data;
     ETHERNET_PKT *ppkt;
     
@@ -648,13 +653,13 @@ void *subnet_rcv(void *ptr)
 								break;
 								
 								case ECHO_REPLAY:
-									sem_post(&allow_route_entry);
 									gettimeofday( &stop_time, NULL );
 									dif = (float)(stop_time.tv_sec - start_time.tv_sec);
 									dif += (stop_time.tv_usec - start_time.tv_usec)/(float)1000000;
 									
 									if (ping_running)
 									{
+										sem_post(&sem_ping);
 										printf("%u bytes from %s: icmp_seq=%u ttl=%u Time=%.4f ms\n", 
 											(ntohs(ip_h->total_length) + sizeof(ETHERNET_HEADER)), 
 											format_address(ip_h->source_address), 
@@ -665,15 +670,18 @@ void *subnet_rcv(void *ptr)
 									}
 									else if (trace_running)
 									{
+										sem_post(&sem_trace);
 										printf("%s %.4f ms\n", format_address(ip_h->source_address), (dif*1000));
 										trace_running = 0;
-										sem_post(&sem_trace);
 									}
 								break;
 								
 								case DESTINATION_UN:
 									if (ping_running)
+									{
 										printf("Destination unreachable\n");
+										sem_post(&sem_ping);
+									}
 									else if (trace_running)
 									{
 										printf("*\n");
@@ -695,21 +703,11 @@ void *subnet_rcv(void *ptr)
 								
 								case REDIRECT:
 									icmp_data = (ICMP_DATA *)(icmp_h + 1);															
-									entry = BuildRouteTableEntry((CHAR_T*)format_address(ip_h->source_address), (CHAR_T*)format_address(icmp_data->prox_no), (CHAR_T*)"255.255.255.255", (BYTE)Route2Interface(icmp_data->prox_no), (int)ARP_TTL_DEF);
+									entry = BuildRouteTableEntry((CHAR_T*)format_address(ip_h->source_address), (CHAR_T*)format_address(icmp_data->prox_no), (CHAR_T*)"255.255.255.255", 0, (BYTE)Route2Interface(icmp_data->prox_no), (int)ARP_TTL_DEF);
 									AddRouteTableEntry (routeTable, entry);
 								break;
 							}
-							
-							if (ping_running)
-							{
-								sem_post(&sem_ping);
-							}
-							else if (trace_running)
-							{
-								sem_post(&sem_trace);
-							}
-						}	
-											
+						}											
 					}	
 					else if (ip_h->source_address != ifaces[riface].ip)	//Processar apenas pacotes que foram enviados pelos outros hosts e não aqueles enviados por mim
 					{
@@ -750,11 +748,11 @@ void *subnet_rcv(void *ptr)
 												sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
 												next_ip = *entry->GATEWAY;
 											}
+											
 											if(sub_arp_res (resolve_arp, 0))
-											{
 												send_icmp_pkt (0, TTL, entry->interface, next_ip, ip_h->source_address, ifaces[entry->interface].ip, ip_h->time_alive, ntohs(ip_h->identification),0);
-												break;
-											}											
+											
+											break;
 										}
 										else //criar pacote de REQUEST
 										{	
@@ -764,7 +762,6 @@ void *subnet_rcv(void *ptr)
 												
 												if (entry->interface == riface)
 												{
-													
 													entry_aux = FindProxNo(routeTable, (WORD) ip_h->source_address);
 									
 													if (*entry_aux->GATEWAY == *entry_aux->TARGET)
@@ -779,9 +776,7 @@ void *subnet_rcv(void *ptr)
 													}
 													
 													if(sub_arp_res (resolve_arp_aux, 0))
-													{
 														send_icmp_pkt (0, REDIRECT, entry_aux->interface, next_ip_aux, ip_h->source_address, ip_h->destination_address, (ip_h->time_alive),ntohs(ip_h->identification), next_ip);
-													}
 													//else
 														//printf("\nNOT RESOLVE: GATEWAY: %s IP-SOURCE: %s IP-DEST %s PROX-IP: %s\n", format_address(next_ip_aux),format_address(ip_h->destination_address),format_address(ip_h->source_address),format_address(next_ip));
 												}
@@ -807,41 +802,15 @@ void *subnet_rcv(void *ptr)
 									}
 									
 									if(sub_arp_res (resolve_arp, 0))
-									{
 										send_icmp_pkt (0, DESTINATION_UN, entry->interface, next_ip, ip_h->source_address, ifaces[entry->interface].ip, (ip_h->time_alive - 1),ntohs(ip_h->identification),0);
-									}
 								
 								break;
 								
 								case ECHO_REPLAY:
-									//criar pacote REPLAY (pois chegou em um gateway) alterar os MACs e decrementar o TTL
-									entry = FindProxNo(routeTable, (WORD) ip_h->destination_address);
-									
-									if (entry)
-									{
-										if (*entry->GATEWAY == *entry->TARGET)
-										{
-											sprintf(resolve_arp, "arp res %s\n", format_address (ip_h->destination_address));
-											next_ip = ip_h->destination_address;
-										}
-										else
-										{
-											sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
-											next_ip = *entry->GATEWAY;
-										}
-															
-										if(sub_arp_res (resolve_arp, 0))
-										{
-											send_icmp_pkt (0, ECHO_REPLAY, entry->interface, next_ip, ip_h->destination_address, ip_h->source_address, ip_h->time_alive, ntohs(ip_h->identification),0);
-										}
-									}
-									
-								break;
-								
 								case TTL:
 								case DESTINATION_UN:
 								
-									//restransmitir pacote TTL (pois chegou em um gateway) alterar os MACs
+									//restransmitir pacote (pois chegou em um gateway) alterar os MACs
 									entry = FindProxNo(routeTable, (WORD) ip_h->destination_address);
 									
 									if (entry)
@@ -864,8 +833,62 @@ void *subnet_rcv(void *ptr)
 									}
 								break;
 							}
+						}							
+						else if (ip_h->protocol == UDP)
+						{
+							udp_h = (UDP_HEADER *)(ip_h + 1);
+							
+							if (ntohs(udp_h->dest_port) == 520)
+							{
+								printf("\nRecebi pacote UDP\n");
+								//Reconstruir a tabela RIP
+								//Analizar cada entrada da tabela RIP e verificar se possui uma rota para essa entrada na tabela de roteamento;
+								//Caso não exista então inclua essa entrada na tabela de roteamento com: máscara baseada na classe do endereço IP da rede; gateway igual ao endereço ip de quem eu recebi essa tabela
+								// e incremente o custo para esta entrada em uma unidade
+								//Caso exista então verifique se ela é uma entrada estática, neste caso não há o que fazer, caso contrário, verifica se o custo
+								// é menor do que a dela em pelo menos duas unidades, se for atualize (remova a entrada atual e insira uma nova entrada): o custo desta entrada como sendo o custo observado mais uma unidade e o gateway como sendo o endereço ip de quem eu 
+								//recebi essa tabela
+								
+								RIP_PKT *rip_pkt;
+								
+								printf("\nLength: %d\n",ntohs(udp_h->length));
+								
+								int i,j, tam = ntohs(udp_h->length) - sizeof(UDP_HEADER);
+								char *mask;
+																
+								//memcpy(&udp_data[0], &udp_h->fisrt_data, tam);
+								
+								i = 0;
+								printf("\nTam: %d\n",tam);
+								BYTE *b = (BYTE *)(udp_h + 1);
+								b = b - 1;
+								while(i < (tam/sizeof(RIP_PKT)))
+								{
+									rip_pkt = (RIP_PKT *) (b + i);
+									printf("\nRede: %s\n",format_address(rip_pkt->IP));
+									printf("\nCusto: %d\n",(int)rip_pkt->metric);
+									i += sizeof(RIP_PKT);
+									
+									mask = to_ip_mask_default(rip_pkt->IP);
+									
+									entry = BuildRouteTableEntry(format_address(rip_pkt->IP), format_address(ip_h->source_address), (CHAR_T*) mask, (rip_pkt->metric + 1), riface, 180);
+									
+									sem_wait(&allow_route_entry);
+									RouteTableEntry *find_entry = FindRouteTableEntry2(routeTable, entry, 1);
+									
+									if (find_entry && (find_entry->COST - 2)  >= rip_pkt->metric)
+									{ 										
+										find_entry = RemoveRouteTableEntry(routeTable, find_entry);
+										
+										free(find_entry);
+									}
+									
+									AddRouteTableEntry(routeTable,entry);
+									
+									sem_post(&allow_route_entry);
+								}	
+							}							
 						}
-						
 					}		        
 					//TODO
 				}
@@ -1339,7 +1362,7 @@ int sub_arp_res( void *arg , int print)
 			
 			struct timespec ts;
 			
-			ts.tv_sec = time(NULL) + (TIMEOUT*2);
+			ts.tv_sec = time(NULL) + TIMEOUT;
 			ts.tv_nsec = 0;
 			
 			arp_resolving = 1;
@@ -1374,7 +1397,7 @@ int sub_arp_res( void *arg , int print)
 /* */
 void control_xnoop()
 {
-	if (run_xnoop || sending_packets || ping_running || trace_running)
+	if (run_xnoop || sending_packets || ping_running || trace_running || rip_running)
 	{
 		if (run_xnoop)
 			run_xnoop = 0;
@@ -1382,8 +1405,10 @@ void control_xnoop()
 			ping_running = 0;
 		else if (trace_running)
 			trace_running = 0;
+		else if (rip_running)
+			rip_running = 0;
 		else
-			sending_packets = 0;	
+			sending_packets = 0;
 	}
 	else
 	{
@@ -1596,7 +1621,7 @@ int sub_route_add( void *arg )
 				}
 				
 				sem_wait(&allow_route_entry);
-				entry = BuildRouteTableEntry((CHAR_T*)_target, (CHAR_T*)_gateway, (CHAR_T*)_netmask, _interface, -1);
+				entry = BuildRouteTableEntry((CHAR_T*)_target, (CHAR_T*)_gateway, (CHAR_T*)_netmask, 0, _interface, -1);
 				AddRouteTableEntry (routeTable, entry);
 				
 				if (*_gw != *_tg)
@@ -1671,7 +1696,7 @@ int sub_route_del( void *arg )
 				//DWORD *_nm = to_ip_byte((CHAR_T*)_netmask);
 				_interface = Route2Interface((WORD)*_gw);
 				sem_wait(&allow_route_entry);
-				entry = BuildRouteTableEntry((CHAR_T*)_target, (CHAR_T*)_gateway, (CHAR_T*)_netmask, _interface, 0);
+				entry = BuildRouteTableEntry((CHAR_T*)_target, (CHAR_T*)_gateway, (CHAR_T*)_netmask, 0, _interface, 0);
 				entry = RemoveRouteTableEntry (routeTable, entry);
 				if(entry)
 				{
@@ -1760,6 +1785,8 @@ int sub_traceroute( void *arg )
 					//send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, *end_ip, ifaces[entry->interface].ip, ident, ident,0);
 					//send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, *end_ip, ifaces[entry->interface].ip, ident, ident,0);	
 					
+					sem_post(&allow_route_entry);
+					
 					ident++;
 					qtd_pkg_du = 0;
 					
@@ -1780,12 +1807,18 @@ int sub_traceroute( void *arg )
 					}
 				}
 				else
+				{
+					ident++;
 					printf ("*\n");
+					sem_post(&allow_route_entry);
+				}
 			}
 			else
-				printf ("*\n");
-			
-			sem_post(&allow_route_entry);
+			{
+				ident++;
+				printf ("*\n");			
+				sem_post(&allow_route_entry);
+			}
 			
 			i++;
 			sleep (1);
@@ -1855,11 +1888,14 @@ int sub_ping( void *arg )
 				{
 					gettimeofday( &start_time, NULL ); 
 					send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, *end_ip, ifaces[entry->interface].ip, 64, ident, 0);
+					
+					sem_post(&allow_route_entry);
+					
 					ident++;
 					
 					struct timespec ts;
 					
-					ts.tv_sec = time(NULL) + TIMEOUT*10;
+					ts.tv_sec = time(NULL) + TIMEOUT*2;
 					ts.tv_nsec = 0;
 					int rv;
 					
@@ -1874,12 +1910,17 @@ int sub_ping( void *arg )
 					}
 				}
 				else
-					printf ("Host is unreachable2\n");
+				{
+					printf ("Host is unreachable2\n");				
+					sem_post(&allow_route_entry);
+				}
 			}
 			else
+			{
 				printf ("Host is unreachabl3\n");
+				sem_post(&allow_route_entry);
+			}
 			
-			sem_post(&allow_route_entry);
 			sleep (1);
 		}		
 		ping_running = 0;		
@@ -1890,14 +1931,100 @@ int sub_ping( void *arg )
 	return 0;
 }
 
+void * rip_control (void *p)
+{
+	int i, j;
+	while(1)
+	{
+		if (!rip_running)
+			continue;
+		
+		//Criar um pacote com a tabela RIP para ser enviada por broadcast através da rede
+		sem_wait(&allow_route_entry);
+		
+		RouteTableEntry *entry = routeTable->list;
+		
+		BYTE udp_data[512];
+		
+		RIP_PKT *rip_pkt;
+		
+		i=0;
+		
+		//printf("\nRede: %d\n",(int)*entry->TARGET);
+		while (entry)
+		{
+			rip_pkt = malloc(sizeof(RIP_PKT));
+			rip_pkt->IP = (WORD)*entry->TARGET;
+			rip_pkt->metric = entry->COST;	
+			memcpy(&udp_data[i], (BYTE *)rip_pkt , sizeof(RIP_PKT));
+			i += sizeof(RIP_PKT);
+			
+			entry = entry->next;
+		}
+		//printf("\nRede: %d\n",(int )(rip_pkt->IP));
+		sem_post(&allow_route_entry);
+		
+		for (j = 0; j < nifaces; j++)
+			send_udp_pkt(RIP_PORT, udp_data, i, j);
+		
+		sleep(30);
+		//Bloquear esta thread por 30 segundos
+	}
+}
+
 int sub_rip_start( void *arg )
 {
+	rip_running = 1;
 	return 0;
 }
 
 int sub_rip_stop( void *arg )
 {
+	rip_running = 0;
 	return 0;
+}
+
+void send_udp_pkt(int porta, BYTE *data, int tam, int interface)
+{
+	ETHERNET_HEADER * eth;
+	UDP_HEADER * udp;
+	IP_HEADER *ip_pkt;
+	
+	eth =  malloc(sizeof(ETHERNET_HEADER) + sizeof(IP_HEADER) + sizeof (UDP_HEADER) + tam);
+	
+	/*construção do pacote ETHERNET*/
+	eth->net = ifaces[interface].net;
+	
+	memcpy(&eth->sender[0], ifaces[interface].mac, MAC_ADDR_LEN);
+		
+	memcpy(&eth->receiver[0], broad_eth , MAC_ADDR_LEN);		
+	
+	eth->type = htons(IP);
+	
+	/*construção do pacote IP*/
+	ip_pkt = (IP_HEADER *)(eth + 1);
+	ip_pkt->version = 0x45;
+	ip_pkt->type_service = 5;
+	ip_pkt->total_length = htons(tam + sizeof(UDP_HEADER) + sizeof (IP_HEADER));
+
+	ip_pkt->identification = htons(0);
+	ip_pkt->fragment = htons(0);
+	ip_pkt->time_alive = 1;
+	ip_pkt->protocol = UDP;
+	ip_pkt->source_address = ifaces[interface].ip; // ip da interface de saída
+	ip_pkt->destination_address = 0; //ip do host a receber o echo
+	ip_pkt->checksum = 0;
+	ip_pkt->checksum = htons(calc_check_sum(ip_pkt, IP));
+	
+	/*construção do pacote UDP*/
+	udp = (UDP_HEADER *)(ip_pkt + 1);
+	udp->src_port = htons(porta);
+	udp->dest_port = htons(porta);
+	udp->checksum = htons(0);
+	udp->fisrt_data = *data;
+	udp->length = htons(sizeof (UDP_HEADER) + tam);
+	
+	send_pkt(sizeof(ETHERNET_HEADER) + sizeof(IP_HEADER) + sizeof (UDP_HEADER) + tam, interface, broad_eth, IP, (BYTE*)eth);	
 }
 
 void send_icmp_pkt ( BYTE _icmp_code, BYTE _icmp_type, BYTE interface, WORD gateway, WORD destination, WORD source, BYTE hopnum, WORD id_pkg, WORD prox_no)
@@ -2030,6 +2157,8 @@ int main(int argc, char *argv[])
 	printf("Listening on port: %d\n", ntohs(my_port));
 	pthread_create(&tid, NULL, subnet_rcv, (void *)&my_port);
 	pthread_create(&tid, NULL, subnet_send, (void *)NULL);
+	
+	pthread_create(&tid, NULL, (void *)rip_control, NULL);
 	
 	//pthread_create(&tid, NULL,(void *) RemoveArpTableEntry, (void *)NULL);
 	//pthread_create(&tid, NULL, (void *)AddArpTableEntry, (void *)NULL);

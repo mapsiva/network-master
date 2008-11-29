@@ -15,12 +15,11 @@
 */
 
 
-RipTableEntry * BuildRipTableEntry( WORD host, WORD next_hop , int num_hops)
+RipTableEntry * BuildRipTableEntry( WORD host , int num_hops)
 {
 	 RipTableEntry * _entry =  (RipTableEntry *) malloc(sizeof(RipTableEntry));
 	 
 	 _entry->host 		=  	host;
-	 _entry->next_hop 	= 	next_hop;
 	 _entry->num_hops	= 	num_hops;
 	 return _entry;
 }
@@ -54,7 +53,7 @@ void DisplayRipTable (RipTable * table)
 	
 	while (_entry)
 	{
-		printf ("%-16s %-16s %-16d\t ", format_address((DWORD)*(&_entry->host)), format_address((DWORD)*(&_entry->next_hop)),
+		printf ("%-16s %-16d\t ", format_address((DWORD)*(&_entry->host)),
 		_entry->num_hops);
 		
 		_entry = _entry->next;
