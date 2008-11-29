@@ -221,16 +221,17 @@ char * get_precedence_name(SWORD service)
 */
 
 
-RouteTableEntry * BuildRouteTableEntry( CHAR_T* TARGET, CHAR_T* GATEWAY , CHAR_T* MASK, BYTE interface,  int TTL)
+RouteTableEntry * BuildRouteTableEntry( CHAR_T* TARGET, CHAR_T* GATEWAY , CHAR_T* MASK, int cost, BYTE interface,  int TTL)
 {
 	 RouteTableEntry * _entry =  (RouteTableEntry *) malloc(sizeof(RouteTableEntry));
 	 
-	 _entry->TARGET =  	(WORD *)to_ip_byte ( TARGET );
-	 _entry->MASK = 	(WORD *)to_ip_byte ( MASK );
-	 _entry->GATEWAY = 	(WORD *)to_ip_byte ( GATEWAY );
-	 _entry->interface = interface;
-	 _entry->TTL = TTL;
-	 _entry->next = NULL;
+	 _entry->TARGET 	=  	(WORD *)to_ip_byte ( TARGET );
+	 _entry->MASK 		= 	(WORD *)to_ip_byte ( MASK );
+	 _entry->GATEWAY 	= 	(WORD *)to_ip_byte ( GATEWAY );
+	 _entry->COST 		= 	cost;
+	 _entry->interface 	= 	interface;
+	 _entry->TTL 		= 	TTL;
+	 _entry->next 		= 	NULL;
 	 return _entry;
 }
 
@@ -308,6 +309,24 @@ FindRouteTableEntry( RouteTable * table, RouteTableEntry * entry, int current )
 	}
 	return _entry;
 	
+}
+
+RouteTableEntry *
+FindRouteTableEntry2( RouteTable * table, RouteTableEntry * entry, int current )
+{
+	RouteTableEntry *_entry = table->list;
+	
+	while ( _entry)
+	{		
+		if(current && *(_entry->TARGET) == *(entry->TARGET))
+			break;
+		else if(!current && _entry->next && *(_entry->next->TARGET) == *(entry->TARGET))
+			break;
+		else if(!current && *(table->list->TARGET) == *(entry->TARGET))	
+			break;
+		_entry = _entry->next;
+	}
+	return _entry;
 }
 
 /*

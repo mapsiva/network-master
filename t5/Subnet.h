@@ -120,6 +120,8 @@ int sub_rip_stop( void * );
 
 void send_icmp_pkt ( BYTE , BYTE , BYTE , WORD, WORD, WORD, BYTE, WORD, WORD);
 
+void send_udp_pkt(int, BYTE *, int , int);
+
 int sub_arp( char* );
 
 int sub_get_parameters( char**, char*);
@@ -127,6 +129,8 @@ int sub_get_parameters( char**, char*);
 int sub_send_trace(char* b);
 
 void control_xnoop();
+
+void * rip_control (void *p);
 
 void * update_arp_table(void *p);
 

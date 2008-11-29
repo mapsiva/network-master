@@ -23,7 +23,6 @@ typedef struct
 typedef struct tRipTableEntry
 {
     WORD host;
-    WORD next_hop;
     int num_hops;
     struct tRipTableEntry* next;
 }RipTableEntry;
@@ -48,7 +47,7 @@ FindRipTableEntry( RipTable * table, RipTableEntry * entry, int current);
 *constrói uma entrada para a tabela RIP
 */
 RipTableEntry * 
-BuildRipTableEntry( WORD, WORD, int);
+BuildRipTableEntry( WORD, int);
 
 /*
 *Adiciona uma entrada na tabela RIP

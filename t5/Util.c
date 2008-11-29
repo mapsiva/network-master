@@ -276,4 +276,18 @@ char *ip2str(char *buf, unsigned ip)
     return buf;
 }
 
+char *to_ip_mask_default(WORD ip)
+{
+	char *mask;
+	if (ip < (WORD) (*to_ip_byte((CHAR_T*)"128.0.0.0")))
+		mask = "255.0.0.0";
+	else if (ip < (WORD) (*to_ip_byte((CHAR_T*)"192.0.0.0")))
+		mask = "255.255.0.0";
+	else if (ip < (WORD) (*to_ip_byte((CHAR_T*)"224.0.0.0")))
+		mask = "255.255.255.0";
+	else
+		mask = "255.255.255.255";
+	return mask;
+}
+
 #endif 
