@@ -130,7 +130,7 @@ int sub_send_trace(char* b);
 
 void control_xnoop();
 
-void * rip_control (void *p);
+void rip_control ();
 
 void * update_arp_table(void *p);
 
