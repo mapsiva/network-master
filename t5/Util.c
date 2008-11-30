@@ -279,11 +279,13 @@ char *ip2str(char *buf, unsigned ip)
 char *to_ip_mask_default(WORD ip)
 {
 	char *mask;
-	if (ip < (WORD) (*to_ip_byte((CHAR_T*)"128.0.0.0")))
+	BYTE *b = (BYTE *) &ip;
+	printf("\nBYTE 1: %d\n",*b);
+	if (*b < 128)
 		mask = "255.0.0.0";
-	else if (ip < (WORD) (*to_ip_byte((CHAR_T*)"192.0.0.0")))
+	else if (*b < 192)
 		mask = "255.255.0.0";
-	else if (ip < (WORD) (*to_ip_byte((CHAR_T*)"224.0.0.0")))
+	else if (*b < 224)
 		mask = "255.255.255.0";
 	else
 		mask = "255.255.255.255";
