@@ -34,6 +34,8 @@
 
 ArpTable   *arpTable;
 RouteTable *routeTable;
+RipTable *ripTable;
+
  int ping_running = 0;
  int trace_running = 0;
  int rip_running = 0;
@@ -840,7 +842,7 @@ void *subnet_rcv(void *ptr)
 							
 							if (ntohs(udp_h->dest_port) == 520)
 							{
-								printf("\nRecebi pacote UDP\n");
+								
 								//Reconstruir a tabela RIP
 								//Analizar cada entrada da tabela RIP e verificar se possui uma rota para essa entrada na tabela de roteamento;
 								//Caso não exista então inclua essa entrada na tabela de roteamento com: máscara baseada na classe do endereço IP da rede; gateway igual ao endereço ip de quem eu recebi essa tabela
@@ -851,22 +853,16 @@ void *subnet_rcv(void *ptr)
 								
 								RIP_PKT *rip_pkt;
 								
-								printf("\nLength: %d\n",ntohs(udp_h->length));
+								int i, tam = ntohs(udp_h->length) - sizeof(UDP_HEADER);
 								
-								int i,j, tam = ntohs(udp_h->length) - sizeof(UDP_HEADER);
 								char *mask;
-																
-								//memcpy(&udp_data[0], &udp_h->fisrt_data, tam);
 								
 								i = 0;
-								printf("\nTam: %d\n",tam);
-								BYTE *b = (BYTE *)(udp_h + 1);
-								b = b - 1;
+								
+								rip_pkt = (RIP_PKT *) &udp_h->fisrt_data;
+								
 								while(i < (tam/sizeof(RIP_PKT)))
 								{
-									rip_pkt = (RIP_PKT *) (b + i);
-									printf("\nRede: %s\n",format_address(rip_pkt->IP));
-									printf("\nCusto: %d\n",(int)rip_pkt->metric);
 									i += sizeof(RIP_PKT);
 									
 									mask = to_ip_mask_default(rip_pkt->IP);
@@ -886,11 +882,12 @@ void *subnet_rcv(void *ptr)
 									AddRouteTableEntry(routeTable,entry);
 									
 									sem_post(&allow_route_entry);
+									rip_pkt++;
 								}	
 							}							
 						}
 					}		        
-					//TODO
+					
 				}
 			}
 			//Fim da busca
@@ -1931,56 +1928,55 @@ int sub_ping( void *arg )
 	return 0;
 }
 
-void * rip_control (void *p)
+void rip_control ()
 {
 	int i, j;
-	while(1)
-	{
-		if (!rip_running)
-			continue;
+	
+		
 		
 		//Criar um pacote com a tabela RIP para ser enviada por broadcast através da rede
 		sem_wait(&allow_route_entry);
 		
 		RouteTableEntry *entry = routeTable->list;
 		
-		BYTE udp_data[512];
+		BYTE * udp_data = malloc(512);
 		
 		RIP_PKT *rip_pkt;
 		
 		i=0;
-		
-		//printf("\nRede: %d\n",(int)*entry->TARGET);
+	
+		rip_pkt = (RIP_PKT *)udp_data;
 		while (entry)
 		{
-			rip_pkt = malloc(sizeof(RIP_PKT));
 			rip_pkt->IP = (WORD)*entry->TARGET;
-			rip_pkt->metric = entry->COST;	
-			memcpy(&udp_data[i], (BYTE *)rip_pkt , sizeof(RIP_PKT));
-			i += sizeof(RIP_PKT);
-			
+			rip_pkt->metric = entry->COST;				
+			rip_pkt++;
 			entry = entry->next;
+			i++;
 		}
-		//printf("\nRede: %d\n",(int )(rip_pkt->IP));
+		
 		sem_post(&allow_route_entry);
 		
 		for (j = 0; j < nifaces; j++)
-			send_udp_pkt(RIP_PORT, udp_data, i, j);
+			send_udp_pkt(RIP_PORT, udp_data, i*sizeof(RIP_PKT), j);
 		
-		sleep(30);
-		//Bloquear esta thread por 30 segundos
-	}
+		alarm (30);
+
 }
 
 int sub_rip_start( void *arg )
 {
+	printf ("RIP running...\n");
 	rip_running = 1;
+	rip_control ();
 	return 0;
 }
 
 int sub_rip_stop( void *arg )
 {
+	printf ("RIP stopped...\n");
 	rip_running = 0;
+	alarm(0);
 	return 0;
 }
 
@@ -2021,7 +2017,8 @@ void send_udp_pkt(int porta, BYTE *data, int tam, int interface)
 	udp->src_port = htons(porta);
 	udp->dest_port = htons(porta);
 	udp->checksum = htons(0);
-	udp->fisrt_data = *data;
+
+	memcpy(&udp->fisrt_data, data , tam);
 	udp->length = htons(sizeof (UDP_HEADER) + tam);
 	
 	send_pkt(sizeof(ETHERNET_HEADER) + sizeof(IP_HEADER) + sizeof (UDP_HEADER) + tam, interface, broad_eth, IP, (BYTE*)eth);	
@@ -2120,7 +2117,8 @@ int main(int argc, char *argv[])
 	/* Construcao das tabelas ARP e ROUTE */	
 	arpTable   = BuildArpTable();
 	routeTable = BuildRouteTable();
-
+	ripTable = BuildRipTable();
+	
 	//Ajustando as opções padrões do XNOOP	
 	_xnoop.npkgs = 0;
 	run_xnoop = 0;
@@ -2128,6 +2126,7 @@ int main(int argc, char *argv[])
 	qtd_pkgs = 0;
 	
 	signal (SIGINT, control_xnoop);
+	signal (SIGALRM, rip_control);
 	
 	for (i=0; i<MAX_PARAMETERS; i++)
 		parameters[i] = malloc (MAX_SIZE_PARAMETER);
@@ -2158,7 +2157,7 @@ int main(int argc, char *argv[])
 	pthread_create(&tid, NULL, subnet_rcv, (void *)&my_port);
 	pthread_create(&tid, NULL, subnet_send, (void *)NULL);
 	
-	pthread_create(&tid, NULL, (void *)rip_control, NULL);
+	//pthread_create(&tid, NULL, (void *)rip_control, NULL);
 	
 	//pthread_create(&tid, NULL,(void *) RemoveArpTableEntry, (void *)NULL);
 	//pthread_create(&tid, NULL, (void *)AddArpTableEntry, (void *)NULL);
