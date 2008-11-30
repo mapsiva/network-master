@@ -67,4 +67,7 @@ is_netmask(char*);
 char*
 to_ip_mask_default(WORD ip);
 
+WORD 
+to_ip_network(WORD ip, WORD mask);
+
 #endif 

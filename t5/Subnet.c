@@ -858,11 +858,12 @@ void *subnet_rcv(void *ptr)
 								char *mask;
 								
 								i = 0;
-								
+								printf("\nTAM: %d\n",tam);
 								rip_pkt = (RIP_PKT *) &udp_h->fisrt_data;
 								
-								while(i < (tam/sizeof(RIP_PKT)))
+								while(i < tam)
 								{
+									printf("\nI: %d\n",i);
 									i += sizeof(RIP_PKT);
 									
 									mask = to_ip_mask_default(rip_pkt->IP);
@@ -872,17 +873,24 @@ void *subnet_rcv(void *ptr)
 									sem_wait(&allow_route_entry);
 									RouteTableEntry *find_entry = FindRouteTableEntry2(routeTable, entry, 1);
 									
-									if (find_entry && (find_entry->COST - 2)  >= rip_pkt->metric)
-									{ 										
-										find_entry = RemoveRouteTableEntry(routeTable, find_entry);
-										
-										free(find_entry);
+									if (find_entry)
+									{ 				
+										//Possui uma rota dinâmica com custo pior do que a da tabela RIP
+										if (find_entry->TTL > -1 && find_entry->COST - 2  >= rip_pkt->metric)
+										{
+											find_entry = RemoveRouteTableEntry(routeTable, find_entry);
+											
+											free(find_entry);
+											
+											AddRouteTableEntry(routeTable,entry);
+										}
 									}
-									
-									AddRouteTableEntry(routeTable,entry);
+									else								
+										AddRouteTableEntry(routeTable,entry);
 									
 									sem_post(&allow_route_entry);
 									rip_pkt++;
+									
 								}	
 							}							
 						}
@@ -1966,6 +1974,24 @@ void rip_control ()
 
 int sub_rip_start( void *arg )
 {
+	int i;
+	WORD rede;
+	for (i=0; i<nifaces; i++)
+	{	
+		sem_wait(&allow_route_entry);
+		rede = to_ip_network(ifaces[i].ip, ifaces[i].mask);
+		RouteTableEntry *entry = BuildRouteTableEntry(format_address(rede), format_address(rede), format_address(ifaces[i].mask), 0, i, -1);
+		RouteTableEntry *find_entry = FindRouteTableEntry2(routeTable, entry, 1);
+		
+		//Remover qq rota criada estaticamente para a rede ao qual está conectada diretamente
+		if (find_entry)
+		{
+			find_entry = RemoveRouteTableEntry(routeTable, find_entry);
+			free(find_entry);
+		}
+		AddRouteTableEntry(routeTable,entry);
+		sem_post(&allow_route_entry);
+	}
 	printf ("RIP running...\n");
 	rip_running = 1;
 	rip_control ();
