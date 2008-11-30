@@ -858,12 +858,10 @@ void *subnet_rcv(void *ptr)
 								char *mask;
 								
 								i = 0;
-								printf("\nTAM: %d\n",tam);
 								rip_pkt = (RIP_PKT *) &udp_h->fisrt_data;
 								
 								while(i < tam)
 								{
-									printf("\nI: %d\n",i);
 									i += sizeof(RIP_PKT);
 									
 									mask = to_ip_mask_default(rip_pkt->IP);
@@ -875,7 +873,7 @@ void *subnet_rcv(void *ptr)
 									
 									if (find_entry)
 									{ 				
-										//Possui uma rota dinâmica com custo pior do que a da tabela RIP
+										//Possui uma rota dinâmica com custo pior do que a entrada observada na tabela RIP
 										if (find_entry->TTL > -1 && find_entry->COST - 2  >= rip_pkt->metric)
 										{
 											find_entry = RemoveRouteTableEntry(routeTable, find_entry);
@@ -885,7 +883,7 @@ void *subnet_rcv(void *ptr)
 											AddRouteTableEntry(routeTable,entry);
 										}
 									}
-									else								
+									else
 										AddRouteTableEntry(routeTable,entry);
 									
 									sem_post(&allow_route_entry);
