@@ -856,6 +856,7 @@ void *subnet_rcv(void *ptr)
 								int i, tam = ntohs(udp_h->length) - sizeof(UDP_HEADER);
 								
 								char *mask;
+								WORD rede;
 								
 								i = 0;
 								rip_pkt = (RIP_PKT *) &udp_h->fisrt_data;
@@ -866,13 +867,19 @@ void *subnet_rcv(void *ptr)
 									
 									mask = to_ip_mask_default(rip_pkt->IP);
 									
-									entry = BuildRouteTableEntry(format_address(rip_pkt->IP), format_address(ip_h->source_address), (CHAR_T*) mask, (rip_pkt->metric + 1), riface, 180);
+									rede = to_ip_network(ip_h->source_address, (WORD)*to_ip_byte((CHAR_T*)mask));
+									
+									//Este host não está conectado diretamente a esta rede?
+									if (rede != to_ip_network(rip_pkt->IP, (WORD)*to_ip_byte((CHAR_T*)mask)))
+										rede = ip_h->source_address;
+									
+									entry = BuildRouteTableEntry(format_address(rip_pkt->IP), format_address(rede), (CHAR_T*) mask, (rip_pkt->metric + 1), riface, 180);
 									
 									sem_wait(&allow_route_entry);
 									RouteTableEntry *find_entry = FindRouteTableEntry2(routeTable, entry, 1);
 									
 									if (find_entry)
-									{ 				
+									{
 										//Possui uma rota dinâmica com custo pior do que a entrada observada na tabela RIP
 										if (find_entry->TTL > -1 && find_entry->COST - 2  >= rip_pkt->metric)
 										{
