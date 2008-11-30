@@ -280,9 +280,14 @@ char *to_ip_mask_default(WORD ip)
 {
 	char *mask;
 	BYTE *b = (BYTE *) &ip;
-	printf("\nBYTE 1: %d\n",*b);
+	
 	if (*b < 128)
-		mask = "255.0.0.0";
+	{
+		if (*b == 10)
+			mask = "255.255.255.0";
+		else
+			mask = "255.0.0.0";
+	}
 	else if (*b < 192)
 		mask = "255.255.0.0";
 	else if (*b < 224)
