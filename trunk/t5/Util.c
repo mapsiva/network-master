@@ -290,4 +290,10 @@ char *to_ip_mask_default(WORD ip)
 	return mask;
 }
 
+WORD to_ip_network(WORD ip, WORD mask)
+{
+	return ip & mask;
+}
+
+
 #endif 
