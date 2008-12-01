@@ -43,6 +43,9 @@ RipTable *ripTable;
  int qtd_pkg_du = 0;
  
  int RIP_PORT = 520;
+ int ROUTE_TTL_INF = -1;
+ int ROUTE_COST_INF = 16;
+ int ROUTE_COST = 180;
  
  WORD traceroute_ip;
 
@@ -873,7 +876,7 @@ void *subnet_rcv(void *ptr)
 									if (rede != to_ip_network(rip_pkt->IP, (WORD)*to_ip_byte((CHAR_T*)mask)))
 										rede = ip_h->source_address;
 									
-									entry = BuildRouteTableEntry(format_address(rip_pkt->IP), format_address(rede), (CHAR_T*) mask, (rip_pkt->metric + 1), riface, 180);
+									entry = BuildRouteTableEntry(format_address(rip_pkt->IP), format_address(rede), (CHAR_T*) mask, (rip_pkt->metric + 1), riface, ROUTE_COST);
 									
 									sem_wait(&allow_route_entry);
 									RouteTableEntry *find_entry = FindRouteTableEntry2(routeTable, entry, 1);
@@ -1944,36 +1947,56 @@ int sub_ping( void *arg )
 void rip_control ()
 {
 	int i, j;
+	RouteTableEntry *entry;
+	BYTE * udp_data = malloc(512);
+	RIP_PKT *rip_pkt;
+	char resolve_arp[100];
 	
-		
-		
-		//Criar um pacote com a tabela RIP para ser enviada por broadcast através da rede
-		sem_wait(&allow_route_entry);
-		
-		RouteTableEntry *entry = routeTable->list;
-		
-		BYTE * udp_data = malloc(512);
-		
-		RIP_PKT *rip_pkt;
-		
-		i=0;
+	//Verificar se os roteadores conectados diretamente estão ativos ainda pois pode ser que eles tenham caído,
+	//neste caso, deve-se colocar o valor 16 no custo destas rotas, caso contrário, não há o que fazer
+	sem_wait(&allow_route_entry);
 	
-		rip_pkt = (RIP_PKT *)udp_data;
-		while (entry)
+	entry = routeTable->list;	
+	
+	while (entry)
+	{
+		//Criar pacote ARP e enviar para o roteador conectado diretamente, se ele responder então atualizar o custo 
+		//da rota analisada para 1, caso contrário, atualizar o custo da rota analisada para o valor 16
+		if (*entry->GATEWAY != *entry->TARGET && (entry->COST == 1 || entry->COST == 16))
 		{
-			rip_pkt->IP = (WORD)*entry->TARGET;
-			rip_pkt->metric = entry->COST;				
-			rip_pkt++;
-			entry = entry->next;
-			i++;
+			sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
+			if(sub_arp_res (resolve_arp, 0))
+				entry->COST = 1;
+			else
+				entry->COST = 16;
 		}
-		
-		sem_post(&allow_route_entry);
-		
-		for (j = 0; j < nifaces; j++)
-			send_udp_pkt(RIP_PORT, udp_data, i*sizeof(RIP_PKT), j);
-		
-		alarm (30);
+		entry = entry->next;	
+	}
+	sem_post(&allow_route_entry);
+	
+	//Criar um pacote com a tabela RIP para ser enviada por broadcast através da rede
+	sem_wait(&allow_route_entry);
+	
+	entry = routeTable->list;
+	
+	i=0;
+	
+	rip_pkt = (RIP_PKT *)udp_data;
+	while (entry)
+	{
+		rip_pkt->IP = (WORD)*entry->TARGET;
+		rip_pkt->metric = entry->COST;				
+		rip_pkt++;
+		entry = entry->next;
+		i+=sizeof(RIP_PKT);
+	}
+	
+	sem_post(&allow_route_entry);
+	
+	for (j = 0; j < nifaces; j++)
+		send_udp_pkt(RIP_PORT, udp_data, i, j);
+	
+	alarm (30);
 
 }
 
@@ -1985,7 +2008,7 @@ int sub_rip_start( void *arg )
 	{	
 		sem_wait(&allow_route_entry);
 		rede = to_ip_network(ifaces[i].ip, ifaces[i].mask);
-		RouteTableEntry *entry = BuildRouteTableEntry(format_address(rede), format_address(rede), format_address(ifaces[i].mask), 0, i, -1);
+		RouteTableEntry *entry = BuildRouteTableEntry(format_address(rede), format_address(rede), format_address(ifaces[i].mask), 0, i, ROUTE_TTL_INF);
 		RouteTableEntry *find_entry = FindRouteTableEntry2(routeTable, entry, 1);
 		
 		//Remover qq rota criada estaticamente para a rede ao qual está conectada diretamente
