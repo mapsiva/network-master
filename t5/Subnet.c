@@ -860,6 +860,7 @@ void *subnet_rcv(void *ptr)
 								
 								char *mask;
 								WORD rede;
+								int custo;
 								
 								i = 0;
 								rip_pkt = (RIP_PKT *) &udp_h->fisrt_data;
@@ -871,12 +872,15 @@ void *subnet_rcv(void *ptr)
 									mask = to_ip_mask_default(rip_pkt->IP);
 									
 									rede = to_ip_network(ip_h->source_address, (WORD)*to_ip_byte((CHAR_T*)mask));
-									
+									custo = 0;
 									//Este host não está conectado diretamente a esta rede?
 									if (rede != to_ip_network(rip_pkt->IP, (WORD)*to_ip_byte((CHAR_T*)mask)))
+									{
 										rede = ip_h->source_address;
+										custo = rip_pkt->metric + 1;	
+									}
 									
-									entry = BuildRouteTableEntry(format_address(rip_pkt->IP), format_address(rede), (CHAR_T*) mask, (rip_pkt->metric + 1), riface, ROUTE_COST);
+									entry = BuildRouteTableEntry(format_address(rip_pkt->IP), format_address(rede), (CHAR_T*) mask, custo, riface, ROUTE_COST);
 									
 									sem_wait(&allow_route_entry);
 									RouteTableEntry *find_entry = FindRouteTableEntry2(routeTable, entry, 1);
@@ -884,8 +888,10 @@ void *subnet_rcv(void *ptr)
 									if (find_entry)
 									{
 										//Possui uma rota dinâmica com custo pior do que a entrada observada na tabela RIP
-										if (find_entry->TTL > -1 && find_entry->COST - 2  >= rip_pkt->metric)
+										if ((int)find_entry->TTL > (int)ROUTE_TTL_INF && (int)find_entry->COST - 2  >= (int)rip_pkt->metric)
 										{
+											printf("\nCusto Anterior: %d\n", (int)find_entry->COST);
+											printf("\nCusto Atual: %d\n", (int)rip_pkt->metric);
 											find_entry = RemoveRouteTableEntry(routeTable, find_entry);
 											
 											free(find_entry);
@@ -1987,8 +1993,8 @@ void rip_control ()
 		rip_pkt->IP = (WORD)*entry->TARGET;
 		rip_pkt->metric = entry->COST;				
 		rip_pkt++;
-		entry = entry->next;
 		i+=sizeof(RIP_PKT);
+		entry = entry->next;
 	}
 	
 	sem_post(&allow_route_entry);
