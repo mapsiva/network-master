@@ -765,8 +765,7 @@ void *subnet_rcv(void *ptr)
 												send_icmp_pkt (0, ECHO_REQUEST, entry->interface, next_ip, ip_h->destination_address, ip_h->source_address, (ip_h->time_alive - 1),ntohs(ip_h->identification),0);
 												
 												if (entry->interface == riface)
-												{
-													
+												{													
 													entry_aux = FindProxNo(routeTable, (WORD) ip_h->source_address);
 									
 													if (*entry_aux->GATEWAY == *entry_aux->TARGET)
@@ -816,30 +815,6 @@ void *subnet_rcv(void *ptr)
 								break;
 								
 								case ECHO_REPLAY:
-									//criar pacote REPLAY (pois chegou em um gateway) alterar os MACs e decrementar o TTL
-									entry = FindProxNo(routeTable, (WORD) ip_h->destination_address);
-									
-									if (entry)
-									{
-										if (*entry->GATEWAY == *entry->TARGET)
-										{
-											sprintf(resolve_arp, "arp res %s\n", format_address (ip_h->destination_address));
-											next_ip = ip_h->destination_address;
-										}
-										else
-										{
-											sprintf(resolve_arp, "arp res %s\n", format_address (*entry->GATEWAY));
-											next_ip = *entry->GATEWAY;
-										}
-															
-										if(sub_arp_res (resolve_arp, 0))
-										{
-											send_icmp_pkt (0, ECHO_REPLAY, entry->interface, next_ip, ip_h->destination_address, ip_h->source_address, ip_h->time_alive, ntohs(ip_h->identification),0);
-										}
-									}
-									
-								break;
-								
 								case TTL:
 								case DESTINATION_UN:
 								
@@ -1427,6 +1402,7 @@ void * update_arp_table(void *p)
 			{
 				if (_entry->TTL == -1)
 				{
+					_previous = _entry;
 					_entry = _entry->next;	
 					continue;
 				}
@@ -1498,8 +1474,9 @@ void * update_route_table(void *p)
 		{			
 			while (_entry)
 			{
-				if (_entry->TTL == -1)
+				if ((int)_entry->TTL == (int)-1)
 				{
+					_previous = _entry;
 					_entry = _entry->next;	
 					continue;
 				}
@@ -1872,14 +1849,14 @@ int sub_ping( void *arg )
 					{
 						//the semaphore returned
 						if(ping_running)
-			 				printf ("Host is unreachable1\n");
+			 				printf ("Destination unreachable\n");
 					}
 				}
 				else
-					printf ("Host is unreachable2\n");
+					printf ("Destination unreachable\n");
 			}
 			else
-				printf ("Host is unreachabl3\n");
+				printf ("Destination unreachable\n");
 			
 			sem_post(&allow_route_entry);
 			sleep (1);
