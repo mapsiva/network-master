@@ -282,12 +282,7 @@ char *to_ip_mask_default(WORD ip)
 	BYTE *b = (BYTE *) &ip;
 	
 	if (*b < 128)
-	{
-		if (*b == 10)
-			mask = "255.255.255.0";
-		else
-			mask = "255.0.0.0";
-	}
+		mask = "255.0.0.0";
 	else if (*b < 192)
 		mask = "255.255.0.0";
 	else if (*b < 224)

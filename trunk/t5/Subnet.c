@@ -46,6 +46,7 @@ RipTable *ripTable;
  int ROUTE_TTL_INF = -1;
  int ROUTE_COST_INF = 16;
  int ROUTE_COST = 180;
+ int ROUTE_INTERVAL = 30;
  
  WORD traceroute_ip;
 
@@ -845,7 +846,6 @@ void *subnet_rcv(void *ptr)
 							
 							if (ntohs(udp_h->dest_port) == 520)
 							{
-								
 								//Reconstruir a tabela RIP
 								//Analizar cada entrada da tabela RIP e verificar se possui uma rota para essa entrada na tabela de roteamento;
 								//Caso não exista então inclua essa entrada na tabela de roteamento com: máscara baseada na classe do endereço IP da rede; gateway igual ao endereço ip de quem eu recebi essa tabela
@@ -860,7 +860,7 @@ void *subnet_rcv(void *ptr)
 								
 								char *mask;
 								WORD rede;
-								int custo;
+								int custo, ttl_route;
 								
 								i = 0;
 								rip_pkt = (RIP_PKT *) &udp_h->fisrt_data;
@@ -873,43 +873,50 @@ void *subnet_rcv(void *ptr)
 									
 									rede = to_ip_network(ip_h->source_address, (WORD)*to_ip_byte((CHAR_T*)mask));
 									custo = 0;
+									ttl_route = ROUTE_TTL_INF;
 									//Este host não está conectado diretamente a esta rede?
 									if (rede != to_ip_network(rip_pkt->IP, (WORD)*to_ip_byte((CHAR_T*)mask)))
 									{
 										rede = ip_h->source_address;
-										custo = rip_pkt->metric + 1;	
+										custo = rip_pkt->metric + 1;
+										ttl_route = ROUTE_COST;	
 									}
 									
-									entry = BuildRouteTableEntry(format_address(rip_pkt->IP), format_address(rede), (CHAR_T*) mask, custo, riface, ROUTE_COST);
+									if (custo > 16)
+										custo = 16;
 									
+									entry = BuildRouteTableEntry(format_address(rip_pkt->IP), format_address(rede), (CHAR_T*) mask, custo, riface, ttl_route);
+										
 									sem_wait(&allow_route_entry);
 									RouteTableEntry *find_entry = FindRouteTableEntry2(routeTable, entry, 1);
 									
 									if (find_entry)
 									{
 										//Possui uma rota dinâmica com custo pior do que a entrada observada na tabela RIP
-										if ((int)find_entry->TTL > (int)ROUTE_TTL_INF && (int)find_entry->COST - 2  >= (int)rip_pkt->metric)
+										if ((int)find_entry->TTL != (int)ROUTE_TTL_INF && (int)find_entry->COST - 2  >= (int)rip_pkt->metric)
 										{
-											printf("\nCusto Anterior: %d\n", (int)find_entry->COST);
-											printf("\nCusto Atual: %d\n", (int)rip_pkt->metric);
 											find_entry = RemoveRouteTableEntry(routeTable, find_entry);
 											
 											free(find_entry);
 											
 											AddRouteTableEntry(routeTable,entry);
 										}
+										else if ((int)rip_pkt->metric == 16)
+										{
+											find_entry = RemoveRouteTableEntry(routeTable, find_entry);
+											
+											free(find_entry);
+										}
 									}
 									else
 										AddRouteTableEntry(routeTable,entry);
 									
 									sem_post(&allow_route_entry);
-									rip_pkt++;
-									
-								}	
+									rip_pkt++;									
+								}
 							}							
 						}
-					}		        
-					
+					}
 				}
 			}
 			//Fim da busca
@@ -1469,6 +1476,7 @@ void * update_arp_table(void *p)
 			{
 				if (_entry->TTL == -1)
 				{
+					_previous = _entry;
 					_entry = _entry->next;	
 					continue;
 				}
@@ -1540,8 +1548,9 @@ void * update_route_table(void *p)
 		{			
 			while (_entry)
 			{
-				if (_entry->TTL == -1)
+				if ((int)_entry->TTL == (int)-1)
 				{
+					_previous = _entry;
 					_entry = _entry->next;	
 					continue;
 				}
@@ -1564,7 +1573,7 @@ void * update_route_table(void *p)
 						
 						free(_entry);
 						
-						_entry = _previous;		
+						_entry = _previous;
 					}
 					
 					routeTable->length--;
@@ -1572,7 +1581,7 @@ void * update_route_table(void *p)
 				else
 				{
 					_previous = _entry;
-					_entry = _entry->next;	
+					_entry = _entry->next;
 				}
 			}
 		}
@@ -1925,18 +1934,18 @@ int sub_ping( void *arg )
 					{
 						//the semaphore returned
 						if(ping_running)
-			 				printf ("Host is unreachable1\n");
+			 				printf ("Destination unreachable\n");
 					}
 				}
 				else
 				{
-					printf ("Host is unreachable2\n");				
+					printf ("Destination unreachable\n");				
 					sem_post(&allow_route_entry);
 				}
 			}
 			else
 			{
-				printf ("Host is unreachabl3\n");
+				printf ("Destination unreachable\n");
 				sem_post(&allow_route_entry);
 			}
 			
@@ -1974,7 +1983,10 @@ void rip_control ()
 			if(sub_arp_res (resolve_arp, 0))
 				entry->COST = 1;
 			else
+			{
+				printf("\n%s\n",format_address (*entry->GATEWAY));
 				entry->COST = 16;
+			}
 		}
 		entry = entry->next;	
 	}
@@ -2002,8 +2014,7 @@ void rip_control ()
 	for (j = 0; j < nifaces; j++)
 		send_udp_pkt(RIP_PORT, udp_data, i, j);
 	
-	alarm (30);
-
+	alarm (ROUTE_INTERVAL);
 }
 
 int sub_rip_start( void *arg )
